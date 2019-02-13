@@ -31,9 +31,6 @@
 ##  в том числе при размещении в разделяемой памяти.
 ##
 
-set(LIBERTHINK_TYPE STATIC)
-add_subdirectory(erthink)
-
 find_program(RE2C re2c)
 if(RE2C AND NOT RE2C_VERSION)
   execute_process(COMMAND ${RE2C} --version
@@ -71,6 +68,8 @@ set(LIBFPTU_SOURCES
   ../fast_positive/defs.h
   ../fast_positive/tuples.h
   ../fast_positive/tuples_internal.h
+  ../fast_positive/details/erthink/erthink_u2a.h
+  ../fast_positive/details/erthink/erthink_d2a.h
   gperf_ECMAScript_keywords.h
   bitset4tags.h
   common.cxx
@@ -86,8 +85,6 @@ set(LIBFPTU_SOURCES
   sort.cxx
   time.cxx
   data.cxx
-  erthink/erthink_u2a.h
-  erthink/erthink_d2a.h
   json_emit.cxx
   json_parse.cxx
   ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)

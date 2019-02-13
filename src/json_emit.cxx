@@ -21,10 +21,9 @@
 #pragma warning(disable : 4710) /* function not inlined */
 #endif
 
-#include "erthink/erthink_d2a.h"
-#include "erthink/erthink_u2a.h"
-
 #include "bitset4tags.h"
+#include "fast_positive/details/erthink/erthink_d2a.h"
+#include "fast_positive/details/erthink/erthink_u2a.h"
 #include "fast_positive/tuples_internal.h"
 
 #ifdef _MSC_VER
