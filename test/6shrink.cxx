@@ -1,5 +1,5 @@
-/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+﻿/*
+ * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
  *
  * This file is part of libfptu, aka "Fast Positive Tuples".
  *
@@ -21,15 +21,16 @@
 
 #include "shuffle6.hpp"
 
-static bool field_filter_any(const fptu_field *, void *context, void *param) {
+static bool field_filter_any(const fptu_field *, void *context,
+                             void *param) noexcept {
   (void)context;
   (void)param;
   return true;
 }
 
 TEST(Shrink, Base) {
-  char space[fptu_buffer_enough];
-  fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+  char space[fptu::buffer_enough];
+  fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
   ASSERT_NE(nullptr, pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
 
@@ -44,18 +45,18 @@ TEST(Shrink, Base) {
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
+  EXPECT_EQ(0u, pt->junk_space());
 
   // add one more header-only and erase first
   EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0xB, 0xBB43));
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(1u, pt->junk);
+  EXPECT_EQ(4u, pt->junk_space());
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
+  EXPECT_EQ(0u, pt->junk_space());
   fptu_field *fp = fptu::lookup(pt, 0xB, fptu_uint16);
   ASSERT_NE(nullptr, fp);
   EXPECT_EQ(0xBB43u, fptu_field_uint16(fp));
@@ -65,11 +66,11 @@ TEST(Shrink, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(1u, pt->junk);
+  EXPECT_EQ(4u, pt->junk_space());
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
+  EXPECT_EQ(0u, pt->junk_space());
   fp = fptu::lookup(pt, 0xC, fptu_uint32);
   ASSERT_NE(nullptr, fp);
   EXPECT_EQ(42u, fptu_field_uint32(fp));
@@ -79,18 +80,18 @@ TEST(Shrink, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xC, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(2u, pt->junk);
+  EXPECT_EQ(8u, pt->junk_space());
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
+  EXPECT_EQ(0u, pt->junk_space());
   fp = fptu::lookup(pt, 0xD, fptu_int64);
   ASSERT_NE(nullptr, fp);
   EXPECT_EQ(-555, fptu_field_int64(fp));
 }
 
 TEST(Shrink, Shuffle) {
-  char space[fptu_buffer_enough];
+  char space[fptu::buffer_enough];
 
   ASSERT_TRUE(shuffle6::selftest());
 
@@ -99,7 +100,7 @@ TEST(Shrink, Shuffle) {
     for (unsigned n = 0; n < shuffle6::factorial; ++n) {
       shuffle6 order(n);
       while (!order.empty()) {
-        fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+        fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
         ASSERT_NE(nullptr, pt);
 
         unsigned count = 0;
@@ -166,7 +167,7 @@ TEST(Shrink, Shuffle) {
         ASSERT_STREQ(nullptr, fptu::check(pt));
         ASSERT_EQ(count,
                   fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-        EXPECT_EQ(0u, pt->junk);
+        EXPECT_EQ(0u, pt->junk_space());
 
         if (count) {
           for (unsigned i = 0; i < 6; ++i) {
@@ -200,6 +201,8 @@ TEST(Shrink, Shuffle) {
     }
   }
 }
+
+//------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+ * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
  *
  * This file is part of libfptu, aka "Fast Positive Tuples".
  *
@@ -32,1158 +32,1200 @@
  */
 
 #pragma once
-#ifndef FAST_POSITIVE_TUPLES_H
-#define FAST_POSITIVE_TUPLES_H
 
-#define FPTU_VERSION_MAJOR 0
-#define FPTU_VERSION_MINOR 0
+//------------------------------------------------------------------------------
+#include "fast_positive/details/warnings_push_pt.h"
 
-#include "fast_positive/config.h"
-#include "fast_positive/defs.h"
-
-#if defined(fptu_EXPORTS)
-#define FPTU_API __dll_export
-#elif defined(fptu_IMPORTS)
-#define FPTU_API __dll_import
-#else
-#define FPTU_API
-#endif /* fptu_EXPORTS */
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#if _MSC_VER < 1900
-#pragma warning(disable : 4350) /* behavior change: 'std::_Wrap_alloc... */
-#endif
-#pragma warning(disable : 4514) /* 'xyz': unreferenced inline function         \
-                                   has been removed */
-#pragma warning(disable : 4710) /* 'xyz': function not inlined */
-#pragma warning(disable : 4711) /* function 'xyz' selected for                 \
-                                   automatic inline expansion */
-#pragma warning(disable : 4061) /* enumerator 'abc' in switch of enum 'xyz' is \
-                                   not explicitly handled by a case label */
-#pragma warning(disable : 4201) /* nonstandard extension used :                \
-                                   nameless struct / union */
-#pragma warning(disable : 4127) /* conditional expression is constant */
-
-#pragma warning(push, 1)
-#ifndef _STL_WARNING_LEVEL
-#define _STL_WARNING_LEVEL 3 /* Avoid warnings inside nasty MSVC STL code */
-#endif
-#pragma warning(disable : 4548) /* expression before comma has no effect;      \
-                                   expected expression with side - effect */
-#pragma warning(disable : 4530) /* C++ exception handler used, but unwind      \
-                                   semantics are not enabled. Specify /EHsc */
-#pragma warning(disable : 4577) /* 'noexcept' used with no exception handling  \
-                                   mode specified; termination on exception    \
-                                   is not guaranteed. Specify /EHsc */
-#endif                          /* _MSC_VER (warnings) */
-
-#include <errno.h>  // for error codes
-#include <float.h>  // for FLT_EVAL_METHOD and float_t
-#include <limits.h> // for INT_MAX, etc
-#include <math.h>   // for NaNs
-#include <stdio.h>  // for FILE
-#include <string.h> // for strlen()
-#include <time.h>   // for struct timespec, struct timeval
-
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h> // for struct iovec
-#elif !defined(HAVE_STRUCT_IOVEC)
-struct iovec {
-  void *iov_base; /* Starting address */
-  size_t iov_len; /* Number of bytes to transfer */
-};
-#define HAVE_STRUCT_IOVEC
-#endif
+#include "fast_positive/details/api.h"
+#include "fast_positive/details/types.h"
 
 #ifdef __cplusplus
+
+#include "fast_positive/details/warnings_push_system.h"
+
 #include <cmath>     // for std::ldexp
 #include <limits>    // for numeric_limits<>
 #include <memory>    // for std::uniq_ptr
 #include <ostream>   // for std::ostream
 #include <stdexcept> // for std::invalid_argument
 #include <string>    // for std::string
-#if __cplusplus >= 201703L && __has_include(<string_view>)
-#include <string_view>
-#define HAVE_cxx17_std_string_view 1
-#else
-#define HAVE_cxx17_std_string_view 0
-#endif
 
-extern "C" {
+#include "fast_positive/details/warnings_pop.h"
+
+#include "fast_positive/details/audit.h"
+#include "fast_positive/details/essentials.h"
+#include "fast_positive/details/exceptions.h"
+#include "fast_positive/details/field.h"
+#include "fast_positive/details/getter.h"
+#include "fast_positive/details/legacy_common.h"
+#include "fast_positive/details/ro.h"
+#include "fast_positive/details/rw.h"
+#include "fast_positive/details/schema.h"
+#include "fast_positive/details/tagged_pointer.h"
+#include "fast_positive/details/token.h"
+
 #endif /* __cplusplus */
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+#include "fast_positive/details/warnings_pop.h"
 
-//----------------------------------------------------------------------------
-/* Опции конфигурации управляющие внутренним поведением libfptu, т.е
- * их изменение требует пересборки библиотеки.
- *
- * Чуть позже эти определения передедут в fptu_config.h */
+//------------------------------------------------------------------------------
 
-// TBD
+namespace fptu {
 
-//----------------------------------------------------------------------------
-/* Общие перечисления и структуры */
+class schema /* Минималистический справочник схемы.
+   Содержит необходимую для машины информацию об именах полей, их
+   внутренних атрибутах и типе хранимых значений.
 
-/* Коды ошибок.
- * Список будет пополнен, а описания уточнены. */
-enum fptu_error {
-  FPTU_SUCCESS = 0,
-  FPTU_OK = FPTU_SUCCESS,
-#if defined(_WIN32) || defined(_WIN64)
-  FPTU_ENOFIELD = 0x00000650 /* ERROR_INVALID_FIELD */,
-  FPTU_EINVAL = 0x00000057 /* ERROR_INVALID_PARAMETER */,
-  FPTU_ENOSPACE = 0x00000540 /* ERROR_ALLOTTED_SPACE_EXCEEDED */,
-#else
-#ifdef ENOKEY
-  FPTU_ENOFIELD = ENOKEY /* Required key not available */,
-#else
-  FPTU_ENOFIELD = ENOENT /* No such file or directory (POSIX) */,
-#endif
-  FPTU_EINVAL = EINVAL /* Invalid argument (POSIX) */,
-  FPTU_ENOSPACE = ENOBUFS /* No buffer space available (POSIX)  */,
-/* OVERFLOW - Value too large to be stored in data type (POSIX) */
-#endif
-};
+   С точки зрения API, главное назначение справочника схемы:
+   трансляция символических ("человеческих") имен полей в "токены
+   доступа".
 
-#pragma pack(push, 1)
+   Полное определение в fast_positive/details/schema.h */
+    ;
 
-#ifdef __cplusplus
-enum fptu_type : uint32_t;
-union fptu_payload;
-#else
-typedef enum fptu_error fptu_error;
-typedef union fptu_varlen fptu_varlen;
-typedef union fptu_payload fptu_payload;
-typedef union fptu_field fptu_field;
-typedef union fptu_unit fptu_unit;
-typedef union fptu_time fptu_time;
-typedef union fptu_ro fptu_ro;
-typedef struct fptu_rw fptu_rw;
-typedef enum fptu_type fptu_type;
-typedef enum fptu_filter fptu_filter;
-typedef enum fptu_json_options fptu_json_options;
-#endif /* __cplusplus */
+class token /* Токен доступа к полю кортежей.
+  Является именем поля кортежа оттранслированным в координаты машинного
+  представления схемы. В компактном и удобном для машины виде содержит всю
+  необходимую информацию:
+    - тип данных поля;
+    - вид поля быстрое/медленное/коллекция или поле вложенной структуры;
+    - смещение к данным для "быстрых" полей.
+    и т.д.
 
-/* Внутренний тип для хранения размера полей переменной длины. */
-union fptu_varlen {
-  struct {
-    uint16_t brutto; /* брутто-размер в 4-байтовых юнитах,
-                      * всегда больше или равен 1. */
-    union {
-      uint16_t opaque_bytes;
-      uint16_t array_length;
-      uint16_t tuple_items;
-    };
-  };
-  uint32_t flat;
-};
+  Полное определение в fast_positive/details/token.h */
+    ;
 
-/* Поле кортежа.
- *
- * Фактически это дескриптор поля, в котором записаны: тип данных,
- * номер колонки и смещение к данным. */
-union
-#ifdef __cplusplus
-    FPTU_API
-#endif /* __cplusplus */
-        fptu_field {
-  struct {
-    uint16_t tag;    /* тип и "номер колонки". */
-    uint16_t offset; /* смещение к данным относительно заголовка, либо
-                        непосредственно данные для uint16_t. */
-  };
-  uint32_t header;
-  uint32_t body[1]; /* в body[0] расположен дескриптор/заголовок,
-                     * а начиная с body[offset] данные. */
-#ifdef __cplusplus
-  inline unsigned colnum() const;
-  inline fptu_type type() const;
-  inline bool is_dead() const;
-  inline bool is_fixedsize() const;
+class variant_value /* Класс поддержки динамической типизации.
+  Похож на boost::variant и fpta_value. Принципиальное отличие в том, что класс
+  не хранит значение внутри, а является обёрнутым тэгированным указателем (тип
+  данных хранится в тэге).
 
-  inline uint_fast16_t get_payload_uint16() const;
-  inline const fptu_payload *payload() const;
-  inline fptu_payload *payload();
-  inline const void *inner_begin() const;
-  inline const void *inner_end() const;
-  inline size_t array_length() const;
-#endif /* __cplusplus */
-};
-
-/* Внутренний тип соответствующий 32-битной ячейке с данными. */
-union fptu_unit {
-  fptu_field field;
-  fptu_varlen varlen;
-  uint32_t data;
-};
-
-/* Представление времени.
- *
- * В формате фиксированной точки 32-dot-32:
- *   - В старшей "целой" части секунды по UTC, буквально как выдает time(),
- *     но без знака. Это отодвигает проблему 2038-го года на 2106,
- *     требуя взамен аккуратности при вычитании.
- *   - В младшей "дробной" части неполные секунды в 1/2**32 долях.
- *
- * Эта форма унифицирована с "Positive Hiper100re" и одновременно достаточно
- * удобна в использовании. Поэтому настоятельно рекомендуется использовать
- * именно её, особенно для хранения и передачи данных. */
-union
-#ifdef __cplusplus
-    FPTU_API
-#endif /* __cplusplus */
-        fptu_time {
-  uint64_t fixedpoint;
-  struct {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    uint32_t fractional;
-    uint32_t utc;
-#else
-    uint32_t utc;
-    uint32_t fractional;
-#endif /* byte order */
-  };
-
-#ifdef __cplusplus
-  static uint_fast32_t ns2fractional(uint_fast32_t);
-  static uint_fast32_t fractional2ns(uint_fast32_t);
-  static uint_fast32_t us2fractional(uint_fast32_t);
-  static uint_fast32_t fractional2us(uint_fast32_t);
-  static uint_fast32_t ms2fractional(uint_fast32_t);
-  static uint_fast32_t fractional2ms(uint_fast32_t);
-
-  double fractional2seconds() const { return std::ldexp(fractional, -32); }
-  double seconds() const { return fractional2seconds() + utc; }
-
-#ifdef HAVE_TIMESPEC_TV_NSEC
-  /* LY: Clang не позволяет возвращать из C-linkage функции структуру,
-   * у которой есть какие-либо конструкторы C++. Поэтому необходимо отказаться
-   * либо от возможности использовать libfptu из C, либо от Clang,
-   * либо от конструкторов (они и пострадали). */
-  static fptu_time from_timespec(const struct timespec &ts) {
-    fptu_time result = {((uint64_t)ts.tv_sec << 32) |
-                        ns2fractional((uint_fast32_t)ts.tv_nsec)};
-    return result;
-  }
-#endif /* HAVE_TIMESPEC_TV_NSEC */
-
-#ifdef HAVE_TIMEVAL_TV_USEC
-  static FPTU_API fptu_time from_timeval(const struct timeval &tv) {
-    fptu_time result = {((uint64_t)tv.tv_sec << 32) |
-                        us2fractional((uint_fast32_t)tv.tv_usec)};
-    return result;
-  }
-#endif /* HAVE_TIMEVAL_TV_USEC */
-
-#ifdef _FILETIME_
-  static FPTU_API fptu_time from_filetime(FILETIME *pFileTime) {
-    uint64_t ns100 =
-        ((uint64_t)pFileTime->dwHighDateTime << 32) + pFileTime->dwLowDateTime;
-    return from_100ns(
-        ns100 - UINT64_C(/* UTC offset from 1601-01-01 */ 116444736000000000));
-  }
-#endif /* _FILETIME_ */
-#endif /* __cplusplus */
-};
-
-union fptu_payload {
-  uint32_t u32;
-  int32_t i32;
-  uint64_t u64;
-  int64_t i64;
-  fptu_time dt;
-  float fp32;
-  double fp64;
-  char cstr[4];
-  uint8_t fixbin[8];
-  uint32_t fixbin_by32[2];
-  uint64_t fixbin_by64[1];
-  struct {
-    fptu_varlen varlen;
-    uint32_t data[1];
-  } other;
-#ifdef __cplusplus
-  const void *inner_begin() const { return other.data; }
-  const void *inner_end() const { return other.data - 1 + other.varlen.brutto; }
-  size_t array_length() const { return other.varlen.array_length; }
-#endif
-};
-
-#pragma pack(pop)
-
-/* Представление сериализованной формы кортежа.
- *
- * Фактические это просто системная структура iovec, т.е. указатель
- * на буфер с данными и размер этих данных в байтах. Системный тип struct
- * iovec выбран для совместимости с функциями readv(), writev() и т.п.
- * Другими словами, это просто "оболочка", а сами данные кортежа должны быть
- * где-то размещены. */
-union fptu_ro {
-  struct {
-    const fptu_unit *units;
-    size_t total_bytes;
-  };
-  struct iovec sys;
-};
-
-/* Изменяемая форма кортежа.
- * Является плоским буфером, в начале которого расположены служебные поля.
- *
- * Инициализируется функциями fptu_init(), fptu_alloc() и fptu_fetch(). */
-struct
-#ifdef __cplusplus
-    FPTU_API
-#endif /* __cplusplus */
-        fptu_rw {
-  unsigned head; /* Индекс дозаписи дескрипторов, растет к началу буфера,
-                    указывает на первый занятый элемент. */
-  unsigned tail; /* Индекс для дозаписи данных, растет к концу буфера,
-                    указываент на первый не занятый элемент. */
-  unsigned junk; /* Счетчик мусорных 32-битных элементов, которые
-                    образовались при удалении/обновлении. */
-  unsigned pivot; /* Индекс опорной точки, от которой растут "голова" и
-                     "хвоcт", указывает на терминатор заголовка. */
-  unsigned end; /* Конец выделенного буфера, т.е. units[end] не наше. */
-
-  /* TODO: Автоматическое расширение буфера.
-
-    fptu_unit  implace[1]; // начало данных если память выделяет одним куском.
-
-    fptu_unit *units;  // указатель на данные, который указывает
-                       // либо на inplace, либо на "автоматический" буфер
-   */
-
-  fptu_unit units[1];
-
-#ifdef __cplusplus
-  /* closed and noncopyable. */
-  fptu_rw(const fptu_rw &) = delete;
-  fptu_rw &operator=(fptu_rw const &) = delete;
-
-  static void *operator new(size_t bytes) = delete;
-  static fptu_rw *create(size_t items_limit, size_t data_bytes);
-  static void operator delete(void *ptr) { ::free(ptr); }
-
-  static void *operator new[](size_t bytes) = delete;
-  static void operator delete[](void *ptr) = delete;
-#endif /* __cplusplus */
-};
-
-/* Основные ограничения, константы и их производные. */
-enum fptu_bits {
-  // базовые лимиты и параметры
-  fptu_bits = 16u, // ширина счетчиков
-  fptu_typeid_bits = 5u, // ширина типа в идентификаторе поля
-  fptu_ct_reserve_bits = 1u, // резерв в идентификаторе поля
-  fptu_unit_size = 4u,       // размер одного юнита
-  // количество служебных (зарезервированных) бит в заголовке кортежа,
-  // для признаков сортированности и отсутствия повторяющихся полей
-  fptu_lx_bits = 2u,
-
-  // производные константы и параметры
-  // log2(fptu_unit_size)
-  fptu_unit_shift = 2u,
-
-  // базовый лимит значений
-  fptu_limit = (UINT32_C(1) << fptu_bits) - 1u,
-  // максимальный суммарный размер сериализованного представления кортежа,
-  fptu_max_tuple_bytes = fptu_limit * fptu_unit_size,
-
-  // ширина тега-номера поля/колонки
-  fptu_co_bits = fptu_bits - fptu_typeid_bits - fptu_ct_reserve_bits,
-  // маска для получения типа из идентификатора поля/колонки
-  fptu_ty_mask = (UINT32_C(1) << fptu_typeid_bits) - 1u,
-  // маска резервных битов в идентификаторе поля/колонки
-  fptu_fr_mask = ((UINT32_C(1) << fptu_ct_reserve_bits) - 1u)
-                 << fptu_typeid_bits,
-
-  // сдвиг для получения тега-номера из идентификатора поля/колонки
-  fptu_co_shift = fptu_typeid_bits + fptu_ct_reserve_bits,
-  // значение тега-номера для удаленных полей/колонок
-  fptu_co_dead = (UINT32_C(1) << fptu_co_bits) - 1u,
-  // максимальный тег-номер поля/колонки
-  fptu_max_cols = fptu_co_dead - 1u,
-
-  // кол-во бит доступных для хранения размера массива дескрипторов полей
-  fptu_lt_bits = fptu_bits - fptu_lx_bits,
-  // маска для выделения служебных бит из заголовка кортежа
-  fptu_lx_mask = ((UINT32_C(1) << fptu_lx_bits) - 1u) << fptu_lt_bits,
-  // маска для получения размера массива дескрипторов из заголовка кортежа
-  fptu_lt_mask = (UINT32_C(1) << fptu_lt_bits) - 1u,
-  // максимальное кол-во полей/колонок в одном кортеже
-  fptu_max_fields = fptu_lt_mask,
-
-  // максимальный размер поля/колонки
-  fptu_max_field_bytes = fptu_limit,
-  // максимальный размер произвольной последовательности байт
-  fptu_max_opaque_bytes = fptu_max_field_bytes - fptu_unit_size,
-  // максимальное кол-во элементов в массиве,
-  // так чтобы при любом базовом типе не превышались другие лимиты
-  fptu_max_array_len = fptu_max_opaque_bytes / 32,
-  // буфер достаточного размера для любого кортежа
-  fptu_buffer_enough =
-      sizeof(fptu_rw) + fptu_max_tuple_bytes + fptu_max_fields * fptu_unit_size,
-  // предельный размер, превышение которого считается ошибкой
-  fptu_buffer_limit = fptu_max_tuple_bytes * 2
-};
-
-/* Типы полей.
- *
- * Следует обратить внимание, что fptu_farray является флагом,
- * а значения начиная с fptu_ffilter используются как маски для
- * поиска/фильтрации полей (и видимо будут выделены в отдельный enum). */
-enum fptu_type
-#ifdef __cplusplus
-    : uint32_t
-#endif
+  Соответственно, класс единообразно предоставляет доступ к значениями внутри
+  кортежей, значениям нативных переменных C++, строкам std::string, константным
+  строкам в «пуле строк» и т.д. */
 {
-  // fixed length, without ex-data (descriptor only)
-  fptu_null = 0,
-  fptu_uint16 = 1, // including boolean and enums
+  using pimpl = tagged_pointer<void, wide_tagged_pointer_base>;
 
-  // fixed length with ex-data (at least 4 byte after the pivot)
-  fptu_int32 = 2,
-  fptu_uint32 = 3,
-  fptu_fp32 = 4, // 32-bit float-point, e.g. float
+  /* 3 бита */
+  enum kind_pointer : unsigned {
+    none = 0 /* nullptr или обычный не-тегированный указатель */,
+    pod_value = 1 /* указатель на: значение POD-типа (C-string или простой тип
+                     фиксированного размера) */
+    ,
+    extobj_value = 2 /* указатель на: внешне управляемый объект или переменную
+                  внешнего типа (в том числе "список") */
+    ,
+    long_managed = 3 /* указатель на: значение типа переменного размера (в
+                        управляемом буфере) */
+    ,
+    varlen_pool = 4 /* указатель на: значение типа переменного размера в пуле
+                       констант */
+    ,
+    field_ro =
+        5 /* указатель на: данные поля в RO-кортеже с типом данных в теге */
+    ,
+    field_rw =
+        6 /* указатель на: данные поля в RW-кортеже с типом данных в теге */
+    ,
+    field_rw_incorporeal =
+        7 /* указатель на: RW-кортеж с id поля внутри (бестелесное
+       поле, которое при присвоении превратиться в field_rw) */
+  };
 
-  fptu_int64 = 5,
-  fptu_uint64 = 6,
-  fptu_fp64 = 7,     // 64-bit float-point, e.g. double
-  fptu_datetime = 8, // date-time as fixed-point, compatible with UTC
-
-  fptu_96 = 9,   // opaque 12-bytes (subject to change)
-  fptu_128 = 10, // opaque 16-bytes (uuid, ipv6, etc).
-  fptu_160 = 11, // opaque 20-bytes (sha1).
-  fptu_256 = 12, // opaque 32-bytes (sha256).
-
-  // variable length, e.g. length and payload inside ex-data
-  fptu_cstr = 13, // utf-8 с-string, zero terminated
-
-  // with additional length
-  fptu_opaque = 14, // opaque octet string
-  fptu_nested = 15, // nested tuple
-  fptu_farray = 16, // flag for array-types
-
-  // arrays
-  fptu_array_uint16 = fptu_uint16 | fptu_farray,
-  fptu_array_int32 = fptu_int32 | fptu_farray,
-  fptu_array_uint32 = fptu_uint32 | fptu_farray,
-  fptu_array_fp32 = fptu_fp32 | fptu_farray,
-  fptu_array_int64 = fptu_int64 | fptu_farray,
-  fptu_array_uint64 = fptu_uint64 | fptu_farray,
-  fptu_array_fp64 = fptu_fp64 | fptu_farray,
-  fptu_array_datetime = fptu_datetime | fptu_farray,
-  fptu_array_96 = fptu_96 | fptu_farray,
-  fptu_array_128 = fptu_128 | fptu_farray,
-  fptu_array_160 = fptu_160 | fptu_farray,
-  fptu_array_256 = fptu_256 | fptu_farray,
-  fptu_array_cstr = fptu_cstr | fptu_farray,
-  fptu_array_opaque = fptu_opaque | fptu_farray,
-  fptu_array_nested = fptu_nested | fptu_farray,
-
-  // pseudo types for lookup and filtering
-  fptu_typeid_max = (INT32_C(1) << fptu_typeid_bits) - 1,
-
-  // aliases
-  fptu_16 = fptu_uint16,
-  fptu_32 = fptu_uint32,
-  fptu_64 = fptu_uint64,
-  fptu_bool = fptu_uint16,
-  fptu_array_bool = fptu_array_uint16,
-  fptu_enum = fptu_uint16,
-  fptu_array_enum = fptu_array_uint16,
-  fptu_wchar = fptu_uint16,
-  fptu_ipv4 = fptu_uint32,
-  fptu_uuid = fptu_128,
-  fptu_ipv6 = fptu_128,
-  fptu_md5 = fptu_128,
-  fptu_sha1 = fptu_160,
-  fptu_sha256 = fptu_256,
-  fptu_wstring = fptu_opaque
+  /* TBD / TODO */
 };
 
-static __inline fptu_type fptu_type_array_of(fptu_type type) {
-  assert(type > fptu_null && type <= fptu_nested);
-  return (fptu_type)((uint32_t)type | fptu_farray);
+//------------------------------------------------------------------------------
+
+/* forward-декларация основных классов для взаимодействия между ними */
+class tuple_ro_weak;
+class tuple_ro_managed;
+class tuple_rw_fixed;
+class tuple_rw_managed;
+
+/* аллокатор управляемых буферов по-умолчанию */
+constexpr hippeus::buffer_tag default_buffer_allot() noexcept {
+  return hippeus::buffer_tag(&hippeus_allot_stdcxx, false);
 }
 
-enum fptu_filter
-#ifdef __cplusplus
-    : uint32_t
-#endif
-{ fptu_ffilter = UINT32_C(1) << (fptu_null | fptu_farray),
-  fptu_any = ~UINT32_C(0), // match any type
-  fptu_any_int = fptu_ffilter | (UINT32_C(1) << fptu_int32) |
-                 (UINT32_C(1) << fptu_int64), // match int32/int64
-  fptu_any_uint = fptu_ffilter | (UINT32_C(1) << fptu_uint16) |
-                  (UINT32_C(1) << fptu_uint32) |
-                  (UINT32_C(1) << fptu_uint64), // match uint16/uint32/uint64
-  fptu_any_fp = fptu_ffilter | (UINT32_C(1) << fptu_fp32) |
-                (UINT32_C(1) << fptu_fp64), // match fp32/fp64
-  fptu_any_number = fptu_any_int | fptu_any_uint | fptu_any_fp,
+template <typename TUPLE>
+class tuple_crtp_reader
+/* CRTP шаблон для вытягивания функционала из PIMPL-указателя.
+   https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+   https://en.cppreference.com/w/cpp/language/pimpl
+
+   Обеспечивает получение значений полей посредством функций get_TYPE(token),
+   а также оператор индексирования operator[token], который возвращает
+   промежуточный объект доступа с набором собственных геттеров.
+
+   Доступ к коллекциям (повторяющимся полям) предоставляется через
+   промежуточный range-объект возвращаемый функцией collection(), примерно так:
+     for(auto field: tuple.collection(token))
+       sum += field.get_integer();
+
+   ВОПРОСЫ ДИЗАЙНА:
+   CRTP-обёртка здесь преследует три НЕ-принципиальные цели:
+     - спрятать различные PIMPL-указатели, т.е. избавиться от синтаксиса
+       использования указателя при чтении кортежа.
+     - концентрированно представить формальное описание интерфейса,
+       проще говоря чтобы видеть все функциональные методы в одном месте.
+     - как еще один слой абстракции/изоляции, в котором можно что-по
+       подкрутить без изменения ABI библиотеки. В том числе, теоретически
+       можно вообще подменить реализацию.
+
+   Тем не менее, CRTP НЕ является неотъемлемой или шибко нужно частью,
+   от него можно избавиться.
+
+   В свою очередь, PIMPL или "просто указатель" нужен так как кортеж в читаемой
+   сериализованной форме не имеет конструктора (это просто участок памяти).
+
+   PIMPL здесь не приводит к увеличению накладных расходов, так как ABI
+   по-прежнему работает с одним указателем на плоские читаемые данные кортежа.
+   При этом PIMPL-обёртку следует передавать по-значению, т.е. достаточно
+   НЕ добавлять еще один уровень косвенности. */
+{
+private:
+  constexpr const TUPLE &self() const noexcept {
+    return *static_cast<const TUPLE *>(this);
+  }
+
+public:
+  __pure_function constexpr const details::tuple_ro *get_impl() const noexcept {
+    return self().pimpl_;
+  }
+
+#define HERE_CRTP_MAKE(RETURN_TYPE, NAME)                                      \
+  template <typename TOKEN>                                                    \
+  __pure_function inline RETURN_TYPE NAME(const TOKEN &ident) const {          \
+    return get_impl()->NAME(ident);                                            \
+  }
+  HERE_CRTP_MAKE(details::accessor_ro<TOKEN>, operator[])
+  HERE_CRTP_MAKE(details::collection_ro<TOKEN>, collection)
+  HERE_CRTP_MAKE(bool, is_present)
+  HERE_CRTP_MAKE(string_view, get_string)
+  HERE_CRTP_MAKE(string_view, get_varbinary)
+  HERE_CRTP_MAKE(property_pair, get_property)
+  HERE_CRTP_MAKE(bool, get_bool)
+  HERE_CRTP_MAKE(short, get_enum)
+  HERE_CRTP_MAKE(int8_t, get_i8)
+  HERE_CRTP_MAKE(uint8_t, get_u8)
+  HERE_CRTP_MAKE(int16_t, get_i16)
+  HERE_CRTP_MAKE(uint16_t, get_u16)
+  HERE_CRTP_MAKE(int32_t, get_i32)
+  HERE_CRTP_MAKE(uint32_t, get_u32)
+  HERE_CRTP_MAKE(int64_t, get_i64)
+  HERE_CRTP_MAKE(uint64_t, get_u64)
+  HERE_CRTP_MAKE(float, get_f32)
+  HERE_CRTP_MAKE(double, get_f64)
+  HERE_CRTP_MAKE(decimal64, get_decimal)
+  HERE_CRTP_MAKE(datetime_t, get_datetime)
+  HERE_CRTP_MAKE(const uuid_t &, get_uuid)
+  HERE_CRTP_MAKE(const int128_t &, get_int128)
+  HERE_CRTP_MAKE(const uint128_t &, get_uint128)
+  HERE_CRTP_MAKE(const binary96_t &, get_b96)
+  HERE_CRTP_MAKE(const binary128_t &, get_b128)
+  HERE_CRTP_MAKE(const binary160_t &, get_b160)
+  HERE_CRTP_MAKE(const binary192_t &, get_b192)
+  HERE_CRTP_MAKE(const binary224_t &, get_b224)
+  HERE_CRTP_MAKE(const binary256_t &, get_b256)
+  HERE_CRTP_MAKE(const binary320_t &, get_b320)
+  HERE_CRTP_MAKE(const binary384_t &, get_b384)
+  HERE_CRTP_MAKE(const binary512_t &, get_b512)
+  HERE_CRTP_MAKE(const ip_address_t &, get_ip_address)
+  HERE_CRTP_MAKE(mac_address_t, get_mac_address)
+  HERE_CRTP_MAKE(const ip_net_t &, get_ip_net)
+  HERE_CRTP_MAKE(int64_t, get_integer)
+  HERE_CRTP_MAKE(uint64_t, get_unsigned)
+  HERE_CRTP_MAKE(double, get_float)
+#undef HERE_CRTP_MAKE
+
+  __pure_function explicit constexpr operator bool() const noexcept {
+    return get_impl() != 0;
+  }
+  __pure_function const char *validate(const fptu::schema *schema,
+                                       bool holes_are_not_allowed = false) const
+      noexcept {
+    return get_impl()->audit(schema, holes_are_not_allowed);
+  }
+  __pure_function static const char *
+  validate(const void *ptr, std::size_t bytes, const fptu::schema *schema,
+           bool holes_are_not_allowed = false) noexcept {
+    return TUPLE::impl::audit(ptr, bytes, schema, holes_are_not_allowed);
+  }
+  __pure_function constexpr bool empty() const noexcept {
+    return get_impl()->empty();
+  }
+  __pure_function constexpr std::size_t size() const noexcept {
+    return get_impl()->size();
+  }
+  __pure_function constexpr const void *data() const noexcept {
+    return get_impl()->data();
+  }
+  __pure_function constexpr std::size_t index_size() const noexcept {
+    return get_impl()->index_size();
+  }
+  __pure_function constexpr bool is_sorted() const noexcept {
+    return get_impl()->is_sorted();
+  }
+  __pure_function constexpr bool have_preplaced() const noexcept {
+    return get_impl()->have_preplaced();
+  }
+  __pure_function operator iovec() const noexcept {
+    return iovec(data(), size());
+  }
 };
-FPT_ENUM_FLAG_OPERATORS(fptu_filter)
 
-static __inline fptu_filter fptu_filter_mask(fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return (fptu_filter)(UINT32_C(1) << type);
-}
+class tuple_ro_weak : public tuple_crtp_reader<tuple_ro_weak>
+/* Не-управляемый R/O-кортеж с данными в отдельном (внешнем) буфере.
+  Фактически это просто указатель, поэтому кортеж
+  валиден только пока доступны и не изменены данные во внешнем буфере.
+  Может быть создан из кортежа любого класса (см далее). */
+{
+  friend class tuple_crtp_reader<tuple_ro_weak>;
+  friend class tuple_ro_managed;
+  template <typename> friend class tuple_crtp_writer;
 
-#ifdef __cplusplus
-enum class fptu_type_or_filter : uint32_t {};
-#else
-typedef int32_t fptu_type_or_filter;
-#endif /* __cplusplus */
+protected:
+  using impl = details::tuple_ro;
+  const impl *pimpl_;
+  explicit constexpr tuple_ro_weak(const impl *ptr) noexcept : pimpl_(ptr) {}
 
-static __inline unsigned fptu_get_colnum(uint_fast16_t tag) {
-  return ((unsigned)tag) >> fptu_co_shift;
-}
+public:
+  constexpr tuple_ro_weak() noexcept : tuple_ro_weak(nullptr) {}
+  tuple_ro_weak(const void *ptr, std::size_t bytes, const fptu::schema *schema,
+                bool skip_validation = false)
+      : pimpl_(impl::make_from_buffer(ptr, bytes, schema, skip_validation)) {}
+  ~tuple_ro_weak() =
+      /* to foo was a literal type*/ default /* { pimpl_ = nullptr; } */;
 
-static __inline fptu_type fptu_get_type(uint_fast16_t tag) {
-  return (fptu_type)(tag & fptu_ty_mask);
-}
+  constexpr tuple_ro_weak(const tuple_ro_weak &) noexcept = default;
+  tuple_ro_weak &operator=(const tuple_ro_weak &) noexcept = default;
 
-static __inline uint_fast16_t fptu_make_tag(unsigned column, fptu_type type) {
-  assert((unsigned)type <= fptu_ty_mask);
-  assert(column <= fptu_max_cols);
-  return (uint_fast16_t)type + (column << fptu_co_shift);
-}
+  constexpr tuple_ro_weak(tuple_ro_weak &&src) noexcept = default;
+  cxx14_constexpr tuple_ro_weak &operator=(tuple_ro_weak &&src) noexcept {
+    pimpl_ = src.pimpl_;
+    src.pimpl_ = nullptr;
+    return *this;
+  }
+  void swap(tuple_ro_weak &ditto) noexcept { std::swap(pimpl_, ditto.pimpl_); }
 
-static __inline bool fptu_tag_is_fixedsize(uint_fast16_t tag) {
-  return fptu_get_type(tag) < fptu_cstr;
-}
+  template <typename TOKEN>
+  __pure_function inline tuple_ro_weak
+  get_nested_weak(const TOKEN &ident) const {
+    return tuple_ro_weak(get_impl()->get_nested(ident));
+  }
 
-static __inline bool fptu_tag_is_dead(uint_fast16_t tag) {
-  return tag >= (fptu_co_dead << fptu_co_shift);
-}
+  constexpr bool operator==(const tuple_ro_weak &ditto) const noexcept {
+    return pimpl_ == ditto.pimpl_;
+  }
+  constexpr bool operator!=(const tuple_ro_weak &ditto) const noexcept {
+    return pimpl_ != ditto.pimpl_;
+  }
+  inline bool operator==(const tuple_ro_managed &ditto) const noexcept;
+  inline bool operator!=(const tuple_ro_managed &ditto) const noexcept;
+  inline bool operator==(const tuple_rw_fixed &ditto) const noexcept;
+  inline bool operator!=(const tuple_rw_fixed &ditto) const noexcept;
+};
 
-static __inline bool fptu_field_is_dead(const fptu_field *pf) {
-  return !pf || fptu_tag_is_dead(pf->tag);
-}
+class tuple_ro_managed : public tuple_crtp_reader<tuple_ro_managed>
+/* Управляемый R/O-кортеж с данными в управляемом буфере со счётчиком ссылок.
+  Поддерживает std::move(), clone(), RAII для счётчика ссылок.
+  Может быть создан из tuple_rw_managed без копирования данных, а из
+  кортежей других классов с выделением буфера и полным копированием данных. */
+{
+  friend class tuple_crtp_reader<tuple_ro_managed>;
+  template <typename TUPLE> friend class tuple_crtp_writer;
 
-static __inline const fptu_payload *fptu_get_payload(const fptu_field *pf) {
-  return (const fptu_payload *)&pf->body[pf->offset];
-}
+protected:
+  using impl = details::tuple_ro;
+  const impl *pimpl_;
+  const hippeus::buffer *hb_;
 
-static __inline fptu_payload *fptu_field_payload(fptu_field *pf) {
-  return (fptu_payload *)&pf->body[pf->offset];
-}
+  FPTU_API __cold __noreturn void throw_buffer_mismatch() const;
+  void check_buffer() const {
+    if (unlikely((pimpl_ != nullptr) != (hb_ != nullptr)))
+      throw_buffer_mismatch();
+    if (hb_) {
+      if (unlikely(
+              static_cast<const uint8_t *>(pimpl_->data()) < hb_->begin() ||
+              static_cast<const uint8_t *>(pimpl_->data()) + pimpl_->size() >
+                  hb_->end()))
+        throw_buffer_mismatch();
+    }
+  }
 
-/* Возвращает текущее время в правильной форме.
+  explicit tuple_ro_managed(const impl *ro,
+                            const hippeus::buffer *buffer) noexcept
+      : pimpl_(ro), hb_(buffer->add_reference(/* accepts nullptr */)) {
+    check_buffer();
+  }
+
+  /* копирующие конструкторы с копированием данных */
+  inline tuple_ro_managed(const tuple_ro_weak &,
+                          const hippeus::buffer_tag &allot_tag);
+  inline tuple_ro_managed(const tuple_ro_managed &,
+                          const hippeus::buffer_tag &allot_tag);
+  inline tuple_ro_managed(const tuple_rw_fixed &,
+                          const hippeus::buffer_tag &allot_tag);
+
+public:
+  const hippeus::buffer *get_buffer() const noexcept { return hb_; }
+  tuple_ro_managed() noexcept : pimpl_(nullptr), hb_(nullptr) {}
+  void release() {
+    hb_->detach(/* accepts nullptr */);
+    pimpl_ = nullptr;
+    hb_ = nullptr;
+  }
+  ~tuple_ro_managed() { release(); }
+
+  tuple_ro_managed(
+      const void *source_ptr, std::size_t source_bytes,
+      const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : tuple_ro_managed() {
+    /* TODO: конструктор из внешнего источника с выделением управляемого буфера
+     * и копированием данных.
+     *
+     * Технически несложно выделить буфер и скопировать в него данные. Однако,
+     * логично чтобы размер буфера и география размещения в нём данных полностью
+     * совпадала с details::tuple_rw. Тогда это подзадача может быть выполнена
+     * общим кодом, а главное можно предоставить перекрестные move и не-move
+     * конструкторы между tuple_ro_managed и details::tuple_rw.
+     *
+     * При этом возникает два подспудных вопроса:
+     *  - details::tuple_rw хранит указатель на схему внутри себя. Поэтому
+     *    следует либо обеспечить полную совместимость с details::tuple_rw.
+     *    Либо дополнительно требовать в перемещающих конструкторах R/W-форм
+     *    указатель на схему, и проводить повторную проверку данных
+     *    на соответствие схеме.
+     *  - Если обеспечивать полную совместимость с details::tuple_rw, то встает
+     *    вопрос о необходимости класса tuple_ro_managed как такового. Ведь
+     *    проще использовать details::tuple_rw, скрыв изменяющие методы.
+     *
+     * Итоговое решение:
+     *  - При создании tuple_ro_managed с выделением буфера и копированием
+     *    в него данных производиться создание полноценного экземпляра
+     *    details::tuple_rw, с последующим перемещением буфера в экземпляр
+     *    tuple_ro_managed.
+     *  - При создании tuple_ro_managed из существующего буфера (например при
+     *    чтении вложенного кортежа) никаких дополнительных действий
+     *    не предпринимается.
+     *  - Перемещающие конструкторы R/W-форм из tuple_ro_managed должны получать
+     *    указатель на схему, самостоятельно определять способ, которым был
+     *    создан tuple_ro_managed и действовать соответствующим образом:
+     *     1) Если буфер НЕ в монопольном использовании, то конструктор должен
+     *        сделать копию данных вне зависимости от способа создание.
+     *     2) Если буфер в монопольном использовании и R/O-форма была
+     *        создана из details::tuple_rw, то внутри буфера, по смещению
+     *        соответствующему полю details::tuple_rw::buffer_offset_ будет
+     *        корректное смещение на сам буфер, а все поля schema_, head_, tail_
+     *        и т.д. соответствовать R/O-форме. В этом случае конструктор
+     *        может задействовать уже готовый, созданный ранее объект.
+     *     3) При любом несоответствии должна быть выполнена проверка данных
+     *        и создание объекта с "чистого листа". Однако, копирование данных
+     *        должно производиться только при необходимости выделения нового
+     *        буфера (если текущее расположение данных не позволяет разместить
+     *        служебные данные details::tuple_rw). */
+    FPTU_NOT_IMPLEMENTED();
+    (void)source_ptr;
+    (void)source_bytes;
+    (void)schema;
+    (void)allot_tag;
+  }
+
+  static tuple_ro_managed clone(const tuple_ro_weak &src,
+                                const hippeus::buffer_tag &allot_tag =
+                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                        false)) {
+    /* TODO: конструктор из уже проверенной R/O-формы с выделением управляющего
+     * буфера.
+     *
+     * Здесь есть подспудный вопрос со схемой:
+     *  - Схема не требуется для работы с R/O-формой, если считать что данные
+     *    уже были проверены на корректность при создании tuple_ro_weak.
+     *  - Если схему не передавать параметром, то скрытый/промежуточный
+     *    экземпляр details::tuple_rw будет создан без схемы и тогда
+     *    последующее создание R/W-форм приведет к повторной валидации данных.
+     *  - Если же схему передавать, но не делать здесь повторной проверки
+     *    данных, то может быть потенциальное катастрофическое несоответствие
+     *    схемы и данных, которое приведет к неожиданному краху только
+     *    если созданный экземпляр tuple_ro_managed будет преобразован
+     *    в R/W-форму.
+     *
+     * Итоговое решение:
+     *   - Не передаем схему и создаем скрытый/промежуточный экземпляр
+     *     details::tuple_rw без схемы, но и без проверки данных.
+     *   - При последующем преобразовании tuple_ro_managed в R/W-форму будет
+     *     выполнена повторная проверка. Однако, считаем что такой сценарий
+     *     достаточно редкий, либо пользователю следует сразу создавать
+     *     R/W-форму из tuple_ro_weak. */
+    return tuple_ro_managed(src, allot_tag);
+  }
+
+  static tuple_ro_managed clone(const tuple_ro_managed &src,
+                                const hippeus::buffer_tag &allot_tag =
+                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                        false)) {
+    return tuple_ro_managed(src, allot_tag);
+  }
+  static tuple_ro_managed clone(const tuple_rw_fixed &src,
+                                const hippeus::buffer_tag &allot_tag =
+                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                        false)) {
+    return tuple_ro_managed(src, allot_tag);
+  }
+
+  tuple_ro_managed(const tuple_ro_weak &nested_weak,
+                   const tuple_ro_managed &managed_master)
+      : tuple_ro_managed(nested_weak ? nested_weak.get_impl() : nullptr,
+                         nested_weak ? managed_master.get_buffer() : nullptr) {}
+
+  tuple_ro_managed(const tuple_ro_managed &src)
+      : tuple_ro_managed(src.pimpl_, src.hb_) {}
+
+  tuple_ro_managed &operator=(const tuple_ro_managed &src) {
+    if (likely(hb_ != src.hb_)) {
+      release();
+      hb_ = src.hb_->add_reference();
+    }
+    pimpl_ = src.pimpl_;
+    check_buffer();
+    return *this;
+  }
+
+  inline tuple_ro_managed(tuple_rw_fixed &&src);
+  tuple_ro_managed(tuple_ro_managed &&src) : pimpl_(src.pimpl_), hb_(src.hb_) {
+    check_buffer();
+    src.pimpl_ = nullptr;
+    src.hb_ = nullptr;
+  }
+
+  tuple_ro_managed &operator=(tuple_ro_managed &&src) {
+    release();
+    hb_ = src.hb_;
+    pimpl_ = src.pimpl_;
+    check_buffer();
+    src.pimpl_ = nullptr;
+    src.hb_ = nullptr;
+    return *this;
+  }
+
+  void swap(tuple_ro_managed &ditto) noexcept {
+    std::swap(pimpl_, ditto.pimpl_);
+    std::swap(hb_, ditto.hb_);
+  }
+
+  tuple_ro_weak take_weak() const noexcept { return tuple_ro_weak(pimpl_); }
+
+  bool operator==(const tuple_ro_weak &ditto) const noexcept {
+    return pimpl_ == ditto.pimpl_;
+  }
+  bool operator!=(const tuple_ro_weak &ditto) const noexcept {
+    return pimpl_ != ditto.pimpl_;
+  }
+  bool operator==(const tuple_ro_managed &ditto) const noexcept {
+    return pimpl_ == ditto.pimpl_;
+  }
+  bool operator!=(const tuple_ro_managed &ditto) const noexcept {
+    return pimpl_ != ditto.pimpl_;
+  }
+  inline bool operator==(const tuple_rw_fixed &ditto) const noexcept;
+  inline bool operator!=(const tuple_rw_fixed &ditto) const noexcept;
+
+  template <typename TOKEN>
+  __pure_function inline tuple_ro_weak
+  get_nested_weak(const TOKEN &ident) const {
+    return tuple_ro_weak(get_impl()->get_nested(ident));
+  }
+
+  template <typename TOKEN>
+  __pure_function inline tuple_ro_managed
+  get_nested_managed(const TOKEN &ident) const {
+    return tuple_ro_managed(get_impl()->get_nested(ident), get_buffer());
+  }
+};
+
+//------------------------------------------------------------------------------
+
+template <typename TUPLE> class tuple_crtp_writer {
+private:
+  cxx14_constexpr const TUPLE &self() const noexcept {
+    return *static_cast<const TUPLE *>(this);
+  }
+  cxx14_constexpr TUPLE &self() noexcept { return *static_cast<TUPLE *>(this); }
+
+protected:
+  cxx14_constexpr details::tuple_rw *get_impl() noexcept {
+    return self().pimpl_;
+  }
+
+public:
+  cxx14_constexpr const details::tuple_rw *get_impl() const noexcept {
+    return self().pimpl_;
+  }
+
+#define HERE_CRTP_MAKE(RETURN_TYPE, NAME)                                      \
+  template <typename TOKEN>                                                    \
+  __pure_function inline RETURN_TYPE NAME(const TOKEN &ident) const {          \
+    return get_impl()->NAME(ident);                                            \
+  }
+  HERE_CRTP_MAKE(details::accessor_ro<TOKEN>, operator[])
+  HERE_CRTP_MAKE(details::collection_ro<TOKEN>, collection)
+  HERE_CRTP_MAKE(bool, is_present)
+  HERE_CRTP_MAKE(string_view, get_string)
+  HERE_CRTP_MAKE(string_view, get_varbinary)
+  HERE_CRTP_MAKE(property_pair, get_property)
+  HERE_CRTP_MAKE(bool, get_bool)
+  HERE_CRTP_MAKE(short, get_enum)
+  HERE_CRTP_MAKE(int8_t, get_i8)
+  HERE_CRTP_MAKE(uint8_t, get_u8)
+  HERE_CRTP_MAKE(int16_t, get_i16)
+  HERE_CRTP_MAKE(uint16_t, get_u16)
+  HERE_CRTP_MAKE(int32_t, get_i32)
+  HERE_CRTP_MAKE(uint32_t, get_u32)
+  HERE_CRTP_MAKE(int64_t, get_i64)
+  HERE_CRTP_MAKE(uint64_t, get_u64)
+  HERE_CRTP_MAKE(float, get_f32)
+  HERE_CRTP_MAKE(double, get_f64)
+  HERE_CRTP_MAKE(decimal64, get_decimal)
+  HERE_CRTP_MAKE(datetime_t, get_datetime)
+  HERE_CRTP_MAKE(const uuid_t &, get_uuid)
+  HERE_CRTP_MAKE(const int128_t &, get_int128)
+  HERE_CRTP_MAKE(const uint128_t &, get_uint128)
+  HERE_CRTP_MAKE(const binary96_t &, get_b96)
+  HERE_CRTP_MAKE(const binary128_t &, get_b128)
+  HERE_CRTP_MAKE(const binary160_t &, get_b160)
+  HERE_CRTP_MAKE(const binary192_t &, get_b192)
+  HERE_CRTP_MAKE(const binary224_t &, get_b224)
+  HERE_CRTP_MAKE(const binary256_t &, get_b256)
+  HERE_CRTP_MAKE(const binary320_t &, get_b320)
+  HERE_CRTP_MAKE(const binary384_t &, get_b384)
+  HERE_CRTP_MAKE(const binary512_t &, get_b512)
+  HERE_CRTP_MAKE(const ip_address_t &, get_ip_address)
+  HERE_CRTP_MAKE(mac_address_t, get_mac_address)
+  HERE_CRTP_MAKE(const ip_net_t &, get_ip_net)
+  HERE_CRTP_MAKE(int64_t, get_integer)
+  HERE_CRTP_MAKE(uint64_t, get_unsigned)
+  HERE_CRTP_MAKE(double, get_float)
+#undef HERE_CRTP_MAKE
+
+  template <typename TOKEN>
+  __pure_function inline tuple_ro_weak
+  get_nested_weak(const TOKEN &ident) const {
+    return tuple_ro_weak(get_impl()->get_nested(ident));
+  }
+
+  template <typename TOKEN>
+  __pure_function inline tuple_ro_managed
+  get_nested_managed(const TOKEN &ident) const {
+    return tuple_ro_managed(get_impl()->get_nested(ident), get_buffer());
+  }
+
+#define HERE_CRTP_MAKE(VALUE_TYPE, NAME)                                       \
+  template <typename TOKEN>                                                    \
+  inline void set_##NAME(const TOKEN &ident, const VALUE_TYPE value) {         \
+    get_impl()->set_##NAME(ident, value);                                      \
+  }                                                                            \
+  inline details::tuple_rw::iterator_rw<token> insert_##NAME(                  \
+      const token &ident, const VALUE_TYPE value) {                            \
+    return get_impl()->insert_##NAME(ident, value);                            \
+  }
+  HERE_CRTP_MAKE(string_view &, string)
+  HERE_CRTP_MAKE(string_view &, varbinary)
+  HERE_CRTP_MAKE(property_pair &, property)
+  HERE_CRTP_MAKE(bool, bool)
+  HERE_CRTP_MAKE(short, enum)
+  HERE_CRTP_MAKE(int8_t, i8)
+  HERE_CRTP_MAKE(uint8_t, u8)
+  HERE_CRTP_MAKE(int16_t, i16)
+  HERE_CRTP_MAKE(uint16_t, u16)
+  HERE_CRTP_MAKE(int32_t, i32)
+  HERE_CRTP_MAKE(uint32_t, u32)
+  HERE_CRTP_MAKE(int64_t, i64)
+  HERE_CRTP_MAKE(uint64_t, u64)
+  HERE_CRTP_MAKE(float, f32)
+  HERE_CRTP_MAKE(double, f64)
+  HERE_CRTP_MAKE(decimal64, decimal)
+  HERE_CRTP_MAKE(datetime_t, datetime)
+  HERE_CRTP_MAKE(uuid_t &, uuid)
+  HERE_CRTP_MAKE(int128_t &, int128)
+  HERE_CRTP_MAKE(uint128_t &, uint128)
+  HERE_CRTP_MAKE(binary96_t &, b96)
+  HERE_CRTP_MAKE(binary128_t &, b128)
+  HERE_CRTP_MAKE(binary160_t &, b160)
+  HERE_CRTP_MAKE(binary192_t &, b192)
+  HERE_CRTP_MAKE(binary224_t &, b224)
+  HERE_CRTP_MAKE(binary256_t &, b256)
+  HERE_CRTP_MAKE(binary320_t &, b320)
+  HERE_CRTP_MAKE(binary384_t &, b384)
+  HERE_CRTP_MAKE(binary512_t &, b512)
+  HERE_CRTP_MAKE(ip_address_t &, ip_address)
+  HERE_CRTP_MAKE(mac_address_t, mac_address)
+  HERE_CRTP_MAKE(ip_net_t &, ip_net)
+  HERE_CRTP_MAKE(int64_t, integer)
+  HERE_CRTP_MAKE(uint64_t, integer)
+  HERE_CRTP_MAKE(int64_t, unsigned)
+  HERE_CRTP_MAKE(uint64_t, unsigned)
+  HERE_CRTP_MAKE(double, float)
+#undef HERE_CRTP_MAKE
+
+  template <typename TOKEN>
+  inline void set_nested(const TOKEN &ident, const tuple_ro_weak &value) {
+    get_impl()->set_nested(ident, value.get_impl());
+  }
+  details::tuple_rw::iterator_rw<token>
+  insert_nested(const token &ident, const tuple_ro_weak &value) {
+    return get_impl()->insert_nested(ident, value.get_impl());
+  }
+
+  __pure_function constexpr const hippeus::buffer *get_buffer() const noexcept {
+    return get_impl()->get_buffer();
+  }
+  __pure_function explicit constexpr operator bool() const noexcept {
+    return get_impl() != 0;
+  }
+  __pure_function const char *validate() const noexcept {
+    return get_impl()->audit();
+  }
+  __pure_function constexpr std::size_t brutto_size() const noexcept {
+    return get_impl()->brutto_size();
+  }
+  __pure_function constexpr std::size_t netto_size() const noexcept {
+    return get_impl()->netto_size();
+  }
+  __pure_function constexpr std::size_t index_size() const noexcept {
+    return get_impl()->index_size();
+  }
+  __pure_function constexpr std::size_t loose_count() const noexcept {
+    return get_impl()->loose_count();
+  }
+  __pure_function constexpr bool is_sorted() const noexcept {
+    return get_impl()->is_sorted();
+  }
+  __pure_function constexpr bool have_preplaced() const noexcept {
+    return get_impl()->have_preplaced();
+  }
+  void ensure() { get_impl()->ensure(); }
+  void debug_check() { get_impl()->debug_check(); }
+  void reset() noexcept { return get_impl()->reset(); }
+  bool optimize(const details::tuple_rw::optimize_flags flags =
+                    details::tuple_rw::optimize_flags::
+                        all) /* returns true if iterators become invalid */ {
+    return get_impl()->optimize(flags);
+  }
+  bool compactify() /* returns true if iterators become invalid */ {
+    return get_impl()->compactify();
+  }
+  bool sort_index(
+      bool force = false) /* returns true if iterators become invalid */ {
+    return get_impl()->sort_index(force);
+  }
+
+  bool erase(const dynamic_iterator_rw &it) { return get_impl()->erase(it); }
+  std::size_t erase(const dynamic_iterator_rw &from,
+                    const dynamic_iterator_rw &to) {
+    return get_impl()->erase(from, to);
+  }
+  std::size_t erase(const dynamic_collection_rw &collection) {
+    return get_impl()->erase(collection);
+  }
+  template <typename TOKEN> bool erase(const TOKEN &ident) {
+    return get_impl()->erase(ident);
+  }
+
+  __pure_function constexpr std::size_t head_space() const noexcept {
+    return get_impl()->head_space();
+  }
+  __pure_function constexpr std::size_t tail_space() const noexcept {
+    return get_impl()->tail_space();
+  }
+  __pure_function constexpr std::size_t junk_space() const noexcept {
+    return get_impl()->junk_space();
+  }
+  __pure_function constexpr bool empty() const noexcept {
+    return get_impl()->empty();
+  }
+
+  __pure_function tuple_ro_weak take_weak_asis() const {
+    return tuple_ro_weak(get_impl()->take_asis());
+  }
+  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+  std::pair<tuple_ro_weak, bool> take_weak_optimized() {
+    const auto pair = get_impl()->take_optimized();
+    return std::make_pair(tuple_ro_weak(pair.first), pair.second);
+  }
+  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+  std::pair<tuple_ro_weak, bool> take_weak(bool dont_optimize = false) {
+    return dont_optimize ? take_weak_optimized()
+                         : std::make_pair(take_weak_asis(), false);
+  }
+
+  __pure_function tuple_ro_managed move_to_ro(bool dont_optimize = false) {
+    if (!dont_optimize)
+      optimize();
+    return tuple_ro_managed(std::move(self()));
+  }
+
+  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+  __pure_function tuple_ro_managed take_managed_clone_asis(
+      bool hollow_if_empty = false,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot()) const {
+    const auto weak = take_weak_asis();
+    if (hollow_if_empty && unlikely(weak.empty()))
+      return tuple_ro_managed();
+
+    return tuple_ro_managed(weak, allot_tag);
+  }
+  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+  std::pair<tuple_ro_managed, bool> take_managed_clone_optimized(
+      bool hollow_if_empty = false,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    const auto pair = take_weak_optimized();
+    if (hollow_if_empty && unlikely(pair.first.empty()))
+      return std::make_pair(tuple_ro_managed(), pair.second);
+
+    return std::make_pair(tuple_ro_managed(pair.first, allot_tag), pair.second);
+  }
+  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+  std::pair<tuple_ro_managed, bool> take_managed_clone(
+      bool dont_optimize = false, bool hollow_if_empty = false,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    return dont_optimize
+               ? take_managed_clone_optimized(hollow_if_empty, allot_tag)
+               : std::make_pair(
+                     take_managed_clone_asis(hollow_if_empty, allot_tag),
+                     false);
+  }
+
+  __pure_function static constexpr size_t
+  estimate_required_space(size_t loose_items_limit, std::size_t data_size_limit,
+                          const fptu::schema *schema,
+                          bool dont_account_preplaced = false) {
+    return details::tuple_rw::estimate_required_space(
+        loose_items_limit, data_size_limit, schema, dont_account_preplaced);
+  }
+
+  __pure_function static constexpr std::size_t
+  estimate_required_space(const tuple_ro_weak &ro, const std::size_t more_items,
+                          const std::size_t more_payload,
+                          const fptu::schema *schema) {
+    return details::tuple_rw::estimate_required_space(ro.get_impl(), more_items,
+                                                      more_payload, schema);
+  }
+
+  __pure_function static constexpr std::size_t estimate_required_space(
+      const tuple_ro_managed &ro, const std::size_t more_items,
+      const std::size_t more_payload, const fptu::schema *schema) {
+    return details::tuple_rw::estimate_required_space(ro.get_impl(), more_items,
+                                                      more_payload, schema);
+  }
+
+  template <typename TOKEN>
+  __pure_function inline details::tuple_rw::collection_rw<TOKEN>
+  collection(const TOKEN &ident) {
+    return get_impl()->collection(ident);
+  }
+
+  template <typename TOKEN>
+  __pure_function inline details::tuple_rw::accessor_rw<TOKEN>
+  operator[](const TOKEN &ident) {
+    return get_impl()->operator[](ident);
+  }
+};
+
+/* Управляемый R/W-кортеж с данными в управляемом буфере со счётчиком ссылок.
+ * Но БЕЗ функционала увеличения размера нижележащего буфера, поэтому кидается
+ * исключениями в случае нехватки места.
  *
- * Аргумент grain_ns задает желаемую точность в наносекундах, в зависимости от
- * которой будет использован CLOCK_REALTIME, либо CLOCK_REALTIME_COARSE.
+ * Следует отметить, что допускается только монопольное использование как
+ * экземпляра кортежа, так и буфера (несмотря на то, что буфер допускает
+ * совместное чтение данных).
+ * Реализация автоматической COW стратегии возможна на уровне управляемых
+ * буферов, но это НЕ представляется ни необходимым, ни рациональным:
+ *  - Требует проверки перед каждой операцией изменения кортежа;
+ *  - Предполагает вероятность инвалидации итераторов как перед, так и после
+ *    любой изменяющей кортеж операции. Проще говоря, не-const-итераторы
+ *    становятся одноразовыми, а контроль их верного использования стоит
+ *    дополнительных усилий.
+ *  - Монопольное использование и клонирование данных при конструировании
+ *    класса R/W-кортежа выглядит более эффективным и прозрачным.
  *
- * Положительные значения grain_ns, включая нуль, трактуются как наносекунды.
+ * Таким образом, R/W-кортеж требует эксклюзивного владения буфером и при
+ * необходимости клонирует его при получении.
  *
- * Отрицательные же означают количество младших бит, которые НЕ требуются в
- * результате и будут обнулены. Таким образом, отрицательные значения grain_ns
- * позволяют запросить текущее время, одновременно с "резервированием" младших
- * бит результата под специфические нужды.
- *
- * В конечном счете это позволяет существенно экономить на системных вызовах
- * и/или обращении к аппаратуре. В том числе не выполнять системный вызов,
- * а ограничиться использованием механизма vdso (прямое чтение из открытой
- * страницы данных ядра). В зависимости от запрошенной точности,
- * доступной аппаратуры и актуальном режиме работы ядра, экономия может
- * составить до сотен и даже тысяч раз.
- *
- * Следует понимать, что реальная точность зависит от актуальной конфигурации
- * аппаратуры и ядра ОС. Проще говоря, запрос текущего времени с grain_ns = 1
- * достаточно абсурден и вовсе не гарантирует такой точности результата. */
-FPTU_API fptu_time fptu_now(int grain_ns);
-FPTU_API fptu_time fptu_now_fine(void);
-FPTU_API fptu_time fptu_now_coarse(void);
+ * Требование монопольного использования буфера также определяет поведение при
+ * получении сериализованной читаемой формы кортежа в управляемом буфере
+ * в виде экземпляра tuple_ro_managed:
+ *  - без копирования данных посредством std::move, с разрушением исходного
+ *    R/W-представления. Технически это реализуется функцией move_to_ro(),
+ *    а также перемещающим конструктором tuple_ro_managed из tuple_rw_fixed
+ *  - с выделением нового буфера и копированием в него данных. Технически
+ *    это реализуется функцией take_managed_clone(), а также копирующий
+ *    конструктор tuple_ro_managed из tuple_rw_fixed. */
+class FPTU_API tuple_rw_fixed : public tuple_crtp_writer<tuple_rw_fixed> {
+  friend class tuple_crtp_writer<tuple_rw_fixed>;
+  friend class tuple_ro_managed;
 
-//----------------------------------------------------------------------------
+protected:
+  using impl = details::tuple_rw;
+  impl *pimpl_;
+  __cold __noreturn void throw_managed_buffer_required() const;
 
-#define FPTU_DENIL_FP32_BIN UINT32_C(0xFFFFffff)
-#ifndef _MSC_VER /* MSVC provides invalid nanf(), leave it undefined */
-#define FPTU_DENIL_FP32_MAS "8388607"
-#endif /* ! _MSC_VER */
+  inline tuple_rw_fixed(const tuple_ro_weak &src,
+                        const hippeus::buffer_tag &allot_tag);
+  inline tuple_rw_fixed(const tuple_ro_managed &src,
+                        const hippeus::buffer_tag &allot_tag);
+  inline tuple_rw_fixed(const tuple_rw_fixed &src,
+                        const hippeus::buffer_tag &allot_tag);
 
-#if defined(_MSC_VER) && /* obsolete and trouble full */ _MSC_VER < 1910
-static __inline float fptu_fp32_denil(void) {
-  union {
-    uint32_t u32;
-    float fp32;
-  } casting;
-  casting.u32 = FPTU_DENIL_FP32_BIN;
-  return casting.fp32;
-#else
-static __inline constexpr float fptu_fp32_denil(void) {
-#if defined(FPTU_DENIL_FP32_MAS) && (__GNUC_PREREQ(3, 3) || __has_builtin(nanf))
-  return -__builtin_nanf(FPTU_DENIL_FP32_MAS);
-#else
-  union {
-    uint32_t u32;
-    float fp32;
-  } const constexpr casting = {FPTU_DENIL_FP32_BIN};
-  return casting.fp32;
-#endif /* FPTU_DENIL_FP32_MAS */
-#endif /* !_MSVC */
+public:
+  constexpr tuple_rw_fixed() noexcept : pimpl_(nullptr) {}
+  void release() {
+    impl::deleter()(/* accepts nullptr */ pimpl_);
+    pimpl_ = nullptr;
+  }
+  ~tuple_rw_fixed() { release(); }
+
+  tuple_rw_fixed(std::size_t items_limit, std::size_t data_bytes,
+                 const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : pimpl_(impl::create_new(items_limit, data_bytes, schema, allot_tag)) {}
+
+  tuple_rw_fixed(const fptu::details::audit_holes_info &holes_info,
+                 const tuple_ro_weak &ro, std::size_t more_items,
+                 std::size_t more_payload, const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : pimpl_(impl::create_from_ro(holes_info, ro.get_impl(), more_items,
+                                    more_payload, schema, allot_tag)) {}
+
+  tuple_rw_fixed(const void *source_ptr, std::size_t source_bytes,
+                 std::size_t more_items, std::size_t more_payload,
+                 const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : pimpl_(impl::create_from_buffer(source_ptr, source_bytes, more_items,
+                                        more_payload, schema, allot_tag)) {}
+
+  tuple_rw_fixed(const tuple_rw_fixed &) = delete;
+  tuple_rw_fixed &operator=(const tuple_rw_fixed &) = delete;
+
+  void swap(tuple_rw_fixed &ditto) noexcept { std::swap(pimpl_, ditto.pimpl_); }
+
+  cxx14_constexpr tuple_rw_fixed(tuple_rw_fixed &&src) noexcept
+      : pimpl_(src.pimpl_) {
+    src.pimpl_ = nullptr;
+  }
+  tuple_rw_fixed &operator=(tuple_rw_fixed &&src) {
+    if (likely(pimpl_ != src.pimpl_)) {
+      release();
+      pimpl_ = src.pimpl_;
+      src.pimpl_ = nullptr;
+    }
+    return *this;
+  }
+
+  inline tuple_rw_fixed(tuple_ro_managed &&src);
+
+  static tuple_rw_fixed clone(const tuple_ro_weak &src,
+                              const hippeus::buffer_tag &allot_tag =
+                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                      false)) {
+    return tuple_rw_fixed(src, allot_tag);
+  }
+
+  static tuple_rw_fixed clone(const tuple_ro_managed &src,
+                              const hippeus::buffer_tag &allot_tag =
+                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                      false)) {
+    return tuple_rw_fixed(src, allot_tag);
+  }
+  static tuple_rw_fixed clone(const tuple_rw_fixed &src,
+                              const hippeus::buffer_tag &allot_tag =
+                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                      false)) {
+    return tuple_rw_fixed(src, allot_tag);
+  }
+
+  bool operator==(const tuple_ro_weak &ditto) const noexcept {
+    return get_impl()->operator==(ditto.get_impl());
+  }
+  bool operator!=(const tuple_ro_weak &ditto) const noexcept {
+    return !get_impl()->operator==(ditto.get_impl());
+  }
+  bool operator==(const tuple_ro_managed &ditto) const noexcept {
+    return get_impl()->operator==(ditto.get_impl());
+  }
+  bool operator!=(const tuple_ro_managed &ditto) const noexcept {
+    return !get_impl()->operator==(ditto.get_impl());
+  }
+  bool operator==(const tuple_rw_fixed &ditto) const noexcept {
+    return get_impl() == ditto.get_impl();
+  }
+  bool operator!=(const tuple_rw_fixed &ditto) const noexcept {
+    return get_impl() != ditto.get_impl();
+  }
+};
+
+/* Управляемый R/W-кортеж с данными в управляемом буфере со счётчиком ссылок,
+ * С функционалом автоматического увеличения/перевыделения нижележащего буфера
+ * при нехватки места.
+ *
+ * tuple_rw_managed перехватывает исключения выбрасываемые из-за нехватки места,
+ * а затем:
+ *  - выделяет новый буфер с увеличением размера (с использованием нескольких
+ *    эвристик и информации из перехваченного исключения).
+ *  - копирует данные в новый буфер.
+ *  - освобождает старый буфер и перезапускает операцию, для которой не хватило
+ *    места.
+ *
+ * Остальные свойства и поведение tuple_rw_managed аналогично tuple_rw_fixed. */
+class FPTU_API tuple_rw_managed : public tuple_rw_fixed {
+  using base = tuple_rw_fixed;
+  void expand_underlying_buffer(const insufficient_space &deficit);
+
+protected:
+  tuple_rw_managed(const tuple_ro_weak &src,
+                   const hippeus::buffer_tag &allot_tag)
+      : base(src, allot_tag) {}
+
+  tuple_rw_managed(const tuple_ro_managed &src,
+                   const hippeus::buffer_tag &allot_tag)
+      : base(src, allot_tag) {}
+
+  tuple_rw_managed(const tuple_rw_fixed &src,
+                   const hippeus::buffer_tag &allot_tag)
+      : base(src, allot_tag) {}
+
+public:
+  constexpr tuple_rw_managed() noexcept : base() {}
+  tuple_rw_managed(
+      std::size_t items_limit, std::size_t data_bytes,
+      const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : base(items_limit, data_bytes, schema, allot_tag) {}
+
+  tuple_rw_managed(
+      const fptu::details::audit_holes_info &holes_info,
+      const tuple_ro_weak &ro, std::size_t more_items, std::size_t more_payload,
+      const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : base(holes_info, ro, more_items, more_payload, schema, allot_tag) {}
+
+  tuple_rw_managed(
+      const void *source_ptr, std::size_t source_bytes, std::size_t more_items,
+      std::size_t more_payload, const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : base(source_ptr, source_bytes, more_items, more_payload, schema,
+             allot_tag) {}
+
+  static tuple_rw_managed clone(const tuple_ro_weak &src,
+                                const hippeus::buffer_tag &allot_tag =
+                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                        false)) {
+    return tuple_rw_managed(src, allot_tag);
+  }
+
+  tuple_rw_managed(const tuple_rw_managed &) = delete;
+  tuple_rw_managed &operator=(const tuple_rw_managed &) = delete;
+
+  tuple_rw_managed(tuple_ro_managed &&src) noexcept : base(std::move(src)) {}
+  tuple_rw_managed &operator=(tuple_ro_managed &&src) {
+    base::operator=(std::move(src));
+    return *this;
+  }
+
+  cxx14_constexpr tuple_rw_managed(tuple_rw_fixed &&src) noexcept
+      : base(std::move(src)) {}
+  tuple_rw_managed &operator=(tuple_rw_fixed &&src) {
+    base::operator=(std::move(src));
+    return *this;
+  }
+
+  cxx14_constexpr tuple_rw_managed(tuple_rw_managed &&src) noexcept
+      : base(std::move(src)) {}
+  tuple_rw_managed &operator=(tuple_rw_managed &&src) {
+    base::operator=(std::move(src));
+    return *this;
+  }
+
+  static tuple_rw_managed clone(const tuple_ro_managed &src,
+                                const hippeus::buffer_tag &allot_tag =
+                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                        false)) {
+    return tuple_rw_managed(src, allot_tag);
+  }
+  static tuple_rw_managed clone(const tuple_rw_fixed &src,
+                                const hippeus::buffer_tag &allot_tag =
+                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
+                                                        false)) {
+    return tuple_rw_managed(src, allot_tag);
+  }
+
+#define HERE_THUNK_MAKE(VALUE_TYPE, NAME)                                      \
+  FPTU_TEMPLATE_FOR_STATIC_TOKEN                                               \
+  inline void set_##NAME(const TOKEN &ident, const VALUE_TYPE value) {         \
+    while (true) {                                                             \
+      try {                                                                    \
+        return base::set_##NAME(ident, value);                                 \
+      } catch (const insufficient_space &deficit) {                            \
+        expand_underlying_buffer(deficit);                                     \
+        continue;                                                              \
+      }                                                                        \
+    }                                                                          \
+  }                                                                            \
+  void set_##NAME(const token &ident, const VALUE_TYPE value);                 \
+  details::tuple_rw::iterator_rw<token> insert_##NAME(const token &ident,      \
+                                                      const VALUE_TYPE value);
+
+  HERE_THUNK_MAKE(tuple_ro_weak &, nested)
+  HERE_THUNK_MAKE(string_view &, string)
+  HERE_THUNK_MAKE(string_view &, varbinary)
+  HERE_THUNK_MAKE(property_pair &, property)
+  HERE_THUNK_MAKE(bool, bool)
+  HERE_THUNK_MAKE(short, enum)
+  HERE_THUNK_MAKE(int8_t, i8)
+  HERE_THUNK_MAKE(uint8_t, u8)
+  HERE_THUNK_MAKE(int16_t, i16)
+  HERE_THUNK_MAKE(uint16_t, u16)
+  HERE_THUNK_MAKE(int32_t, i32)
+  HERE_THUNK_MAKE(uint32_t, u32)
+  HERE_THUNK_MAKE(int64_t, i64)
+  HERE_THUNK_MAKE(uint64_t, u64)
+  HERE_THUNK_MAKE(float, f32)
+  HERE_THUNK_MAKE(double, f64)
+  HERE_THUNK_MAKE(decimal64, decimal)
+  HERE_THUNK_MAKE(datetime_t, datetime)
+  HERE_THUNK_MAKE(uuid_t &, uuid)
+  HERE_THUNK_MAKE(int128_t &, int128)
+  HERE_THUNK_MAKE(uint128_t &, uint128)
+  HERE_THUNK_MAKE(binary96_t &, b96)
+  HERE_THUNK_MAKE(binary128_t &, b128)
+  HERE_THUNK_MAKE(binary160_t &, b160)
+  HERE_THUNK_MAKE(binary192_t &, b192)
+  HERE_THUNK_MAKE(binary224_t &, b224)
+  HERE_THUNK_MAKE(binary256_t &, b256)
+  HERE_THUNK_MAKE(binary320_t &, b320)
+  HERE_THUNK_MAKE(binary384_t &, b384)
+  HERE_THUNK_MAKE(binary512_t &, b512)
+  HERE_THUNK_MAKE(ip_address_t &, ip_address)
+  HERE_THUNK_MAKE(mac_address_t, mac_address)
+  HERE_THUNK_MAKE(ip_net_t &, ip_net)
+  HERE_THUNK_MAKE(int64_t, integer)
+  HERE_THUNK_MAKE(uint64_t, integer)
+  HERE_THUNK_MAKE(int64_t, unsigned)
+  HERE_THUNK_MAKE(uint64_t, unsigned)
+  HERE_THUNK_MAKE(double, float)
+#undef HERE_THUNK_MAKE
+
+  bool erase(const dynamic_iterator_rw &it);
+  std::size_t erase(const dynamic_iterator_rw &from,
+                    const dynamic_iterator_rw &to);
+  std::size_t erase(const dynamic_collection_rw &collection);
+  bool erase(const token &ident);
+
+  FPTU_TEMPLATE_FOR_STATIC_TOKEN
+  bool erase(const TOKEN &ident) {
+    while (true) {
+      try {
+        return base::erase(ident);
+      } catch (const insufficient_space &deficit) {
+        expand_underlying_buffer(deficit);
+        continue;
+      }
+    }
+  }
+};
+
+//------------------------------------------------------------------------------
+
+inline tuple_ro_managed::tuple_ro_managed(const tuple_ro_weak &src,
+                                          const hippeus::buffer_tag &allot_tag)
+    : tuple_ro_managed() {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+  (void)allot_tag;
 }
-#define FPTU_DENIL_FP32 fptu_fp32_denil()
-
-#define FPTU_DENIL_FP64_BIN UINT64_C(0xFFFFffffFFFFffff)
-#ifndef _MSC_VER /* MSVC provides invalid nan(), leave it undefined */
-#define FPTU_DENIL_FP64_MAS "4503599627370495"
-#endif /* ! _MSC_VER */
-
-#if defined(_MSC_VER) && /* obsolete and trouble full */ _MSC_VER < 1910
-static __inline double fptu_fp64_denil(void) {
-  union {
-    uint64_t u64;
-    double fp64;
-  } casting;
-  casting.u64 = FPTU_DENIL_FP64_BIN;
-  return casting.fp64;
-#else
-static __inline constexpr double fptu_fp64_denil(void) {
-#if defined(FPTU_DENIL_FP64_MAS) && (__GNUC_PREREQ(3, 3) || __has_builtin(nan))
-  return -__builtin_nan(FPTU_DENIL_FP64_MAS);
-#else
-  union {
-    uint64_t u64;
-    double fp64;
-  } const constexpr casting = {FPTU_DENIL_FP64_BIN};
-  return casting.fp64;
-#endif /* FPTU_DENIL_FP64_MAS */
-#endif /* !_MSVC */
+inline tuple_ro_managed::tuple_ro_managed(const tuple_ro_managed &src,
+                                          const hippeus::buffer_tag &allot_tag)
+    : tuple_ro_managed() {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+  (void)allot_tag;
 }
-#define FPTU_DENIL_FP64 fptu_fp64_denil()
-
-#define FPTU_DENIL_UINT16 UINT16_MAX
-#define FPTU_DENIL_SINT32 INT32_MIN
-#define FPTU_DENIL_UINT32 UINT32_MAX
-#define FPTU_DENIL_SINT64 INT64_MIN
-#define FPTU_DENIL_UINT64 UINT64_MAX
-
-#define FPTU_DENIL_TIME_BIN (0)
-#ifdef __GNUC__
-#define FPTU_DENIL_TIME                                                        \
-  ({                                                                           \
-    constexpr const fptu_time __fptu_time_denil = {FPTU_DENIL_TIME_BIN};       \
-    __fptu_time_denil;                                                         \
-  })
-#else
-static __inline fptu_time fptu_time_denil(void) {
-  constexpr const fptu_time denil = {FPTU_DENIL_TIME_BIN};
-  return denil;
-}
-#define FPTU_DENIL_TIME fptu_time_denil()
-#endif
-#define FPTU_DENIL_CSTR nullptr
-#define FPTU_DENIL_FIXBIN nullptr
-
-//----------------------------------------------------------------------------
-
-/* Возвращает минимальный размер буфера, который необходим для размещения
- * кортежа с указанным кол-вом полей и данных. */
-FPTU_API size_t fptu_space(size_t items, size_t data_bytes);
-
-/* Инициализирует в буфере кортеж, резервируя (отступая) место достаточное
- * для добавления до items_limit полей. Оставшееся место будет
- * использоваться для размещения данных.
- *
- * Возвращает указатель на созданный в буфере объект, либо nullptr, если
- * заданы неверные параметры или размер буфера недостаточен. */
-FPTU_API fptu_rw *fptu_init(void *buffer_space, size_t buffer_bytes,
-                            size_t items_limit);
-
-/* Выделяет через malloc() и инициализирует кортеж достаточный для
- * размещения заданного кол-ва полей и данных.
- *
- * Возвращает адрес объекта, который необходимо free() по окончании
- * использования. Либо nullptr при неверных параметрах или нехватке памяти. */
-FPTU_API fptu_rw *fptu_alloc(size_t items_limit, size_t data_bytes);
-
-/* Очищает ранее инициализированный кортеж.
- * В случае успеха возвращает ноль, иначе код ошибки. */
-FPTU_API fptu_error fptu_clear(fptu_rw *pt);
-
-/* Возвращает кол-во свободных слотов для добавления дескрипторов
- * полей в заголовок кортежа. */
-FPTU_API size_t fptu_space4items(const fptu_rw *pt);
-
-/* Возвращает остаток места доступного для размещения данных. */
-FPTU_API size_t fptu_space4data(const fptu_rw *pt);
-
-/* Возвращает объем мусора в байтах, который станет доступным для
- * добавления полей и данных после fptu_shrink(). */
-FPTU_API size_t fptu_junkspace(const fptu_rw *pt);
-
-/* Проверяет сериализованную форму кортежа на корректность.
- *
- * Возвращает nullptr если ошибок не обнаружено, либо указатель на константную
- * строку с краткой информацией о проблеме (нарушенное условие). */
-FPTU_API const char *fptu_check_ro(fptu_ro ro);
-
-/* Проверяет модифицируемую форму кортежа на корректность.
- *
- * Возвращает nullptr если ошибок не обнаружено, либо указатель на константную
- * строку с краткой информацией о проблеме (нарушенное условие). */
-FPTU_API const char *fptu_check_rw(const fptu_rw *pt);
-
-/* Возвращает сериализованную форму кортежа, которая находится внутри
- * модифицируемой. Дефрагментация не выполняется, поэтому сериализованная
- * форма может содержать лишний мусор, см fptu_junkspace().
- *
- * Возвращаемый результат валиден до изменения или разрушения исходной
- * модифицируемой формы кортежа. */
-FPTU_API fptu_ro fptu_take_noshrink(const fptu_rw *pt);
-
-/* Строит в указанном буфере модифицируемую форму кортежа из сериализованной.
- * Проверка корректности данных в сериализованной форме не производится.
- * Сериализованная форма не модифицируется и не требуется после возврата из
- * функции.
- * Аргумент more_items резервирует кол-во полей, которые можно будет добавить
- * в создаваемую модифицируемую форму.
- *
- * Возвращает указатель на созданный в буфере объект, либо nullptr, если
- * заданы неверные параметры или размер буфера недостаточен. */
-FPTU_API fptu_rw *fptu_fetch(fptu_ro ro, void *buffer_space,
-                             size_t buffer_bytes, unsigned more_items);
-
-/* Проверяет содержимое сериализованной формы на корректность. Одновременно
- * возвращает размер буфера, который потребуется для модифицируемой формы,
- * с учетом добавляемых more_items полей и more_payload данных.
- *
- * При неверных параметрах или некорректных данных возвращает 0 и записывает
- * в error информацию об ошибке (указатель на константную строку
- * с краткой информацией о проблеме). */
-FPTU_API size_t fptu_check_and_get_buffer_size(fptu_ro ro, unsigned more_items,
-                                               unsigned more_payload,
-                                               const char **error);
-FPTU_API size_t fptu_get_buffer_size(fptu_ro ro, unsigned more_items,
-                                     unsigned more_payload);
-
-/* Производит дефрагментацию модифицируемой формы кортежа.
- * Возвращает true если была произведена дефрагментация, что можно
- * использовать как признак инвалидации итераторов. */
-FPTU_API bool fptu_shrink(fptu_rw *pt);
-
-/* Производит дефрагментацию модифицируемой формы кортежа при наличии
- * пустот/мусора после удаления полей.
- * Возвращает true если была произведена дефрагментация, что можно
- * использовать как признак инвалидации итераторов. */
-static __inline bool fptu_cond_shrink(fptu_rw *pt) {
-  return pt->junk != 0 && fptu_shrink(pt);
-}
-
-/* Возвращает сериализованную форму кортежа, которая находится внутри
- * модифицируемой. При необходимости автоматически производится
- * дефрагментация.
- * Возвращаемый результат валиден до изменения или разрушения исходной
- * модифицируемой формы кортежа. */
-static __inline fptu_ro fptu_take(fptu_rw *pt) {
-  fptu_cond_shrink(pt);
-  return fptu_take_noshrink(pt);
-}
-
-/* Если в аргументе type_or_filter взведен бит fptu_ffilter,
- * то type_or_filter интерпретируется как битовая маска типов.
- * Соответственно, будут удалены все поля с заданным column и попадающие
- * в маску типов. Например, если type_or_filter равен fptu_any_fp,
- * то удаляются все fptu_fp32 и fptu_fp64.
- *
- * Из C++ в namespace fptu доступно несколько перегруженных вариантов.
- *
- * Возвращается кол-во удаленных полей (больше либо равно нулю),
- * либо отрицательный код ошибки. */
-FPTU_API int fptu_erase(fptu_rw *pt, unsigned column,
-                        fptu_type_or_filter type_or_filter);
-FPTU_API void fptu_erase_field(fptu_rw *pt, fptu_field *pf);
-
-FPTU_API bool fptu_is_empty_ro(fptu_ro ro);
-
-static __inline bool fptu_is_empty_rw(const fptu_rw *pt) {
-  return pt->pivot - pt->head == pt->junk;
-}
-
-//----------------------------------------------------------------------------
-
-FPTU_API extern const char fptu_empty_cstr[];
-FPTU_API extern const uint8_t fptu_internal_map_t2b[];
-FPTU_API extern const uint8_t fptu_internal_map_t2u[];
-
-/* Вставка или обновление существующего поля.
- *
- * В случае коллекций, когда в кортеже более одного поля с соответствующим
- * типом и номером), будет обновлен первый найденный экземпляр. Но так как
- * в общем случае физический порядок полей не определен, следует считать что
- * функция обновит произвольный экземпляр поля. Поэтому для манипулирования
- * коллекциями следует использовать fptu_erase() и/или fput_field_set_xyz().
- */
-FPTU_API fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column);
-FPTU_API fptu_error fptu_upsert_uint16(fptu_rw *pt, unsigned column,
-                                       uint_fast16_t value);
-static __inline fptu_error fptu_upsert_bool(fptu_rw *pt, unsigned column,
-                                            bool value) {
-  return fptu_upsert_uint16(pt, column, value);
-}
-
-FPTU_API fptu_error fptu_upsert_int32(fptu_rw *pt, unsigned column,
-                                      int_fast32_t value);
-FPTU_API fptu_error fptu_upsert_uint32(fptu_rw *pt, unsigned column,
-                                       uint_fast32_t value);
-FPTU_API fptu_error fptu_upsert_int64(fptu_rw *pt, unsigned column,
-                                      int_fast64_t value);
-FPTU_API fptu_error fptu_upsert_uint64(fptu_rw *pt, unsigned column,
-                                       uint_fast64_t value);
-FPTU_API fptu_error fptu_upsert_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value);
-FPTU_API fptu_error fptu_upsert_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value);
-FPTU_API fptu_error fptu_upsert_datetime(fptu_rw *pt, unsigned column,
-                                         const fptu_time);
-
-FPTU_API fptu_error fptu_upsert_96(fptu_rw *pt, unsigned column,
-                                   const void *data);
-FPTU_API fptu_error fptu_upsert_128(fptu_rw *pt, unsigned column,
-                                    const void *data);
-FPTU_API fptu_error fptu_upsert_160(fptu_rw *pt, unsigned column,
-                                    const void *data);
-FPTU_API fptu_error fptu_upsert_256(fptu_rw *pt, unsigned column,
-                                    const void *data);
-
-FPTU_API fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column,
-                                       const char *text, size_t length);
-static __inline fptu_error fptu_upsert_cstr(fptu_rw *pt, unsigned column,
-                                            const char *value) {
-  if (value == nullptr)
-    value = fptu_empty_cstr;
-
-  return fptu_upsert_string(pt, column, value, strlen(value));
-}
-
-FPTU_API fptu_error fptu_upsert_opaque(fptu_rw *pt, unsigned column,
-                                       const void *value, size_t bytes);
-FPTU_API fptu_error fptu_upsert_opaque_iov(fptu_rw *pt, unsigned column,
-                                           const struct iovec value);
-FPTU_API fptu_error fptu_upsert_nested(fptu_rw *pt, unsigned column,
-                                       fptu_ro ro);
-
-// TODO
-// FPTU_API fptu_error fptu_upsert_array_uint16(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint16_t* array_data); FPTU_API fptu_error
-// fptu_upsert_array_int32(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const int32_t* array_data);
-// FPTU_API fptu_error fptu_upsert_array_uint32(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint32_t* array_data); FPTU_API fptu_error
-// fptu_upsert_array_int64(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const int64_t* array_data);
-// FPTU_API fptu_error fptu_upsert_array_uint64(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint64_t* array_data); FPTU_API fptu_error
-// fptu_upsert_array_cstr(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const char* array_data[]);
-// FPTU_API fptu_error fptu_upsert_array_nested(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const char* array_data[]);
-
-//----------------------------------------------------------------------------
-
-// Добавление ещё одного поля, для поддержки коллекций.
-FPTU_API fptu_error fptu_insert_uint16(fptu_rw *pt, unsigned column,
-                                       uint_fast16_t value);
-static __inline fptu_error fptu_insert_bool(fptu_rw *pt, unsigned column,
-                                            bool value) {
-  return fptu_insert_uint16(pt, column, value);
-}
-FPTU_API fptu_error fptu_insert_int32(fptu_rw *pt, unsigned column,
-                                      int_fast32_t value);
-FPTU_API fptu_error fptu_insert_uint32(fptu_rw *pt, unsigned column,
-                                       uint_fast32_t value);
-FPTU_API fptu_error fptu_insert_int64(fptu_rw *pt, unsigned column,
-                                      int_fast64_t value);
-FPTU_API fptu_error fptu_insert_uint64(fptu_rw *pt, unsigned column,
-                                       uint_fast64_t value);
-FPTU_API fptu_error fptu_insert_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value);
-FPTU_API fptu_error fptu_insert_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value);
-FPTU_API fptu_error fptu_insert_datetime(fptu_rw *pt, unsigned column,
-                                         const fptu_time);
-
-FPTU_API fptu_error fptu_insert_96(fptu_rw *pt, unsigned column,
-                                   const void *data);
-FPTU_API fptu_error fptu_insert_128(fptu_rw *pt, unsigned column,
-                                    const void *data);
-FPTU_API fptu_error fptu_insert_160(fptu_rw *pt, unsigned column,
-                                    const void *data);
-FPTU_API fptu_error fptu_insert_256(fptu_rw *pt, unsigned column,
-                                    const void *data);
-
-FPTU_API fptu_error fptu_insert_string(fptu_rw *pt, unsigned column,
-                                       const char *text, size_t length);
-static __inline fptu_error fptu_insert_cstr(fptu_rw *pt, unsigned column,
-                                            const char *value) {
-  if (value == nullptr)
-    value = fptu_empty_cstr;
-
-  return fptu_insert_string(pt, column, value, strlen(value));
+inline tuple_ro_managed::tuple_ro_managed(const tuple_rw_fixed &src,
+                                          const hippeus::buffer_tag &allot_tag)
+    : tuple_ro_managed() {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+  (void)allot_tag;
 }
 
-FPTU_API fptu_error fptu_insert_opaque(fptu_rw *pt, unsigned column,
-                                       const void *value, size_t bytes);
-FPTU_API fptu_error fptu_insert_opaque_iov(fptu_rw *pt, unsigned column,
-                                           const struct iovec value);
-FPTU_API fptu_error fptu_insert_nested(fptu_rw *pt, unsigned column,
-                                       fptu_ro ro);
-
-// TODO
-// FPTU_API fptu_error fptu_insert_array_uint16(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint16_t* array_data); FPTU_API fptu_error
-// fptu_insert_array_int32(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const int32_t* array_data);
-// FPTU_API fptu_error fptu_insert_array_uint32(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint32_t* array_data); FPTU_API fptu_error
-// fptu_insert_array_int64(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const int64_t* array_data);
-// FPTU_API fptu_error fptu_insert_array_uint64(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint64_t* array_data); FPTU_API fptu_error
-// fptu_insert_array_str(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const char* array_data[]);
-
-//----------------------------------------------------------------------------
-
-// Обновление существующего поля (первого найденного для коллекций).
-FPTU_API fptu_error fptu_update_uint16(fptu_rw *pt, unsigned column,
-                                       uint_fast16_t value);
-static __inline fptu_error fptu_update_bool(fptu_rw *pt, unsigned column,
-                                            bool value) {
-  return fptu_update_uint16(pt, column, value);
-}
-FPTU_API fptu_error fptu_update_int32(fptu_rw *pt, unsigned column,
-                                      int_fast32_t value);
-FPTU_API fptu_error fptu_update_uint32(fptu_rw *pt, unsigned column,
-                                       uint_fast32_t value);
-FPTU_API fptu_error fptu_update_int64(fptu_rw *pt, unsigned column,
-                                      int_fast64_t value);
-FPTU_API fptu_error fptu_update_uint64(fptu_rw *pt, unsigned column,
-                                       uint_fast64_t value);
-FPTU_API fptu_error fptu_update_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value);
-FPTU_API fptu_error fptu_update_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value);
-FPTU_API fptu_error fptu_update_datetime(fptu_rw *pt, unsigned column,
-                                         const fptu_time);
-
-FPTU_API fptu_error fptu_update_96(fptu_rw *pt, unsigned column,
-                                   const void *data);
-FPTU_API fptu_error fptu_update_128(fptu_rw *pt, unsigned column,
-                                    const void *data);
-FPTU_API fptu_error fptu_update_160(fptu_rw *pt, unsigned column,
-                                    const void *data);
-FPTU_API fptu_error fptu_update_256(fptu_rw *pt, unsigned column,
-                                    const void *data);
-
-FPTU_API fptu_error fptu_update_string(fptu_rw *pt, unsigned column,
-                                       const char *text, size_t length);
-static __inline fptu_error fptu_update_cstr(fptu_rw *pt, unsigned column,
-                                            const char *value) {
-  if (value == nullptr)
-    value = fptu_empty_cstr;
-
-  return fptu_update_string(pt, column, value, strlen(value));
+inline tuple_ro_managed::tuple_ro_managed(tuple_rw_fixed &&src)
+    : tuple_ro_managed() {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
 }
 
-FPTU_API fptu_error fptu_update_opaque(fptu_rw *pt, unsigned column,
-                                       const void *value, size_t bytes);
-FPTU_API fptu_error fptu_update_opaque_iov(fptu_rw *pt, unsigned column,
-                                           const struct iovec value);
-FPTU_API fptu_error fptu_update_nested(fptu_rw *pt, unsigned column,
-                                       fptu_ro ro);
+//------------------------------------------------------------------------------
 
-// TODO
-// FPTU_API fptu_error fptu_update_array_uint16(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint16_t* array_data); FPTU_API fptu_error
-// fptu_update_array_int32(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const int32_t* array_data);
-// FPTU_API fptu_error fptu_update_array_uint32(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint32_t* array_data); FPTU_API fptu_error
-// fptu_update_array_int64(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const int64_t* array_data);
-// FPTU_API fptu_error fptu_update_array_uint64(fptu_rw* pt, uint_fast16_t ct,
-// size_t array_length, const uint64_t* array_data); FPTU_API fptu_error
-// fptu_update_array_cstr(fptu_rw* pt, uint_fast16_t ct, size_t array_length,
-// const char* array_data[]);
-
-//----------------------------------------------------------------------------
-
-/* Возвращает первое поле попадающее под критерий выбора, либо nullptr.
- * Семантика type_or_filter указана в описании fptu_erase().
- *
- * Из C++ в namespace fptu доступно несколько перегруженных вариантов. */
-FPTU_API const fptu_field *fptu_lookup_ro(fptu_ro ro, unsigned column,
-                                          fptu_type_or_filter type_or_filter);
-FPTU_API fptu_field *fptu_lookup_rw(fptu_rw *pt, unsigned column,
-                                    fptu_type_or_filter type_or_filter);
-
-/* Возвращает "итераторы" по кортежу, в виде указателей.
- * Гарантируется что begin меньше, либо равно end.
- * В возвращаемом диапазоне могут буть удаленные поля,
- * для которых fptu_field_column() возвращает отрицательное значение. */
-FPTU_API const fptu_field *fptu_begin_ro(fptu_ro ro);
-FPTU_API const fptu_field *fptu_end_ro(fptu_ro ro);
-FPTU_API const fptu_field *fptu_begin_rw(const fptu_rw *pt);
-FPTU_API const fptu_field *fptu_end_rw(const fptu_rw *pt);
-
-/* Итерация полей кортежа с заданным условие отбора, при этом
- * удаленные поля пропускаются.
- * Семантика type_or_filter указана в описании fptu_erase().
- *
- * Из C++ в namespace fptu доступно несколько перегруженных вариантов. */
-FPTU_API const fptu_field *fptu_first(const fptu_field *begin,
-                                      const fptu_field *end, unsigned column,
-                                      fptu_type_or_filter type_or_filter);
-FPTU_API const fptu_field *fptu_next(const fptu_field *from,
-                                     const fptu_field *end, unsigned column,
-                                     fptu_type_or_filter type_or_filter);
-
-/* Итерация полей кортежа с заданным внешним фильтром, при этом
- * удаленные поля пропускаются. */
-typedef bool fptu_field_filter(const fptu_field *, void *context, void *param);
-FPTU_API const fptu_field *fptu_first_ex(const fptu_field *begin,
-                                         const fptu_field *end,
-                                         fptu_field_filter filter,
-                                         void *context, void *param);
-FPTU_API const fptu_field *fptu_next_ex(const fptu_field *begin,
-                                        const fptu_field *end,
-                                        fptu_field_filter filter, void *context,
-                                        void *param);
-/* Подсчет количества полей по заданному номеру колонки и типу,
- * либо маски типов.
- * Семантика type_or_filter указана в описании fptu_erase().
- *
- * Из C++ в namespace fptu доступно несколько перегруженных вариантов. */
-FPTU_API size_t fptu_field_count_ro(fptu_ro ro, unsigned column,
-                                    fptu_type_or_filter type_or_filter);
-
-FPTU_API size_t fptu_field_count_rw(const fptu_rw *rw, unsigned column,
-                                    fptu_type_or_filter type_or_filter);
-
-/* Подсчет количества полей задаваемой функцией-фильтром. */
-FPTU_API size_t fptu_field_count_rw_ex(const fptu_rw *rw,
-                                       fptu_field_filter filter, void *context,
-                                       void *param);
-FPTU_API size_t fptu_field_count_ro_ex(fptu_ro ro, fptu_field_filter filter,
-                                       void *context, void *param);
-
-FPTU_API fptu_type fptu_field_type(const fptu_field *pf);
-FPTU_API int fptu_field_column(const fptu_field *pf);
-FPTU_API struct iovec fptu_field_as_iovec(const fptu_field *pf);
-
-FPTU_API uint_fast16_t fptu_field_uint16(const fptu_field *pf);
-static __inline bool fptu_field_bool(const fptu_field *pf) {
-  const uint_fast16_t value = fptu_field_uint16(pf);
-  return value != 0 && value != FPTU_DENIL_UINT16;
+inline bool tuple_ro_weak::operator==(const tuple_ro_managed &ditto) const
+    noexcept {
+  return ditto == *this;
+}
+inline bool tuple_ro_weak::operator!=(const tuple_ro_managed &ditto) const
+    noexcept {
+  return ditto != *this;
+}
+inline bool tuple_ro_weak::operator==(const tuple_rw_fixed &ditto) const
+    noexcept {
+  return ditto.operator==(*this);
+}
+inline bool tuple_ro_weak::operator!=(const tuple_rw_fixed &ditto) const
+    noexcept {
+  return ditto.operator!=(*this);
 }
 
-FPTU_API int_fast32_t fptu_field_int32(const fptu_field *pf);
-FPTU_API uint_fast32_t fptu_field_uint32(const fptu_field *pf);
-FPTU_API int_fast64_t fptu_field_int64(const fptu_field *pf);
-FPTU_API uint_fast64_t fptu_field_uint64(const fptu_field *pf);
-FPTU_API double_t fptu_field_fp64(const fptu_field *pf);
-FPTU_API float_t fptu_field_fp32(const fptu_field *pf);
-FPTU_API fptu_time fptu_field_datetime(const fptu_field *pf);
-FPTU_API const uint8_t *fptu_field_96(const fptu_field *pf);
-FPTU_API const uint8_t *fptu_field_128(const fptu_field *pf);
-FPTU_API const uint8_t *fptu_field_160(const fptu_field *pf);
-FPTU_API const uint8_t *fptu_field_256(const fptu_field *pf);
-FPTU_API const char *fptu_field_cstr(const fptu_field *pf);
-FPTU_API struct iovec fptu_field_opaque(const fptu_field *pf);
-FPTU_API fptu_ro fptu_field_nested(const fptu_field *pf);
+//------------------------------------------------------------------------------
 
-FPTU_API uint_fast16_t fptu_get_uint16(fptu_ro ro, unsigned column, int *error);
-static __inline bool fptu_get_bool(fptu_ro ro, unsigned column, int *error) {
-  const uint_fast16_t value = fptu_get_uint16(ro, column, error);
-  return value != 0 && value != FPTU_DENIL_UINT16;
+inline bool tuple_ro_managed::operator==(const tuple_rw_fixed &ditto) const
+    noexcept {
+  return ditto == *this;
+}
+inline bool tuple_ro_managed::operator!=(const tuple_rw_fixed &ditto) const
+    noexcept {
+  return ditto != *this;
 }
 
-FPTU_API int_fast32_t fptu_get_int32(fptu_ro ro, unsigned column, int *error);
-FPTU_API uint_fast32_t fptu_get_uint32(fptu_ro ro, unsigned column, int *error);
-FPTU_API int_fast64_t fptu_get_int64(fptu_ro ro, unsigned column, int *error);
-FPTU_API uint_fast64_t fptu_get_uint64(fptu_ro ro, unsigned column, int *error);
-FPTU_API double_t fptu_get_fp64(fptu_ro ro, unsigned column, int *error);
-FPTU_API float_t fptu_get_fp32(fptu_ro ro, unsigned column, int *error);
-FPTU_API fptu_time fptu_get_datetime(fptu_ro ro, unsigned column, int *error);
+//------------------------------------------------------------------------------
 
-FPTU_API int_fast64_t fptu_get_sint(fptu_ro ro, unsigned column, int *error);
-FPTU_API uint_fast64_t fptu_get_uint(fptu_ro ro, unsigned column, int *error);
-FPTU_API double_t fptu_get_fp(fptu_ro ro, unsigned column, int *error);
+inline tuple_rw_fixed::tuple_rw_fixed(const tuple_ro_weak &src,
+                                      const hippeus::buffer_tag &allot_tag)
+    : tuple_rw_fixed() {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+  (void)allot_tag;
+}
+inline tuple_rw_fixed::tuple_rw_fixed(const tuple_ro_managed &src,
+                                      const hippeus::buffer_tag &allot_tag) {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+  (void)allot_tag;
+}
+inline tuple_rw_fixed::tuple_rw_fixed(const tuple_rw_fixed &src,
+                                      const hippeus::buffer_tag &allot_tag) {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+  (void)allot_tag;
+}
+inline tuple_rw_fixed::tuple_rw_fixed(tuple_ro_managed &&src)
+    : tuple_rw_fixed() {
+  FPTU_NOT_IMPLEMENTED();
+  (void)src;
+}
 
-FPTU_API const uint8_t *fptu_get_96(fptu_ro ro, unsigned column, int *error);
-FPTU_API const uint8_t *fptu_get_128(fptu_ro ro, unsigned column, int *error);
-FPTU_API const uint8_t *fptu_get_160(fptu_ro ro, unsigned column, int *error);
-FPTU_API const uint8_t *fptu_get_256(fptu_ro ro, unsigned column, int *error);
-FPTU_API const char *fptu_get_cstr(fptu_ro ro, unsigned column, int *error);
-FPTU_API struct iovec fptu_get_opaque(fptu_ro ro, unsigned column, int *error);
-FPTU_API fptu_ro fptu_get_nested(fptu_ro ro, unsigned column, int *error);
+} // namespace fptu
 
-// TODO: fptu_field_array(), fptu_get_array()
-// typedef struct FPTU_API fptu_array {
-//  size_t size;
-//  union {
-//    uint16_t uint16[2];
-//    int32_t int32[1];
-//    uint32_t uint32[1];
-//    int64_t int64[1];
-//    uint64_t uint64[1];
-//    double fp64[1];
-//    float fp32[1];
-//    const char *cstr[1];
-//    fptu_ro nested[1];
-//    struct iovec opaque[1];
-//  };
-//} fptu_array;
-
-//----------------------------------------------------------------------------
-/* Определения и примитивы для сравнения. */
-
-typedef enum fptu_lge {
-  fptu_ic = 1,                           // incomparable
-  fptu_eq = 2,                           // left == right
-  fptu_lt = 4,                           // left < right
-  fptu_gt = 8,                           // left > right
-  fptu_ne = fptu_lt | fptu_gt | fptu_ic, // left != right
-  fptu_le = fptu_lt | fptu_eq,           // left <= right
-  fptu_ge = fptu_gt | fptu_eq            // left >= right
-} fptu_lge;
-
-FPTU_API fptu_lge fptu_cmp_96(fptu_ro ro, unsigned column,
-                              const uint8_t *value);
-FPTU_API fptu_lge fptu_cmp_128(fptu_ro ro, unsigned column,
-                               const uint8_t *value);
-FPTU_API fptu_lge fptu_cmp_160(fptu_ro ro, unsigned column,
-                               const uint8_t *value);
-FPTU_API fptu_lge fptu_cmp_256(fptu_ro ro, unsigned column,
-                               const uint8_t *value);
-FPTU_API fptu_lge fptu_cmp_opaque(fptu_ro ro, unsigned column,
-                                  const void *value, size_t bytes);
-FPTU_API fptu_lge fptu_cmp_opaque_iov(fptu_ro ro, unsigned column,
-                                      const struct iovec value);
-
-FPTU_API fptu_lge fptu_cmp_binary(const void *left_data, size_t left_len,
-                                  const void *right_data, size_t right_len);
-
-FPTU_API fptu_lge fptu_cmp_fields(const fptu_field *left,
-                                  const fptu_field *right);
-FPTU_API fptu_lge fptu_cmp_tuples(fptu_ro left, fptu_ro right);
-
-FPTU_API const char *fptu_type_name(const fptu_type);
-
-//----------------------------------------------------------------------------
-/* Некоторые внутренние служебные функции.
- * Доступны для специальных случаев, в том числе для тестов. */
-
-FPTU_API bool fptu_is_ordered(const fptu_field *begin, const fptu_field *end);
-FPTU_API uint16_t *fptu_tags(uint16_t *const first, const fptu_field *begin,
-                             const fptu_field *end);
-FPTU_API bool fptu_is_under_valgrind(void);
+//------------------------------------------------------------------------------
+/* Информация о версии и сборке */
 
 typedef struct fptu_version_info {
   uint8_t major;
@@ -1211,25 +1253,8 @@ extern FPTU_API const fptu_version_info fptu_version;
 #endif /* HAVE_FPTU_VERSIONINFO */
 extern FPTU_API const fptu_build_info fptu_build;
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /* Сервисные функции (будет пополнятся). */
-
-static __inline const void *fptu_inner_begin(fptu_field *pf) {
-  assert((fptu_field_type(pf) & fptu_farray) != 0);
-  const fptu_payload *payload = fptu_get_payload(pf);
-  return payload->other.data;
-}
-
-static __inline const void *fptu_inner_end(fptu_field *pf) {
-  assert((fptu_field_type(pf) & fptu_farray) != 0);
-  const fptu_payload *payload = fptu_get_payload(pf);
-  return payload->other.data - 1 + payload->other.varlen.brutto;
-}
-
-static __inline size_t fptu_array_length(fptu_field *pf) {
-  assert((fptu_field_type(pf) & fptu_farray) != 0);
-  return fptu_get_payload(pf)->other.varlen.array_length;
-}
 
 /* Функция обратного вызова, используемая для трансляции идентификаторов/тегов
  * полей в символические имена. Функция будет вызываться многократно, при
@@ -1280,7 +1305,7 @@ enum fptu_json_options {
   fptu_json_sort_Tags = 8 /* TODO: Сортировать по тегам, иначе выводить в
                              порядке следования полей */
 };
-FPT_ENUM_FLAG_OPERATORS(fptu_json_options)
+DEFINE_ENUM_FLAG_OPERATORS(fptu_json_options)
 
 /* Функция обратного вызова для выталкивания сериализованных данных.
  * В случае успеха функция должна возвратить 0 (FPTU_SUCCESS), иначе код
@@ -1291,261 +1316,11 @@ FPT_ENUM_FLAG_OPERATORS(fptu_json_options)
 typedef int (*fptu_emit_func)(void *emiter_ctx, const char *text,
                               size_t length);
 
-/* Сериализует JSON-представление кортежа в "толкающей" (aka push) модели,
- * выталкивая генерируемый текст в предоставленную функцию.
- * Для трансляции идентификаторов/тегов полей и enum-значений (fptu_uint16)
- * в символические имена используются передаваемые в параметрах функции.
- *
- * Параметры output и output_ctx используются для вывода результирующих
- * текстовых данных, и поэтому обязательны. При вызове output в качестве
- * первого параметра будет передан output_ctx.
- *
- * Параметры indent и depth задают отступ и начальный уровень вложенности.
- * Оба этих параметра опциональные, т.е. могут быть нулевыми.
- *
- * Параметры schema_ctx, tag2name и value2enum используются для трансляции
- * идентификаторов/тегов и значений в символические имена, т.е. выполняют
- * роль примитивного справочника схемы. Все три параметра опциональны и могу
- * быть нулевыми, но при этом вместо символических имен для сериализации будут
- * использованы числовые идентификаторы.
- *
- * В случае успеха возвращает ноль, иначе код ошибки. */
-FPTU_API fptu_error fptu_tuple2json(fptu_ro tuple, fptu_emit_func output,
-                                    void *output_ctx, const char *indent,
-                                    unsigned depth, const void *schema_ctx,
-                                    fptu_tag2name_func tag2name,
-                                    fptu_value2enum_func value2enum,
-                                    const fptu_json_options options);
-
-/* Сериализует JSON-представление кортежа в FILE.
- *
- * Назначение параметров indent, depth, schema_ctx, tag2name и value2enum
- * см в описании функции fptu_tuple2json().
- *
- * В случае успеха возвращает ноль, иначе код ошибки, в том числе
- * значение errno в случае ошибки записи в FILE */
-FPTU_API fptu_error fptu_tuple2json_FILE(fptu_ro tuple, FILE *file,
-                                         const char *indent, unsigned depth,
-                                         const void *schema_ctx,
-                                         fptu_tag2name_func tag2name,
-                                         fptu_value2enum_func value2enum,
-                                         const fptu_json_options options);
 #ifdef __cplusplus
-} /* extern "C" */
-
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /* Сервисные функции и классы для C++ (будет пополнятся). */
 
 namespace fptu {
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4275) /* non dll-interface class 'FOO' used as base  \
-                                   for dll-interface class */
-#endif
-class FPTU_API bad_tuple : public std::invalid_argument {
-public:
-  bad_tuple(const fptu_ro &);
-  bad_tuple(const fptu_rw *);
-};
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-FPTU_API void throw_error(fptu_error err);
-
-typedef std::unique_ptr<fptu_rw> tuple_ptr;
-
-/* Минималистичное подобие std::string_view из C++17, но с отличиями:
- *  - более быстрое СРАВНЕНИЕ С ДРУГОЙ СЕМАНТИКОЙ, сначала учитывается длина!
- *  - отсутствуют сервисные методы: remove_prefix, remove_suffix, substr, copy,
- *    starts_with, ends_with, find, rfind, find_first_of, find_last_of,
- *    find_first_not_of, find_last_not_of, operator<<(std::ostream). */
-class string_view {
-protected:
-  const char *str;
-  intptr_t len /* LY: здесь намеренно используется intptr_t:
-                   - со знаком для отличия нулевой длины от отсутствия
-                     значения (nullptr), используя len == -1 как DENIL.
-                   - не ptrdiff_t чтобы упростить оператор сравнения,
-                     из которого не стоит возвращать ptrdiff_t. */
-      ;
-
-public:
-  constexpr string_view() : str(nullptr), len(-1) {}
-  constexpr string_view(const string_view &v) = default;
-  cxx14_constexpr string_view &
-  operator=(const string_view &v) noexcept = default;
-
-  constexpr string_view(const char *str, size_t count)
-      : str(str), len(str ? static_cast<intptr_t>(count) : -1) {
-#if __cplusplus >= 201402L
-    assert(len >= 0 || (len == -1 && !str));
-#endif
-  }
-
-  constexpr string_view(const char *begin, const char *end)
-      : str(begin), len(begin ? static_cast<intptr_t>(end - begin) : -1) {
-#if __cplusplus >= 201402L
-    assert(end >= begin);
-    assert(len >= 0 || (len == -1 && !begin));
-#endif
-  }
-
-  constexpr string_view(const char *ptr)
-      : str(ptr), len(ptr ? static_cast<intptr_t>(strlen(ptr)) : -1) {
-#if __cplusplus >= 201402L
-    assert(len >= 0 || (len == -1 && !str));
-#endif
-  }
-  /* Конструктор из std::string ОБЯЗАН быть explicit для предотвращения
-   * проблемы reference to temporary object из-за неявного создания string_view
-   * из переданной по значению временного экземпляра std::string. */
-  explicit string_view(const std::string &s)
-      : str(s.data()), len(static_cast<intptr_t>(s.size())) {
-    assert(s.size() < npos);
-  }
-  operator std::string() const { return std::string(data(), length()); }
-
-#if HAVE_cxx17_std_string_view
-  /* Конструктор из std::string_view:
-   *  - Может быть НЕ-explicit, так как у std::string_view нет неявного
-   *    конструктора из std::string. Поэтому не возникает проблемы
-   *    reference to temporary object из-за неявного создания string_view
-   *    из переданной по значению временного экземпляра std::string.
-   *  - НЕ ДОЛЖЕН быть explicit для бесшовной интеграции с std::string_view. */
-  constexpr string_view(const std::string_view &v) noexcept
-      : str(v.data()), len(static_cast<intptr_t>(v.size())) {
-    assert(v.size() < npos);
-  }
-  constexpr operator std::string_view() const noexcept {
-    return std::string_view(data(), length());
-  }
-  constexpr string_view &operator=(std::string_view &v) noexcept {
-    assert(v.size() < npos);
-    this->str = v.data();
-    this->len = static_cast<intptr_t>(v.size());
-    return *this;
-  }
-  constexpr void swap(std::string_view &v) noexcept {
-    const auto temp = *this;
-    *this = v;
-    v = temp;
-  }
-#endif /* HAVE_cxx17_std_string_view */
-
-  cxx14_constexpr void swap(string_view &v) noexcept {
-    const auto temp = *this;
-    *this = v;
-    v = temp;
-  }
-
-  typedef std::size_t size_type;
-  typedef std::ptrdiff_t difference_type;
-  typedef char value_type;
-  typedef const char *const_pointer;
-  typedef const char *pointer;
-  typedef const char &const_reference;
-  typedef const_reference reference;
-  constexpr const_reference operator[](size_type pos) const { return str[pos]; }
-  constexpr const_reference front() const {
-#if __cplusplus >= 201402L
-    assert(len > 0);
-#endif
-    return str[0];
-  }
-  constexpr const_reference back() const {
-#if __cplusplus >= 201402L
-    assert(len > 0);
-#endif
-    return str[len - 1];
-  }
-  cxx14_constexpr const_reference at(size_type pos) const;
-  static constexpr size_type npos = size_type(INT_MAX);
-
-  typedef const char *const_iterator;
-  constexpr const_iterator cbegin() const { return str; }
-  constexpr const_iterator cend() const { return str + length(); }
-  typedef const_iterator iterator;
-  constexpr iterator begin() const { return cbegin(); }
-  constexpr iterator end() const { return cend(); }
-
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-  const_reverse_iterator crbegin() const {
-    return const_reverse_iterator(cend());
-  }
-  const_reverse_iterator crend() const {
-    return const_reverse_iterator(cbegin());
-  }
-  typedef const_reverse_iterator reverse_iterator;
-  reverse_iterator rbegin() const { return crbegin(); }
-  reverse_iterator rend() const { return crend(); }
-
-  constexpr const char *data() const { return str; }
-  constexpr size_t length() const { return (len >= 0) ? (size_t)len : 0u; }
-  constexpr bool empty() const { return len <= 0; }
-  constexpr bool nil() const { return len < 0; }
-  constexpr size_t size() const { return length(); }
-  constexpr size_type max_size() const { return 32767; }
-
-  cxx14_constexpr size_t hash_value() const {
-    size_t h = (size_t)len * 3977471;
-    for (intptr_t i = 0; i < len; ++i)
-      h = (h ^ str[i]) * 1664525 + 1013904223;
-    return h ^ 3863194411 * (h >> 11);
-  }
-
-  static cxx14_constexpr intptr_t compare(const string_view &a,
-                                          const string_view &b) {
-    const intptr_t diff = a.len - b.len;
-    return diff ? diff
-                : (a.str == b.str) ? 0 : memcmp(a.data(), b.data(), a.length());
-  }
-  cxx14_constexpr bool operator==(const string_view &v) const {
-    return compare(*this, v) == 0;
-  }
-  cxx14_constexpr bool operator<(const string_view &v) const {
-    return compare(*this, v) < 0;
-  }
-  cxx14_constexpr bool operator>(const string_view &v) const {
-    return compare(*this, v) > 0;
-  }
-  cxx14_constexpr bool operator<=(const string_view &v) const {
-    return compare(*this, v) <= 0;
-  }
-  cxx14_constexpr bool operator>=(const string_view &v) const {
-    return compare(*this, v) >= 0;
-  }
-  cxx14_constexpr bool operator!=(const string_view &v) const {
-    return compare(*this, v) != 0;
-  }
-
-  static intptr_t compare(const std::string &a, const string_view &b) {
-    return compare(string_view(a), b);
-  }
-  static intptr_t compare(const string_view &a, const std::string &b) {
-    return compare(a, string_view(b));
-  }
-  bool operator==(const std::string &s) const { return compare(*this, s) == 0; }
-  bool operator<(const std::string &s) const { return compare(*this, s) < 0; }
-  bool operator>(const std::string &s) const { return compare(*this, s) > 0; }
-  bool operator<=(const std::string &s) const { return compare(*this, s) <= 0; }
-  bool operator>=(const std::string &s) const { return compare(*this, s) >= 0; }
-  bool operator!=(const std::string &s) const { return compare(*this, s) != 0; }
-};
-
-inline unsigned get_colnum(uint_fast16_t tag) { return fptu_get_colnum(tag); }
-
-inline fptu_type get_type(uint_fast16_t tag) { return fptu_get_type(tag); }
-
-inline bool tag_is_fixedsize(uint_fast16_t tag) {
-  return fptu_tag_is_fixedsize(tag);
-}
-inline bool tag_is_dead(uint_fast16_t tag) { return fptu_tag_is_dead(tag); }
-
-inline uint_fast16_t make_tag(unsigned column, fptu_type type) {
-  return fptu_make_tag(column, type);
-}
 
 FPTU_API std::string format(const char *fmt, ...)
 #ifdef __GNUC__
@@ -1553,539 +1328,8 @@ FPTU_API std::string format(const char *fmt, ...)
 #endif
     ;
 FPTU_API std::string format_va(const char *fmt, va_list ap);
-FPTU_API std::string hexadecimal(const void *data, size_t bytes);
-
-inline int erase(fptu_rw *pt, unsigned column, fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_erase(pt, column, (fptu_type_or_filter)type);
-}
-
-inline int erase(fptu_rw *pt, unsigned column, fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_erase(pt, column, (fptu_type_or_filter)filter);
-}
-
-inline void erase(fptu_rw *pt, fptu_field *pf) { fptu_erase_field(pt, pf); }
-
-inline bool is_empty(const fptu_ro &ro) { return fptu_is_empty_ro(ro); }
-
-inline bool is_empty(const fptu_rw *pt) { return fptu_is_empty_rw(pt); }
-
-inline const char *check(const fptu_ro &ro) { return fptu_check_ro(ro); }
-
-inline const char *check(const fptu_rw *pt) { return fptu_check_rw(pt); }
-
-inline const fptu_field *lookup(const fptu_ro &ro, unsigned column,
-                                fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_lookup_ro(ro, column, (fptu_type_or_filter)type);
-}
-inline const fptu_field *lookup(const fptu_ro &ro, unsigned column,
-                                fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_lookup_ro(ro, column, (fptu_type_or_filter)filter);
-}
-
-inline fptu_field *lookup(fptu_rw *rw, unsigned column, fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_lookup_rw(rw, column, (fptu_type_or_filter)type);
-}
-inline fptu_field *lookup(fptu_rw *rw, unsigned column, fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_lookup_rw(rw, column, (fptu_type_or_filter)filter);
-}
-
-inline const fptu_field *begin(const fptu_ro &ro) { return fptu_begin_ro(ro); }
-
-inline const fptu_field *begin(const fptu_ro *ro) { return fptu_begin_ro(*ro); }
-
-inline const fptu_field *begin(const fptu_rw &rw) { return fptu_begin_rw(&rw); }
-
-inline const fptu_field *begin(const fptu_rw *rw) { return fptu_begin_rw(rw); }
-
-inline const fptu_field *end(const fptu_ro &ro) { return fptu_end_ro(ro); }
-
-inline const fptu_field *end(const fptu_ro *ro) { return fptu_end_ro(*ro); }
-
-inline const fptu_field *end(const fptu_rw &rw) { return fptu_end_rw(&rw); }
-
-inline const fptu_field *end(const fptu_rw *rw) { return fptu_end_rw(rw); }
-
-inline const fptu_field *first(const fptu_field *begin, const fptu_field *end,
-                               unsigned column, fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_first(begin, end, column, (fptu_type_or_filter)type);
-}
-inline const fptu_field *first(const fptu_field *begin, const fptu_field *end,
-                               unsigned column, fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_first(begin, end, column, (fptu_type_or_filter)filter);
-}
-
-inline const fptu_field *next(const fptu_field *from, const fptu_field *end,
-                              unsigned column, fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_next(from, end, column, (fptu_type_or_filter)type);
-}
-inline const fptu_field *next(const fptu_field *from, const fptu_field *end,
-                              unsigned column, fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_next(from, end, column, (fptu_type_or_filter)filter);
-}
-
-inline const fptu_field *first(const fptu_field *begin, const fptu_field *end,
-                               fptu_field_filter filter, void *context,
-                               void *param) {
-  return fptu_first_ex(begin, end, filter, context, param);
-}
-
-inline const fptu_field *next(const fptu_field *begin, const fptu_field *end,
-                              fptu_field_filter filter, void *context,
-                              void *param) {
-  return fptu_next_ex(begin, end, filter, context, param);
-}
-
-inline size_t field_count(const fptu_ro &ro, unsigned column, fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_field_count_ro(ro, column, (fptu_type_or_filter)type);
-}
-inline size_t field_count(const fptu_ro &ro, unsigned column,
-                          fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_field_count_ro(ro, column, (fptu_type_or_filter)filter);
-}
-
-inline size_t field_count(const fptu_rw *rw, unsigned column, fptu_type type) {
-  assert(type <= fptu_array_nested);
-  return fptu_field_count_rw(rw, column, (fptu_type_or_filter)type);
-}
-inline size_t field_count(const fptu_rw *rw, unsigned column,
-                          fptu_filter filter) {
-  assert(filter >= fptu_ffilter);
-  return fptu_field_count_rw(rw, column, (fptu_type_or_filter)filter);
-}
-
-inline size_t field_count(const fptu_rw *rw, fptu_field_filter filter,
-                          void *context, void *param) {
-  return fptu_field_count_rw_ex(rw, filter, context, param);
-}
-
-inline size_t field_count(const fptu_ro &ro, fptu_field_filter filter,
-                          void *context, void *param) {
-  return fptu_field_count_ro_ex(ro, filter, context, param);
-}
-
-inline size_t check_and_get_buffer_size(const fptu_ro &ro, unsigned more_items,
-                                        unsigned more_payload,
-                                        const char **error) {
-  return fptu_check_and_get_buffer_size(ro, more_items, more_payload, error);
-}
-
-inline size_t get_buffer_size(const fptu_ro &ro, unsigned more_items,
-                              unsigned more_payload) {
-  return fptu_get_buffer_size(ro, more_items, more_payload);
-}
-
-static inline int64_t cast_wide(int8_t value) { return value; }
-static inline int64_t cast_wide(int16_t value) { return value; }
-static inline int64_t cast_wide(int32_t value) { return value; }
-static inline int64_t cast_wide(int64_t value) { return value; }
-static inline uint64_t cast_wide(uint8_t value) { return value; }
-static inline uint64_t cast_wide(uint16_t value) { return value; }
-static inline uint64_t cast_wide(uint32_t value) { return value; }
-static inline uint64_t cast_wide(uint64_t value) { return value; }
-static inline double_t cast_wide(float value) { return value; }
-static inline double_t cast_wide(double value) { return value; }
-#if FLT_EVAL_METHOD > 1
-static inline double_t cast_wide(double_t /*long double*/ value) {
-  return value;
-}
-#endif
-
-template <typename VALUE_TYPE, typename RANGE_BEGIN_TYPE,
-          typename RANGE_END_TYPE>
-inline bool is_within(VALUE_TYPE value, RANGE_BEGIN_TYPE begin,
-                      RANGE_END_TYPE end) {
-  return is_within(cast_wide(value), cast_wide(begin), cast_wide(end));
-}
-
-template <>
-inline bool is_within<int64_t, int64_t, int64_t>(int64_t value, int64_t begin,
-                                                 int64_t end) {
-  assert(begin < end);
-  return value >= begin && value <= end;
-}
-
-template <>
-inline bool is_within<uint64_t, uint64_t, uint64_t>(uint64_t value,
-                                                    uint64_t begin,
-                                                    uint64_t end) {
-  assert(begin < end);
-  return value >= begin && value <= end;
-}
-
-template <>
-inline bool is_within<double_t, double_t, double_t>(double_t value,
-                                                    double_t begin,
-                                                    double_t end) {
-  assert(begin < end);
-  return value >= begin && value <= end;
-}
-
-template <>
-inline bool is_within<uint64_t, int64_t, int64_t>(uint64_t value, int64_t begin,
-                                                  int64_t end) {
-  assert(begin < end);
-  if (end < 0 || value > (uint64_t)end)
-    return false;
-  if (begin > 0 && value < (uint64_t)begin)
-    return false;
-  return true;
-}
-
-template <>
-inline bool is_within<uint64_t, double_t, double_t>(uint64_t value,
-                                                    double_t begin,
-                                                    double_t end) {
-  assert(begin < end);
-  if (end < 0 || (end < (double_t)UINT64_MAX && value > (uint64_t)end))
-    return false;
-  if (begin > 0 && (begin > (double_t)UINT64_MAX || value < (uint64_t)begin))
-    return false;
-  return true;
-}
-
-template <>
-inline bool is_within<int64_t, double_t, double_t>(int64_t value,
-                                                   double_t begin,
-                                                   double_t end) {
-  assert(begin < end);
-  if (end < (double_t)INT64_MAX && value > (int64_t)end)
-    return false;
-  if (begin > (double_t)INT64_MAX || value < (int64_t)begin)
-    return false;
-  return true;
-}
-
-template <>
-inline bool is_within<int64_t, uint64_t, uint64_t>(int64_t value,
-                                                   uint64_t begin,
-                                                   uint64_t end) {
-  assert(begin < end);
-  if (value < 0)
-    return false;
-  return is_within((uint64_t)value, begin, end);
-}
-
-template <>
-inline bool is_within<double_t, int64_t, int64_t>(double_t value, int64_t begin,
-                                                  int64_t end) {
-  assert(begin < end);
-  return value >= begin && value <= end;
-}
-
-template <>
-inline bool is_within<double_t, uint64_t, uint64_t>(double_t value,
-                                                    uint64_t begin,
-                                                    uint64_t end) {
-  assert(begin < end);
-  return value >= begin && value <= end;
-}
-
-template <fptu_type field_type, typename RESULT_TYPE>
-static RESULT_TYPE get_number(const fptu_field *field) {
-  assert(field != nullptr);
-  static_assert(fptu_any_number & (INT32_C(1) << field_type),
-                "field_type must be numerical");
-  assert(field->tag);
-  switch (field_type) {
-  default:
-    assert(false);
-    return 0;
-  case fptu_uint16:
-    assert(is_within(field->get_payload_uint16(),
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->get_payload_uint16();
-  case fptu_uint32:
-    assert(is_within(field->payload()->u32,
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->u32;
-  case fptu_uint64:
-    assert(is_within(field->payload()->u64,
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->u64;
-  case fptu_int32:
-    assert(is_within(field->payload()->i32,
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->i32;
-  case fptu_int64:
-    assert(is_within(field->payload()->i64,
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->i64;
-  case fptu_fp32:
-    assert(is_within(field->payload()->fp32,
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->fp32;
-  case fptu_fp64:
-    assert(is_within(field->payload()->fp32,
-                     std::numeric_limits<RESULT_TYPE>::lowest(),
-                     std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->fp64;
-  }
-}
-
-template <fptu_type field_type, typename VALUE_TYPE>
-static void set_number(fptu_field *field, const VALUE_TYPE &value) {
-  assert(field != nullptr);
-  static_assert(fptu_any_number & (INT32_C(1) << field_type),
-                "field_type must be numerical");
-  switch (field_type) {
-  default:
-    assert(false);
-    break;
-  case fptu_uint16:
-    assert(is_within(value, 0, INT16_MAX));
-    field->offset = (uint16_t)value;
-    break;
-  case fptu_uint32:
-    assert(is_within(value, 0u, UINT32_MAX));
-    field->payload()->u32 = (uint32_t)value;
-    break;
-  case fptu_uint64:
-    assert(is_within(value, 0u, UINT64_MAX));
-    field->payload()->u64 = (uint64_t)value;
-    break;
-  case fptu_int32:
-    assert(is_within(value, INT32_MIN, INT32_MAX));
-    field->payload()->i32 = (int32_t)value;
-    break;
-  case fptu_int64:
-    assert(is_within(value, INT64_MIN, INT64_MAX));
-    field->payload()->i64 = (int64_t)value;
-    break;
-  case fptu_fp32:
-    assert(value >= FLT_MIN && value <= FLT_MAX);
-    field->payload()->fp32 = (float)value;
-    break;
-  case fptu_fp64:
-    assert(value >= DBL_MIN && value <= DBL_MAX);
-    field->payload()->fp64 = (double)value;
-    break;
-  }
-}
-
-template <fptu_type field_type, typename VALUE_TYPE>
-static int upsert_number(fptu_rw *pt, unsigned colnum,
-                         const VALUE_TYPE &value) {
-  static_assert(fptu_any_number & (INT32_C(1) << field_type),
-                "field_type must be numerical");
-  switch (field_type) {
-  default:
-    assert(false);
-    return 0;
-  case fptu_uint16:
-    assert(is_within(value, 0, INT16_MAX));
-    return fptu_upsert_uint16(pt, colnum, (uint_fast16_t)value);
-  case fptu_uint32:
-    assert(is_within(value, 0u, UINT32_MAX));
-    return fptu_upsert_uint32(pt, colnum, (uint_fast32_t)value);
-  case fptu_uint64:
-    assert(is_within(value, 0u, UINT64_MAX));
-    return fptu_upsert_uint64(pt, colnum, (uint_fast64_t)value);
-  case fptu_int32:
-    assert(is_within(value, INT32_MIN, INT32_MAX));
-    return fptu_upsert_int32(pt, colnum, (int_fast32_t)value);
-  case fptu_int64:
-    assert(is_within(value, INT64_MIN, INT64_MAX));
-    return fptu_upsert_int64(pt, colnum, (int_fast64_t)value);
-  case fptu_fp32:
-    assert(value >= FLT_MIN && value <= FLT_MAX);
-    return fptu_upsert_fp32(pt, colnum, (float_t)value);
-  case fptu_fp64:
-    assert(value >= DBL_MIN && value <= DBL_MAX);
-    return fptu_upsert_fp64(pt, colnum, (double_t)value);
-  }
-}
-
-int tuple2json(const fptu_ro &tuple, fptu_emit_func output, void *output_ctx,
-               const string_view &indent, unsigned depth,
-               const void *schema_ctx, fptu_tag2name_func tag2name,
-               fptu_value2enum_func value2enum,
-               const fptu_json_options options = fptu_json_default);
-
-inline int tuple2json(const fptu_ro &tuple, FILE *file, const char *indent,
-                      unsigned depth, const void *schema_ctx,
-                      fptu_tag2name_func tag2name,
-                      fptu_value2enum_func value2enum,
-                      const fptu_json_options options = fptu_json_default) {
-
-  return fptu_tuple2json_FILE(tuple, file, indent, depth, schema_ctx, tag2name,
-                              value2enum, options);
-}
-
-/* Сериализует JSON-представление кортежа в std::ostream.
- *
- * Назначение параметров indent, depth, schema_ctx, tag2name и value2enum
- * см в описании функции fptu_tuple2json().
- *
- * Ошибки std::ostream обрабатываются в соответствии
- * с установками https://en.cppreference.com/w/cpp/io/basic_ios/exceptions,
- * если это не приводит к вбросу исключений, то возвращается -1.
- * При ошибках fptu возвращается соответствующий код ошибки.
- * При успешном завершении возвращается FPTU_SUCCESS (нуль). */
-FPTU_API int tuple2json(const fptu_ro &tuple, std::ostream &stream,
-                        const string_view &indent, unsigned depth,
-                        const void *schema_ctx, fptu_tag2name_func tag2name,
-                        fptu_value2enum_func value2enum,
-                        const fptu_json_options options = fptu_json_default);
-
-/* Сериализует JSON-представление кортежа в std::string и возвращает результат.
- *
- * Назначение параметров indent, depth, schema_ctx, tag2name и value2enum
- * см в описании функции fptu_tuple2json().
- *
- * При ошибках вбрасывает исключения, включая fptu::bad_tuple */
-FPTU_API std::string
-tuple2json(const fptu_ro &tuple, const string_view &indent, unsigned depth,
-           const void *schema_ctx, fptu_tag2name_func tag2name,
-           fptu_value2enum_func value2enum,
-           const fptu_json_options options = fptu_json_default);
+FPTU_API std::string hexadecimal(const void *data, std::size_t bytes);
 
 } /* namespace fptu */
 
-static __inline fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column,
-                                              const std::string &value) {
-  return fptu_upsert_string(pt, column, value.data(), value.size());
-}
-
-static __inline fptu_error fptu_insert_string(fptu_rw *pt, unsigned column,
-                                              const std::string &value) {
-  return fptu_insert_string(pt, column, value.data(), value.size());
-}
-
-static __inline fptu_error fptu_update_string(fptu_rw *pt, unsigned column,
-                                              const std::string &value) {
-  return fptu_update_string(pt, column, value.data(), value.size());
-}
-
-#if HAVE_cxx17_std_string_view
-static __inline fptu_error fptu_update_string(fptu_rw *pt, unsigned column,
-                                              const std::string_view &value) {
-  return fptu_update_string(pt, column, value.data(), value.size());
-}
-#endif /* HAVE_cxx17_std_string_view */
-
-static __inline fptu_error fptu_update_string(fptu_rw *pt, unsigned column,
-                                              const fptu::string_view &value) {
-  return fptu_update_string(pt, column, value.data(), value.size());
-}
-
-unsigned fptu_field::colnum() const { return fptu_get_colnum(this->tag); }
-
-fptu_type fptu_field::type() const { return fptu_get_type(this->tag); }
-
-bool fptu_field::is_dead() const { return fptu_field_is_dead(this); }
-
-bool fptu_field::is_fixedsize() const {
-  return fptu_tag_is_fixedsize(this->tag);
-}
-
-uint_fast16_t fptu_field::get_payload_uint16() const {
-  assert(type() == fptu_uint16);
-  return offset;
-}
-
-const fptu_payload *fptu_field::payload() const {
-  return fptu_get_payload(this);
-}
-
-fptu_payload *fptu_field::payload() { return fptu_field_payload(this); }
-
-const void *fptu_field::inner_begin() const {
-  assert((type() & fptu_farray) != 0);
-  return payload()->inner_begin();
-}
-
-const void *fptu_field::inner_end() const {
-  assert((type() & fptu_farray) != 0);
-  return payload()->inner_end();
-}
-
-size_t fptu_field::array_length() const {
-  assert((type() & fptu_farray) != 0);
-  return payload()->array_length();
-}
-
-namespace std {
-
-template <> struct hash<fptu::string_view> {
-  cxx14_constexpr std::size_t operator()(fptu::string_view const &v) const {
-    return v.hash_value();
-  }
-};
-
-FPTU_API string to_string(const fptu_error error);
-FPTU_API string to_string(const fptu_type);
-FPTU_API string to_string(const fptu_field &);
-FPTU_API string to_string(const fptu_rw &);
-FPTU_API string to_string(const fptu_ro &);
-FPTU_API string to_string(const fptu_lge);
-FPTU_API string to_string(const fptu_time &time);
-} /* namespace std */
-
-inline bool operator>(const fptu::string_view &a, const std::string &b) {
-  return fptu::string_view::compare(a, b) > 0;
-}
-inline bool operator>=(const fptu::string_view &a, const std::string &b) {
-  return fptu::string_view::compare(a, b) >= 0;
-}
-inline bool operator<(const fptu::string_view &a, const std::string &b) {
-  return fptu::string_view::compare(a, b) < 0;
-}
-inline bool operator<=(const fptu::string_view &a, const std::string &b) {
-  return fptu::string_view::compare(a, b) <= 0;
-}
-inline bool operator==(const fptu::string_view &a, const std::string &b) {
-  return fptu::string_view::compare(a, b) == 0;
-}
-inline bool operator!=(const fptu::string_view &a, const std::string &b) {
-  return fptu::string_view::compare(a, b) != 0;
-}
-
-inline bool operator>(const std::string &a, const fptu::string_view &b) {
-  return fptu::string_view::compare(a, b) > 0;
-}
-inline bool operator>=(const std::string &a, const fptu::string_view &b) {
-  return fptu::string_view::compare(a, b) >= 0;
-}
-inline bool operator<(const std::string &a, const fptu::string_view &b) {
-  return fptu::string_view::compare(a, b) < 0;
-}
-inline bool operator<=(const std::string &a, const fptu::string_view &b) {
-  return fptu::string_view::compare(a, b) <= 0;
-}
-inline bool operator==(const std::string &a, const fptu::string_view &b) {
-  return fptu::string_view::compare(a, b) == 0;
-}
-inline bool operator!=(const std::string &a, const fptu::string_view &b) {
-  return fptu::string_view::compare(a, b) != 0;
-}
-
-/* Явно удаляем лишенные смысла операции, в том числе для выявления ошибок */
-bool operator>(const fptu_lge &, const fptu_lge &) = delete;
-bool operator>=(const fptu_lge &, const fptu_lge &) = delete;
-bool operator<(const fptu_lge &, const fptu_lge &) = delete;
-bool operator<=(const fptu_lge &, const fptu_lge &) = delete;
 #endif /* __cplusplus */
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#endif /* FAST_POSITIVE_TUPLES_H */

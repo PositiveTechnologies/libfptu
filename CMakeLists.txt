@@ -1,5 +1,5 @@
 ﻿##
-##  Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+##  Copyright 2016-2019 libfptu authors: please see AUTHORS file.
 ##
 ##  This file is part of libfptu, aka "Fast Positive Tuples".
 ##
@@ -103,6 +103,7 @@ if(NOT DEFINED FPTU_CXX_STANDARD)
     set(FPTU_CXX_STANDARD 11)
   endif()
 endif()
+#set(FPTU_CXX_STANDARD 14)
 message(STATUS "Use C++${FPTU_CXX_STANDARD} for libfptu")
 
 if(NOT CMAKE_VERSION VERSION_LESS 3.9)

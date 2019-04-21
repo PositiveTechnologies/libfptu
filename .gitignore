@@ -27,3 +27,5 @@ test/ut_2upsert
 test/ut_3iterate
 test/ut_4fetch
 @*/
+*.o
+*.obj

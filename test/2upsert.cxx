@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+ * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
  *
  * This file is part of libfptu, aka "Fast Positive Tuples".
  *
@@ -85,10 +85,10 @@ TEST(Upsert, InvalidColumn) {
   EXPECT_EQ(FPTU_EINVAL,
             fptu_update_160(pt, inval_col, "160_________________"));
 
-  fptu_time datetime = fptu_now_coarse();
-  EXPECT_EQ(FPTU_EINVAL, fptu_upsert_datetime(pt, inval_col, datetime));
-  EXPECT_EQ(FPTU_EINVAL, fptu_insert_datetime(pt, inval_col, datetime));
-  EXPECT_EQ(FPTU_EINVAL, fptu_update_datetime(pt, inval_col, datetime));
+  fptu_datetime_t dt = fptu_now_coarse();
+  EXPECT_EQ(FPTU_EINVAL, fptu_upsert_datetime(pt, inval_col, dt));
+  EXPECT_EQ(FPTU_EINVAL, fptu_insert_datetime(pt, inval_col, dt));
+  EXPECT_EQ(FPTU_EINVAL, fptu_update_datetime(pt, inval_col, dt));
 
   EXPECT_EQ(FPTU_EINVAL,
             fptu_upsert_256(pt, inval_col, "256_____________________________"));
@@ -301,7 +301,7 @@ TEST(Upsert, Base) {
   used += 160 / 8;
   EXPECT_EQ(data - used, fptu_space4data(pt));
 
-  const fptu_time now = fptu_now_coarse();
+  const fptu_datetime_t now = fptu_now_coarse();
   EXPECT_EQ(FPTU_OK, fptu_upsert_datetime(pt, 8, now));
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(3u, fptu_space4items(pt));
@@ -359,24 +359,15 @@ TEST(Upsert, Base) {
   EXPECT_EQ(now.fixedpoint, fptu_get_datetime(ro, 8, nullptr).fixedpoint);
   EXPECT_EQ(fptu_eq, fptu_cmp_256(ro, fptu_max_cols - 2, _256));
 
-  EXPECT_TRUE(fptu_get_bool(ro, 0, nullptr));
-  EXPECT_FALSE(fptu_get_bool(ro, 42, nullptr));
-  EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 0, FPTU_DENIL_UINT16));
-  EXPECT_FALSE(fptu_get_bool(ro, 42, nullptr));
   EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 0, 42));
-  EXPECT_TRUE(fptu_get_bool(ro, 0, nullptr));
-  EXPECT_EQ(FPTU_OK, fptu_upsert_bool(pt, 0, false));
-  EXPECT_FALSE(fptu_get_bool(ro, 0, nullptr));
-  EXPECT_EQ(0u, fptu_get_uint16(ro, 0, nullptr));
-  EXPECT_EQ(FPTU_OK, fptu_upsert_bool(pt, 0, true));
-  EXPECT_TRUE(fptu_get_bool(ro, 0, nullptr));
-  EXPECT_EQ(1u, fptu_get_uint16(ro, 0, nullptr));
+  ASSERT_STREQ(nullptr, fptu::check(pt));
+  EXPECT_EQ(42u, fptu_get_uint16(ro, 0, nullptr));
 
   EXPECT_EQ(0u, fptu_space4items(pt));
   EXPECT_EQ(0u, fptu_space4data(pt));
   EXPECT_EQ(0u, fptu_junkspace(pt));
   ASSERT_STREQ(nullptr, fptu::check(pt));
-  free(pt);
+  fptu_destroy(pt);
 }
 
 struct iovec opaque_iov(unsigned col, unsigned n, unsigned salt) {
@@ -512,7 +503,7 @@ TEST(Upsert, Overwrite) {
   }
 
   ASSERT_STREQ(nullptr, fptu::check(pt));
-  free(pt);
+  fptu_destroy(pt);
 }
 
 TEST(Upsert, InsertUpdate) {
@@ -701,7 +692,7 @@ TEST(Upsert, InsertUpdate) {
   static const uint8_t *const _160 = _128 + 16;
   static const uint8_t *const _256 = _160 + 24;
   ASSERT_LT(32, pattern + sizeof(pattern) - 43 - _256);
-  const fptu_time now1 = fptu_now_coarse();
+  const fptu_datetime_t now1 = fptu_now_coarse();
 
   // insert the first copy of field(0, _96)
   EXPECT_EQ(FPTU_OK, fptu_insert_96(pt, 0, _96));
@@ -770,7 +761,7 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(0u, fptu_junkspace(pt));
 
   // insert the first copy of field(0, datetime)
-  const fptu_time now2 = fptu_now_fine();
+  const fptu_datetime_t now2 = fptu_now_fine();
   EXPECT_EQ(FPTU_OK, fptu_insert_datetime(pt, 0, now1));
   bytes_used += 8;
   ASSERT_STREQ(nullptr, fptu::check(pt));
@@ -944,7 +935,7 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(FPTU_OK, fptu_update_96(pt, 0, _96 - 42));
   EXPECT_EQ(FPTU_OK, fptu_update_128(pt, 0, _128 - 42));
   EXPECT_EQ(FPTU_OK, fptu_update_160(pt, 0, _160 - 42));
-  const fptu_time now3 = fptu_now_fine();
+  const fptu_datetime_t now3 = fptu_now_fine();
   EXPECT_EQ(FPTU_OK, fptu_update_datetime(pt, 0, now3));
   EXPECT_EQ(FPTU_OK, fptu_update_256(pt, 0, _256 - 42));
   EXPECT_EQ(FPTU_OK, fptu_update_cstr(pt, 0, "xyz_"));
@@ -1066,7 +1057,6 @@ TEST(Upsert, InsertUpdate) {
   ro = fptu_take_noshrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(ro));
   EXPECT_EQ(nullptr, fptu::lookup(ro, 0, fptu_uint16));
-  EXPECT_EQ(0, fptu::erase(pt, 0, fptu_null));
 
   // update_xyz() expect no-entry
   EXPECT_EQ(FPTU_ENOFIELD, fptu_update_uint16(pt, 0, 0));
@@ -1092,8 +1082,10 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(bytes_limit, fptu_space4data(pt));
   EXPECT_EQ(0u, fptu_junkspace(pt));
   ASSERT_STREQ(nullptr, fptu::check(pt));
-  free(pt);
+  fptu_destroy(pt);
 }
+
+//------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

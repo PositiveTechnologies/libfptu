@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2017-2018 libfptu authors: please see AUTHORS file.
+ * Copyright 2017-2019 libfptu authors: please see AUTHORS file.
  *
  * This file is part of libfptu, aka "Fast Positive Tuples".
  *
@@ -47,10 +47,16 @@
 
 #include <gtest/gtest.h>
 
+#ifndef GTEST_SKIP
+#define GTEST_SKIP()                                                           \
+  return GTEST_MESSAGE_("Skipped", ::testing::TestPartResult::kSuccess)
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
+#include "fast_positive/details/legacy_compat.h"
 #include "fast_positive/tuples_internal.h"
 
 /* LY: reduce test runtime (significantly on Elbrus) */

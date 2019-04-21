@@ -1,0 +1,242 @@
+﻿/*
+ * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
+ *
+ * This file is part of libfptu, aka "Fast Positive Tuples".
+ *
+ * libfptu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * libfptu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libfptu.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * libfptu = { Fast Positive Tuples, aka Позитивные Кортежи }
+ *
+ * The kind of lightweight linearized tuples, which are extremely handy
+ * to machining, including cases with shared memory.
+ * Please see README.md at https://github.com/leo-yuriev/libfptu
+ *
+ * The Future will Positive. Всё будет хорошо.
+ *
+ * "Позитивные Кортежи" дают легковесное линейное представление небольших
+ * JSON-подобных структур в экстремально удобной для машины форме,
+ * в том числе при размещении в разделяемой памяти.
+ */
+
+#pragma once
+#include "fast_positive/details/api.h"
+#include "fast_positive/details/erthink/erthink_dynamic_constexpr.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
+namespace fptu {
+
+class harrow_tagged_pointer_base {
+public:
+  static constexpr unsigned bits = 4;
+
+private:
+  union casting {
+    uintptr_t uint;
+    void *ptr;
+    const void *const_ptr;
+
+    constexpr casting(const casting &) noexcept = default;
+    constexpr casting(void *ptr) noexcept : ptr(ptr) {}
+    constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
+    constexpr casting(uintptr_t uint) noexcept : uint(uint) {}
+  };
+  casting body_;
+
+  static constexpr uintptr_t tag_mask = (1u << bits) - 1u;
+  static constexpr uintptr_t ptr_mask = uintptr_t(~tag_mask);
+  static constexpr uintptr_t ptr_xor = 0
+      /* This is valid for x86_64 arch due amd64-specific detail about the
+       effective user-mode virtual address space. Briefly: the upper 16 bits of
+       pointers are always zero in user-mode.
+       http://en.wikipedia.org/wiki/X86-64#Canonical_form_addresses
+
+       TODO: Support for other architectures. */
+      ;
+
+protected:
+  static constexpr uintptr_t p2u(void *ptr) noexcept {
+    return casting(ptr).uint;
+  }
+
+  static constexpr void *u2p(uintptr_t u) noexcept { return casting(u).ptr; }
+
+public:
+  constexpr unsigned tag() const noexcept { return body_.uint & tag_mask; }
+
+  constexpr void *ptr() const noexcept {
+    return u2p((body_.uint & ptr_mask) ^ ptr_xor);
+  }
+
+  constexpr harrow_tagged_pointer_base() noexcept : body_(ptr_xor) {
+    constexpr_assert(ptr() == nullptr && tag() == 0);
+  }
+
+  constexpr harrow_tagged_pointer_base(void *ptr, unsigned tag = 0) noexcept
+      : body_((p2u(ptr) ^ ptr_xor) | (uintptr_t(tag) << bits)) {
+    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    constexpr_assert(tag < (1u << bits));
+    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+  }
+
+  constexpr harrow_tagged_pointer_base(
+      const harrow_tagged_pointer_base &v) noexcept = default;
+  cxx14_constexpr harrow_tagged_pointer_base &
+  operator=(const harrow_tagged_pointer_base &v) noexcept = default;
+
+  cxx14_constexpr void swap(harrow_tagged_pointer_base &v) noexcept {
+    const auto temp = body_;
+    body_ = v.body_;
+    v.body_ = temp;
+  }
+
+  cxx14_constexpr void set_ptr(void *ptr) noexcept {
+    body_.uint = (body_.uint & tag_mask) | (p2u(ptr) ^ ptr_xor);
+    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    constexpr_assert(this->ptr() == ptr);
+  }
+
+  cxx14_constexpr void set_tag(unsigned tag) noexcept {
+    body_.uint = (body_.uint & ptr_mask) | (uintptr_t(tag) << bits);
+    constexpr_assert(tag < (1u << bits));
+    constexpr_assert(this->tag() == tag);
+  }
+
+  cxx14_constexpr void set(void *ptr, unsigned tag) noexcept {
+    body_.uint = (p2u(ptr) ^ ptr_xor) | (uintptr_t(tag) << bits);
+    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    constexpr_assert(tag < (1u << bits));
+    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+  }
+};
+
+//------------------------------------------------------------------------------
+
+class wide_tagged_pointer_base {
+public:
+  static constexpr unsigned bits = 16;
+
+private:
+  union casting {
+    uint64_t u64;
+    uintptr_t up;
+    void *ptr;
+    const void *const_ptr;
+
+    constexpr casting(const casting &) noexcept = default;
+    constexpr casting(void *ptr) noexcept : ptr(ptr) {}
+    constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
+    constexpr casting(uint64_t u64) noexcept : u64(u64) {}
+  };
+  casting body_;
+
+  static constexpr uint64_t tag_mask = ~(~UINT64_C(0) >> bits);
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4310 /* cast truncates of constant value */)
+#endif
+  static constexpr uintptr_t ptr_mask = uintptr_t(~tag_mask);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+  static constexpr uintptr_t ptr_xor = 0
+      /* This is valid for x86_64 arch due amd64-specific detail about the
+       effective user-mode virtual address space. Briefly: the upper 16 bits of
+       pointers are always zero in user-mode.
+       http://en.wikipedia.org/wiki/X86-64#Canonical_form_addresses
+
+       TODO: Support for other architectures. */
+      ;
+
+  static constexpr uintptr_t p2u(void *ptr) noexcept { return casting(ptr).up; }
+
+  static constexpr void *u2p(uintptr_t u) noexcept { return casting(u).ptr; }
+
+public:
+  constexpr unsigned tag() const noexcept { return body_.u64 >> (64 - bits); }
+
+  constexpr void *ptr() const noexcept {
+    return u2p((body_.up & ptr_mask) ^ ptr_xor);
+  }
+
+  constexpr wide_tagged_pointer_base() noexcept : body_(uint64_t(ptr_xor)) {
+    constexpr_assert(ptr() == nullptr && tag() == 0);
+  }
+
+  constexpr wide_tagged_pointer_base(void *ptr, unsigned tag = 0) noexcept
+      : body_((p2u(ptr) ^ ptr_xor) | (uint64_t(tag) << bits)) {
+    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    constexpr_assert(tag < (1u << bits));
+    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+  }
+
+  constexpr wide_tagged_pointer_base(
+      const wide_tagged_pointer_base &v) noexcept = default;
+  cxx14_constexpr wide_tagged_pointer_base &
+  operator=(const wide_tagged_pointer_base &v) noexcept = default;
+
+  cxx14_constexpr void swap(wide_tagged_pointer_base &v) noexcept {
+    const auto temp = body_;
+    body_ = v.body_;
+    v.body_ = temp;
+  }
+
+  cxx14_constexpr void set_ptr(void *ptr) noexcept {
+    body_.u64 = (body_.u64 & tag_mask) | (p2u(ptr) ^ ptr_xor);
+    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    constexpr_assert(this->ptr() == ptr);
+  }
+
+  cxx14_constexpr void set_tag(unsigned tag) noexcept {
+    body_.u64 = (body_.u64 & ptr_mask) | (uint64_t(tag) << bits);
+    constexpr_assert(tag < (1u << bits));
+    constexpr_assert(this->tag() == tag);
+  }
+
+  cxx14_constexpr void set(void *ptr, unsigned tag) noexcept {
+    body_.u64 = (p2u(ptr) ^ ptr_xor) | (uint64_t(tag) << bits);
+    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    constexpr_assert(tag < (1u << bits));
+    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+  }
+};
+
+//------------------------------------------------------------------------------
+
+template <class T, class BASE> class tagged_pointer : public BASE {
+public:
+  using reference = typename std::add_lvalue_reference<T>::type;
+  using base = BASE;
+  constexpr tagged_pointer(T *ptr, unsigned tag = 0) noexcept
+      : base(ptr, tag) {}
+  constexpr tagged_pointer() noexcept : base() {}
+
+  constexpr void set(T *ptr, unsigned tag) noexcept { base::set(ptr, tag); }
+  constexpr void set_ptr(void *ptr) noexcept { base::set_ptr(ptr); }
+  constexpr void set_tag(unsigned tag) noexcept { base::set_tag(tag); }
+  constexpr unsigned tag() const noexcept { return base::tag(); }
+  constexpr T *get() const noexcept {
+    return erthink::constexpr_pointer_cast<T *>(base::ptr());
+  }
+  constexpr T *operator->() const noexcept { return get(); }
+  constexpr reference operator*() const noexcept { return *get(); }
+  constexpr reference operator[](std::ptrdiff_t i) const noexcept {
+    return get()[i];
+  }
+};
+
+} // namespace fptu

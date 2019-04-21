@@ -1,5 +1,5 @@
 ﻿##
-##  Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+##  Copyright 2016-2019 libfptu authors: please see AUTHORS file.
 ##
 ##  This file is part of libfptu, aka "Fast Positive Tuples".
 ##
@@ -65,29 +65,135 @@ endif()
 
 set(LIBFPTU_SOURCES
   ${FAST_POSITIVE_CONFIG_H}
-  ../fast_positive/defs.h
+  ../fast_positive/details/erthink/erthink_arch.h
+  ../fast_positive/details/erthink/erthink_bswap.h
+  ../fast_positive/details/erthink/erthink_byteorder.h
+  ../fast_positive/details/erthink/erthink_d2a.h
+  ../fast_positive/details/erthink/erthink_defs.h
+  ../fast_positive/details/erthink/erthink_dynamic_constexpr.h
+  ../fast_positive/details/erthink/erthink_u2a.h
+  ../fast_positive/details/erthink/erthink_short_alloc.h
+  ../fast_positive/details/erthink/erthink_optimize4size.h
+  ../fast_positive/details/erthink/erthink_optimize4speed.h
+  ../fast_positive/details/erthink/erthink_ifunc.h
+
+  ../fast_positive/details/1Hippeus/actor.h
+  ../fast_positive/details/1Hippeus/buffer.h
+  ../fast_positive/details/1Hippeus/hipagut.h
+  ../fast_positive/details/1Hippeus/hipagut_allocator.h
+  ../fast_positive/details/1Hippeus/utils.h
+
+  ../fast_positive/details/api.h
+  ../fast_positive/details/audit.h
+  ../fast_positive/details/fixed_binary.h
+  ../fast_positive/details/bug.h
+  ../fast_positive/details/cpu_features.h
+  ../fast_positive/details/datetime.h
+  ../fast_positive/details/decimal.h
+  ../fast_positive/details/essentials.h
+  ../fast_positive/details/exceptions.h
+  ../fast_positive/details/field.h
+  ../fast_positive/details/float.h
+  ../fast_positive/details/getter.h
+  ../fast_positive/details/integer128.h
+  ../fast_positive/details/ip_address.h
+  ../fast_positive/details/legacy_common.h
+  ../fast_positive/details/legacy_compat.h
+  ../fast_positive/details/mac_address.h
+  ../fast_positive/details/meta.h
+  ../fast_positive/details/nan.h
+  ../fast_positive/details/property.h
+  ../fast_positive/details/ro.h
+  ../fast_positive/details/rw.h
+  ../fast_positive/details/scan.h
+  ../fast_positive/details/schema.h
+  ../fast_positive/details/string_view.h
+  ../fast_positive/details/tagged_pointer.h
+  ../fast_positive/details/token.h
+  ../fast_positive/details/type2genus.h
+  ../fast_positive/details/types.h
+  ../fast_positive/details/uio.h
+  ../fast_positive/details/utils.h
+  ../fast_positive/details/uuid.h
+  ../fast_positive/details/crutches.h
+  ../fast_positive/details/windows_mustdie.h
+  ../fast_positive/details/posix_modern.h
+  ../fast_positive/details/warnings_push_pt.h
+  ../fast_positive/details/warnings_push_system.h
+  ../fast_positive/details/warnings_pop.h
   ../fast_positive/tuples.h
   ../fast_positive/tuples_internal.h
-  ../fast_positive/details/erthink/erthink_u2a.h
-  ../fast_positive/details/erthink/erthink_d2a.h
+  ../fast_positive/tuples_legacy.h
+
+  1Hippeus/allot_stdcxx.cxx
+  1Hippeus/buffer.cxx
+  1Hippeus/hipagut.cxx
+  1Hippeus/utils.cxx
+
+  ../fast_positive/details/TODO/casting.h
+  ../fast_positive/details/TODO/endianness.h
+  ../fast_positive/details/TODO/unaligned.h
+  TODO/json_parse.cxx
+  TODO/json_emit.cxx
+  TODO/magic.cxx
+
+  autogrowth.cxx
+  audit.cxx
+  tablets.cxx
+  debug.cxx
+  except.cxx
+  gear.cxx
   gperf_ECMAScript_keywords.h
-  bitset4tags.h
-  common.cxx
-  create.cxx
-  check.cxx
-  upsert.cxx
-  remove.cxx
+  compat_common.cxx
+  compat_field.cxx
+  compat_ro.cxx
+  compat_rw.cxx
   misc.cxx
-  shrink.cxx
-  get.cxx
-  compare.cxx
-  iterator.cxx
-  sort.cxx
+  ro.cxx
+  rw.cxx
+  scan_ifunc.cxx
+  scan_portable.cxx
   time.cxx
-  data.cxx
-  json_emit.cxx
-  json_parse.cxx
+
+  obsolete/internal.h
+  obsolete/bitset4tags.h
+  obsolete/check.cxx
+  obsolete/common.cxx
+  obsolete/compare.cxx
+  obsolete/create.cxx
+  obsolete/data.cxx
+  obsolete/get.cxx
+  obsolete/iterator.cxx
+  obsolete/remove.cxx
+  obsolete/shrink.cxx
+  obsolete/sort.cxx
+  obsolete/upsert.cxx
+
   ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)
+
+if(X86_32 OR X86_64)
+  list(APPEND LIBFPTU_SOURCES cpu_features_ia32.cxx scan_SSE2.cxx scan_AVX.cxx scan_AVX2.cxx)
+  if(MSVC)
+    if(X86_32)
+      set_source_files_properties(scan_SSE2.cxx COMPILE_FLAGS /arch:SSE2)
+    endif()
+    set_source_files_properties(scan_AVX.cxx COMPILE_FLAGS /arch:AVX)
+    set_source_files_properties(scan_AVX2.cxx COMPILE_FLAGS /arch:AVX2)
+  else()
+    if(X86_32)
+      set_source_files_properties(scan_SSE2.cxx COMPILE_FLAGS -msse2)
+    endif()
+    set_source_files_properties(scan_AVX.cxx COMPILE_FLAGS -mavx)
+    set_source_files_properties(scan_AVX2.cxx COMPILE_FLAGS -mavx2)
+  endif()
+elseif(E2K)
+  list(APPEND LIBFPTU_SOURCES scan_AVX.cxx)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCC)
+  set_source_files_properties(ro.cxx COMPILE_FLAGS -save-temps)
+  set_source_files_properties(rw.cxx COMPILE_FLAGS -save-temps)
+endif()
 
 if(LIBFPTU_TYPE STREQUAL "PILE")
   add_library(fptu_objects OBJECT ${LIBFPTU_SOURCES})
@@ -113,6 +219,10 @@ set_target_properties(${fptu_target} PROPERTIES
   C_STANDARD 11
   C_STANDARD_REQUIRED OFF
   )
+
+if(CC_HAS_FASTMATH)
+  target_compile_options(${fptu_target} PRIVATE "-ffast-math")
+endif()
 
 if(CC_HAS_VISIBILITY)
   target_compile_options(${fptu_target} PRIVATE "-fvisibility=hidden")

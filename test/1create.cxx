@@ -1,5 +1,5 @@
-/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+﻿/*
+ * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
  *
  * This file is part of libfptu, aka "Fast Positive Tuples".
  *
@@ -22,15 +22,17 @@
 TEST(Init, Invalid) {
   EXPECT_EQ(nullptr, fptu_init(nullptr, 0, 0));
   EXPECT_EQ(nullptr,
-            fptu_init(nullptr, fptu_max_tuple_bytes / 2, fptu_max_fields / 2));
-  EXPECT_EQ(nullptr, fptu_init(nullptr, fptu_max_tuple_bytes, fptu_max_fields));
+            fptu_init(nullptr, fptu_max_tuple_bytes / 2, fptu::max_fields / 2));
+  EXPECT_EQ(nullptr,
+            fptu_init(nullptr, fptu_max_tuple_bytes, fptu::max_fields));
   EXPECT_EQ(nullptr, fptu_init(nullptr, ~0u, ~0u));
 
   char space_exactly_noitems[sizeof(fptu_rw)];
   EXPECT_EQ(nullptr,
             fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 1));
-  EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems,
-                               sizeof(space_exactly_noitems), fptu_max_fields));
+  EXPECT_EQ(nullptr,
+            fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems),
+                      fptu::max_fields));
   EXPECT_EQ(nullptr, fptu_init(nullptr, sizeof(space_exactly_noitems), 0));
   EXPECT_NE(nullptr,
             fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 0));
@@ -38,28 +40,28 @@ TEST(Init, Invalid) {
                                sizeof(space_exactly_noitems) - 1, 0));
   EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, 0));
   EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, 1));
-  EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, fptu_max_fields));
-  EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, fptu_max_fields * 2));
+  EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, fptu::max_fields));
+  EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, fptu::max_fields * 2));
   EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, 0, ~0u));
 
-  char space_maximum[fptu_buffer_enough];
+  char space_maximum[fptu::buffer_enough];
   EXPECT_EQ(nullptr, fptu_init(space_maximum, sizeof(space_maximum),
-                               fptu_max_fields + 1));
+                               fptu::max_fields + 1));
   EXPECT_EQ(nullptr, fptu_init(nullptr, sizeof(space_maximum), 0));
   EXPECT_EQ(nullptr, fptu_init(space_exactly_noitems, ~0u, 1));
   ASSERT_EQ(nullptr, fptu_init(space_exactly_noitems, fptu_buffer_limit + 1,
-                               fptu_max_fields));
+                               fptu::max_fields));
 
   EXPECT_NE(nullptr, fptu_init(space_maximum, sizeof(space_maximum), 0));
   EXPECT_NE(nullptr, fptu_init(space_maximum, sizeof(space_maximum), 1));
   EXPECT_NE(nullptr, fptu_init(space_maximum, sizeof(space_maximum),
-                               fptu_max_fields / 2));
+                               fptu::max_fields / 2));
   EXPECT_NE(nullptr,
-            fptu_init(space_maximum, sizeof(space_maximum), fptu_max_fields));
+            fptu_init(space_maximum, sizeof(space_maximum), fptu::max_fields));
 }
 
 TEST(Init, Base) {
-  char space[fptu_buffer_enough];
+  char space[fptu::buffer_enough];
 
   static const size_t extra_space_cases[] = {
       /* clang-format off */
@@ -71,9 +73,9 @@ TEST(Init, Base) {
 
   static const unsigned items_cases[] = {
       /* clang-format off */
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 42, ~0u, fptu_max_fields / 3,
-        fptu_max_fields / 2, fptu_max_fields, fptu_max_fields + 1,
-        fptu_max_fields * 2
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 42, ~0u, fptu::max_fields / 3,
+        fptu::max_fields / 2, fptu::max_fields, fptu::max_fields + 1,
+        fptu::max_fields * 2
       /* clang-format on */
   };
 
@@ -86,7 +88,7 @@ TEST(Init, Base) {
                    std::to_string(items));
 
       fptu_rw *pt = fptu_init(space, bytes, items);
-      if (items > extra / 4 || items > fptu_max_fields) {
+      if (items > extra / 4 || items > fptu::max_fields) {
         EXPECT_EQ(nullptr, pt);
         continue;
       }
@@ -94,11 +96,11 @@ TEST(Init, Base) {
 
       fptu_ro io = fptu_take_noshrink(pt);
       EXPECT_NE(nullptr, io.units);
-      EXPECT_EQ(fptu_unit_size, io.total_bytes);
+      EXPECT_EQ(fptu::unit_size, io.total_bytes);
 
       EXPECT_EQ(items, fptu_space4items(pt));
       size_t avail =
-          FPT_ALIGN_FLOOR(extra, fptu_unit_size) - fptu_unit_size * items;
+          FPT_ALIGN_FLOOR(extra, fptu::unit_size) - fptu::unit_size * items;
       EXPECT_EQ(avail, fptu_space4data(pt));
       EXPECT_EQ(0u, fptu_junkspace(pt));
 
@@ -112,8 +114,10 @@ TEST(Init, Alloc) {
   fptu_rw *pt = fptu_alloc(7, 42);
   ASSERT_NE(nullptr, pt);
   ASSERT_STREQ(nullptr, fptu_check_rw(pt));
-  free(pt);
+  fptu_destroy(pt);
 }
+
+//------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

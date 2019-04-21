@@ -1,18 +1,12 @@
-﻿- [x] intergation with GoogleTest (pull, build);
-- [x] CI by AppVeyor;
-- [x] use fast-int types and double_t;
-- [x] Link-Time Optimization;
-- [x] verification by Coverity.
-- [x] full c-matrix for Windows (2013/2015/2017).
-- [ ] interface for external scheme;
-- [ ] serialization to JSON (optional with schema);
+- [ ] Зачистить combo_ptr.
+- [ ] Передвинуть биты в tag/token.
+- [ ] автоматическое расширение буферов.
+- [ ] разные tuple-классы и управление буферами.
+- [ ] value через tagget-pointer;
+- [ ] more SIMD (sort, pattern-search, binary-search);
+- [ ] AVX512;
+- [ ] inlay iteration;
+
 - [ ] de-serialization from JSON (with schema);
-- [ ] fput_field_xyz_cmp();
-- [ ] fptu_field_xyz_set();
-- [ ] support for headspace reservation;
-- [ ] support for arrays and nested tuples;
-- [ ] C++ bindings;
 - [ ] unit test for `limits`;
-- [ ] external scheme support and C++ binding auto-generation;
-- [ ] ? support for sorted tuples.
-- [ ] automatic grow for buffers (by one more indirection)
+- [ ] support for sorted tuples.

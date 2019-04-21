@@ -1,5 +1,5 @@
-/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+﻿/*
+ * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
  *
  * This file is part of libfptu, aka "Fast Positive Tuples".
  *
@@ -46,7 +46,7 @@ static void usleep(unsigned usec) {
 }
 #endif /* _MSC_VER */
 
-const auto ms100 = fptu_time::ms2fractional(100);
+const auto ms100 = fptu::datetime_t::ms2fractional(100);
 
 TEST(Trivia, Denil) {
   union {
@@ -57,14 +57,11 @@ TEST(Trivia, Denil) {
   EXPECT_EQ(FPTU_DENIL_FP64_BIN, denil64.u);
   denil64 = {fptu_fp64_denil()};
   EXPECT_EQ(FPTU_DENIL_FP64_BIN, denil64.u);
-#ifdef HAVE_nan
+#if defined(HAVE_nan) &&                                                       \
+    !defined(_MSC_VER) /* MSVC provides invalid nan(), skip test */
   denil64 = {-nan("4503599627370495")};
-#ifdef FPTU_DENIL_FP64_MAS
   EXPECT_EQ(FPTU_DENIL_FP64_BIN, denil64.u);
-#else
-  EXPECT_NE(FPTU_DENIL_FP64_BIN, denil64.u);
-#endif
-#endif /* HAVE_nan */
+#endif /* HAVE_nan && !_MSC_VER */
   denil64 = {fptu_fp32_denil()};
   EXPECT_NE(FPTU_DENIL_FP64_BIN, denil64.u);
 
@@ -76,171 +73,161 @@ TEST(Trivia, Denil) {
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
   denil32 = {fptu_fp32_denil()};
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
-#ifdef HAVE_nanf
+#if defined(HAVE_nanf) &&                                                      \
+    !defined(_MSC_VER) /* MSVC provides invalid nan(), skip test */
   denil32 = {-nanf("8388607")};
-#ifdef FPTU_DENIL_FP32_MAS
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
-#else
-  EXPECT_NE(FPTU_DENIL_FP32_BIN, denil32.u);
-#endif
-#endif /* HAVE_nanf */
+#endif /* HAVE_nanf && !_MSC_VER */
   denil32 = {static_cast<float>(fptu_fp64_denil())};
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
 }
 
 TEST(Trivia, Apriory) {
-  ASSERT_EQ(sizeof(uint16_t) * CHAR_BIT, fptu_bits);
-  ASSERT_EQ(fptu_unit_size * CHAR_BIT / 2, fptu_bits);
   ASSERT_EQ(UINT16_MAX, (uint16_t)-1ll);
   ASSERT_EQ(UINT32_MAX, (uint32_t)-1ll);
-  ASSERT_GE(UINT16_MAX, fptu_limit);
-  ASSERT_EQ(UINT16_MAX, fptu_limit);
-  ASSERT_TRUE(FPT_IS_POWER2(fptu_bits));
-  ASSERT_TRUE(FPT_IS_POWER2(fptu_unit_size));
-  ASSERT_EQ(fptu_unit_size, 1 << fptu_unit_shift);
+  ASSERT_TRUE(FPT_IS_POWER2(fptu::unit_size));
+  ASSERT_EQ(fptu::unit_size, 1 << fptu_unit_shift);
 
-  ASSERT_EQ(fptu_bits, fptu_typeid_bits + fptu_ct_reserve_bits + fptu_co_bits);
-  ASSERT_EQ(fptu_bits, fptu_lx_bits + fptu_lt_bits);
+  ASSERT_LE(std::ptrdiff_t(fptu_max_cols), std::ptrdiff_t(fptu::max_fields));
+  ASSERT_LE(fptu_max_field_bytes, UINT16_MAX * fptu::unit_size);
+  ASSERT_LE(fptu_max_opaque_bytes, fptu_max_field_bytes - fptu::unit_size);
 
-  ASSERT_LE(fptu_max_cols, fptu_max_fields);
-  ASSERT_LE(fptu_max_field_bytes, fptu_limit * fptu_unit_size);
-  ASSERT_LE(fptu_max_opaque_bytes, fptu_max_field_bytes - fptu_unit_size);
+  ASSERT_GE(fptu_max_field_bytes, fptu::max_fields * fptu::unit_size);
+  ASSERT_GE(fptu_max_tuple_bytes, fptu_max_field_bytes + fptu::unit_size * 2);
+  ASSERT_GE(fptu_max_tuple_bytes, (fptu::max_fields + 1) * fptu::unit_size * 2);
+  ASSERT_LE(fptu::buffer_enough, fptu::buffer_limit);
 
-  ASSERT_LE(fptu_max_array_len, fptu_max_fields);
-  ASSERT_LE(fptu_max_array_len, fptu_max_field_bytes / fptu_unit_size - 1);
-  ASSERT_GE(fptu_max_field_bytes, fptu_max_fields * fptu_unit_size);
-  ASSERT_GE(fptu_max_tuple_bytes, fptu_max_field_bytes + fptu_unit_size * 2);
-  ASSERT_GE(fptu_max_tuple_bytes, (fptu_max_fields + 1) * fptu_unit_size * 2);
-  ASSERT_LE(fptu_buffer_enough, fptu_buffer_limit);
+#define HERE_TEST_ITEM(GENUS)                                                  \
+  ASSERT_FALSE(fptu::details::is_fixed_size(                                   \
+      fptu::details::make_tag(fptu::genus::GENUS, 0, false)));                 \
+  ASSERT_FALSE(fptu::details::is_fixed_size(                                   \
+      fptu::details::make_tag(fptu::genus::GENUS, 0, true)))
+  HERE_TEST_ITEM(text);
+  HERE_TEST_ITEM(varbin);
+  HERE_TEST_ITEM(nested);
+  HERE_TEST_ITEM(property);
+#undef HERE_TEST_ITEM
 
-  ASSERT_EQ(fptu_ty_mask, fptu_farray | fptu_nested);
-  ASSERT_GT(fptu_fr_mask, fptu_ty_mask);
-  ASSERT_LT(fptu_fr_mask, 1 << fptu_co_shift);
-  ASSERT_GT(fptu_limit, fptu_max_cols << fptu_co_shift);
+#define HERE_TEST_ITEM(N)                                                      \
+  ASSERT_TRUE(fptu::details::is_fixed_size(                                    \
+      fptu::details::make_tag(fptu::genus(N), 0, false)));                     \
+  ASSERT_TRUE(fptu::details::is_fixed_size(                                    \
+      fptu::details::make_tag(fptu::genus(N), 0, true)))
+  HERE_TEST_ITEM(4);
+  HERE_TEST_ITEM(5);
+  HERE_TEST_ITEM(6);
+  HERE_TEST_ITEM(7);
+  HERE_TEST_ITEM(8);
+  HERE_TEST_ITEM(9);
+  HERE_TEST_ITEM(10);
+  HERE_TEST_ITEM(11);
+  HERE_TEST_ITEM(12);
+  HERE_TEST_ITEM(13);
+  HERE_TEST_ITEM(14);
+  HERE_TEST_ITEM(15);
+  HERE_TEST_ITEM(16);
+  HERE_TEST_ITEM(17);
+  HERE_TEST_ITEM(18);
+  HERE_TEST_ITEM(19);
+  HERE_TEST_ITEM(20);
+  HERE_TEST_ITEM(21);
+  HERE_TEST_ITEM(22);
+  HERE_TEST_ITEM(23);
+  HERE_TEST_ITEM(24);
+  HERE_TEST_ITEM(25);
+  HERE_TEST_ITEM(26);
+  HERE_TEST_ITEM(27);
+  HERE_TEST_ITEM(28);
+  HERE_TEST_ITEM(29);
+  HERE_TEST_ITEM(30);
+#undef HERE_TEST_ITEM
+  ASSERT_EQ(31, int(fptu::genus::hole));
 
-  ASSERT_GT((size_t)fptu_ffilter, (size_t)fptu_ty_mask);
-  ASSERT_EQ(fptu_ffilter, fptu_ffilter & fptu_any);
+  ASSERT_EQ(0u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_uint16)));
+  ASSERT_EQ(0u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_16)));
 
-  ASSERT_EQ(0u, tag_elem_size(fptu_null));
-  ASSERT_EQ(0u, tag_elem_size(fptu_uint16));
-  ASSERT_EQ(0u, tag_elem_size(fptu_16));
+  ASSERT_EQ(1u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_int32)));
+  ASSERT_EQ(1u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_uint32)));
+  ASSERT_EQ(1u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_fp32)));
+  ASSERT_EQ(1u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_32)));
 
-  ASSERT_EQ(4u, tag_elem_size(fptu_int32));
-  ASSERT_EQ(4u, tag_elem_size(fptu_uint32));
-  ASSERT_EQ(4u, tag_elem_size(fptu_fp32));
-  ASSERT_EQ(4u, tag_elem_size(fptu_32));
+  ASSERT_EQ(2u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_int64)));
+  ASSERT_EQ(2u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_uint64)));
+  ASSERT_EQ(2u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_fp64)));
+  ASSERT_EQ(2u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_64)));
 
-  ASSERT_EQ(8u, tag_elem_size(fptu_int64));
-  ASSERT_EQ(8u, tag_elem_size(fptu_uint64));
-  ASSERT_EQ(8u, tag_elem_size(fptu_fp64));
-  ASSERT_EQ(8u, tag_elem_size(fptu_64));
+  ASSERT_EQ(4u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_128)));
+  ASSERT_EQ(5u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_160)));
+  ASSERT_EQ(2u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_datetime)));
+  ASSERT_EQ(8u, fptu::details::loose_units_dynamic(
+                    fptu::details::tag2genus(fptu_256)));
 
-  ASSERT_EQ(12u, tag_elem_size(fptu_96));
-  ASSERT_EQ(16u, tag_elem_size(fptu_128));
-  ASSERT_EQ(20u, tag_elem_size(fptu_160));
-  ASSERT_EQ(8u, tag_elem_size(fptu_datetime));
-  ASSERT_EQ(32u, tag_elem_size(fptu_256));
-
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_null)),
-            fptu_internal_map_t2u[fptu_null]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_uint16)),
-            fptu_internal_map_t2u[fptu_uint16]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_16)),
-            fptu_internal_map_t2u[fptu_16]);
-
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_int32)),
-            fptu_internal_map_t2u[fptu_int32]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_uint32)),
-            fptu_internal_map_t2u[fptu_uint32]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_fp32)),
-            fptu_internal_map_t2u[fptu_fp32]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_32)),
-            fptu_internal_map_t2u[fptu_32]);
-
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_int64)),
-            fptu_internal_map_t2u[fptu_int64]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_uint64)),
-            fptu_internal_map_t2u[fptu_uint64]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_fp64)),
-            fptu_internal_map_t2u[fptu_fp64]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_64)),
-            fptu_internal_map_t2u[fptu_64]);
-
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_96)),
-            fptu_internal_map_t2u[fptu_96]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_128)),
-            fptu_internal_map_t2u[fptu_128]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_160)),
-            fptu_internal_map_t2u[fptu_160]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_datetime)),
-            fptu_internal_map_t2u[fptu_datetime]);
-  ASSERT_EQ(bytes2units(tag_elem_size(fptu_256)),
-            fptu_internal_map_t2u[fptu_256]);
-
-  ASSERT_EQ(4u, sizeof(fptu_varlen));
-  ASSERT_EQ(4u, sizeof(fptu_field));
-  ASSERT_EQ(4u, sizeof(fptu_unit));
   ASSERT_EQ(sizeof(struct iovec), sizeof(fptu_ro));
 
   ASSERT_EQ(sizeof(fptu_rw), fptu_space(0, 0));
 }
 
 TEST(Trivia, ColType) {
-  uint_fast16_t tag;
-  tag = fptu::make_tag(0, fptu_null);
-  ASSERT_EQ(0u, tag);
-  ASSERT_GT(fptu_limit, tag);
+  fptu_tag_t tag;
+  tag = fptu::make_tag(0, fptu_bool);
+  ASSERT_EQ(2147745796u, tag);
   EXPECT_EQ(0u, fptu::get_colnum(tag));
-  EXPECT_EQ(fptu_null, fptu::get_type(tag));
+  EXPECT_EQ(fptu_bool, fptu::get_type(tag));
 
   tag = fptu::make_tag(42, fptu_int64);
   ASSERT_NE(0u, tag);
-  ASSERT_GT(fptu_limit, tag);
   EXPECT_EQ(42u, fptu::get_colnum(tag));
   EXPECT_EQ(fptu_int64, fptu::get_type(tag));
-
-  tag = fptu::make_tag(fptu_max_cols, fptu_array_cstr);
-  ASSERT_NE(0u, tag);
-  ASSERT_GT(fptu_limit, tag);
-  EXPECT_EQ(fptu_max_cols, fptu::get_colnum(tag));
-  EXPECT_EQ(fptu_cstr | fptu_farray, fptu::get_type(tag));
 }
 
 TEST(Trivia, cmp2int) {
-  EXPECT_EQ(0, fptu_cmp2int(41, 41));
-  EXPECT_EQ(1, fptu_cmp2int(42, 41));
-  EXPECT_EQ(-1, fptu_cmp2int(41, 42));
+  EXPECT_EQ(0, fptu::cmp2int(41, 41));
+  EXPECT_EQ(1, fptu::cmp2int(42, 41));
+  EXPECT_EQ(-1, fptu::cmp2int(41, 42));
 
-  EXPECT_EQ(0, fptu_cmp2int(-41, -41));
-  EXPECT_EQ(1, fptu_cmp2int(0, -41));
-  EXPECT_EQ(-1, fptu_cmp2int(-41, 0));
+  EXPECT_EQ(0, fptu::cmp2int(-41, -41));
+  EXPECT_EQ(1, fptu::cmp2int(0, -41));
+  EXPECT_EQ(-1, fptu::cmp2int(-41, 0));
 
-  EXPECT_EQ(1, fptu_cmp2int(42, -42));
-  EXPECT_EQ(-1, fptu_cmp2int(-42, 42));
+  EXPECT_EQ(1, fptu::cmp2int(42, -42));
+  EXPECT_EQ(-1, fptu::cmp2int(-42, 42));
 }
 
 TEST(Trivia, cmp2lge) {
-  EXPECT_EQ(fptu_eq, fptu_cmp2lge(41, 41));
-  EXPECT_EQ(fptu_gt, fptu_cmp2lge(42, 41));
-  EXPECT_EQ(fptu_lt, fptu_cmp2lge(41, 42));
+  EXPECT_EQ(fptu_eq, fptu::cmp2lge(41, 41));
+  EXPECT_EQ(fptu_gt, fptu::cmp2lge(42, 41));
+  EXPECT_EQ(fptu_lt, fptu::cmp2lge(41, 42));
 
-  EXPECT_EQ(fptu_eq, fptu_cmp2lge(-41, -41));
-  EXPECT_EQ(fptu_gt, fptu_cmp2lge(0, -41));
-  EXPECT_EQ(fptu_lt, fptu_cmp2lge(-41, 0));
+  EXPECT_EQ(fptu_eq, fptu::cmp2lge(-41, -41));
+  EXPECT_EQ(fptu_gt, fptu::cmp2lge(0, -41));
+  EXPECT_EQ(fptu_lt, fptu::cmp2lge(-41, 0));
 
-  EXPECT_EQ(fptu_gt, fptu_cmp2lge(42, -42));
-  EXPECT_EQ(fptu_lt, fptu_cmp2lge(-42, 42));
+  EXPECT_EQ(fptu_gt, fptu::cmp2lge(42, -42));
+  EXPECT_EQ(fptu_lt, fptu::cmp2lge(-42, 42));
 }
 
 TEST(Trivia, diff2lge) {
-  EXPECT_EQ(fptu_eq, fptu_diff2lge(0));
-  EXPECT_EQ(fptu_gt, fptu_diff2lge(1));
-  EXPECT_EQ(fptu_gt, fptu_diff2lge(INT_MAX));
-  EXPECT_EQ(fptu_gt, fptu_diff2lge(LONG_MAX));
-  EXPECT_EQ(fptu_gt, fptu_diff2lge(ULONG_MAX));
-  EXPECT_EQ(fptu_lt, fptu_diff2lge(-1));
-  EXPECT_EQ(fptu_lt, fptu_diff2lge(INT_MIN));
-  EXPECT_EQ(fptu_lt, fptu_diff2lge(LONG_MIN));
+  EXPECT_EQ(fptu_eq, fptu::diff2lge(0));
+  EXPECT_EQ(fptu_gt, fptu::diff2lge(1));
+  EXPECT_EQ(fptu_gt, fptu::diff2lge(INT_MAX));
+  EXPECT_EQ(fptu_gt, fptu::diff2lge(LONG_MAX));
+  EXPECT_EQ(fptu_gt, fptu::diff2lge(ULONG_MAX));
+  EXPECT_EQ(fptu_lt, fptu::diff2lge(-1));
+  EXPECT_EQ(fptu_lt, fptu::diff2lge(INT_MIN));
+  EXPECT_EQ(fptu_lt, fptu::diff2lge(LONG_MIN));
 }
 
 TEST(Trivia, iovec) {
@@ -259,7 +246,7 @@ TEST(Trivia, iovec) {
   ASSERT_EQ(serialized.units, serialized.sys.iov_base);
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 TEST(Trivia, time_ns2fractional) {
   const double scale = exp2(32) / 1e9;
@@ -273,7 +260,7 @@ TEST(Trivia, time_ns2fractional) {
       SCOPED_TRACE("ns " + std::to_string(ns) + ", factional " +
                    std::to_string(ns * scale));
       uint32_t probe = floor(ns * scale);
-      ASSERT_EQ(probe, fptu_time::ns2fractional(ns));
+      ASSERT_EQ(probe, fptu::datetime_t::ns2fractional(ns));
     }
   }
 }
@@ -288,7 +275,7 @@ TEST(Trivia, time_fractional2ns) {
       SCOPED_TRACE("fractional " + std::to_string(fractional) + ", ns " +
                    std::to_string(fractional * scale));
       uint32_t probe = floor(fractional * scale);
-      ASSERT_EQ(probe, fptu_time::fractional2ns(fractional));
+      ASSERT_EQ(probe, fptu::datetime_t::fractional2ns(fractional));
     }
   }
 }
@@ -305,7 +292,7 @@ TEST(Trivia, time_us2fractional) {
       SCOPED_TRACE("us " + std::to_string(us) + ", factional " +
                    std::to_string(us * scale));
       uint32_t probe = floor(us * scale);
-      ASSERT_EQ(probe, fptu_time::us2fractional(us));
+      ASSERT_EQ(probe, fptu::datetime_t::us2fractional(us));
     }
   }
 }
@@ -320,7 +307,7 @@ TEST(Trivia, time_fractional2us) {
       SCOPED_TRACE("fractional " + std::to_string(fractional) + ", us " +
                    std::to_string(fractional * scale));
       uint32_t probe = floor(fractional * scale);
-      ASSERT_EQ(probe, fptu_time::fractional2us(fractional));
+      ASSERT_EQ(probe, fptu::datetime_t::fractional2us(fractional));
     }
   }
 }
@@ -337,7 +324,7 @@ TEST(Trivia, time_ms2fractional) {
       SCOPED_TRACE("ms " + std::to_string(ms) + ", factional " +
                    std::to_string(ms * scale));
       uint32_t probe = floor(ms * scale);
-      ASSERT_EQ(probe, fptu_time::ms2fractional(ms));
+      ASSERT_EQ(probe, fptu::datetime_t::ms2fractional(ms));
     }
   }
 }
@@ -352,7 +339,7 @@ TEST(Trivia, time_fractional2ms) {
       SCOPED_TRACE("fractional " + std::to_string(fractional) + ", ms " +
                    std::to_string(fractional * scale));
       uint32_t probe = floor(fractional * scale);
-      ASSERT_EQ(probe, fptu_time::fractional2ms(fractional));
+      ASSERT_EQ(probe, fptu::datetime_t::fractional2ms(fractional));
     }
   }
 }
@@ -417,7 +404,7 @@ TEST(Trivia, time_grain) {
   }
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
