@@ -36,9 +36,13 @@
                                    is not guaranteed. Specify /EHsc */
 #endif
 #if defined(__KERNEL__) || !defined(__cplusplus) || __cplusplus < 201103L
+#include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #else
+#include <cassert>
 #include <cstddef>
+#include <cstdint>
 #endif
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -95,6 +99,10 @@
 #define __has_include(x) (0)
 #endif
 
+#ifndef __has_cpp_attribute
+#define __has_cpp_attribute(x) (0)
+#endif
+
 #if __has_feature(thread_sanitizer)
 #define __SANITIZE_THREAD__ 1
 #endif
@@ -103,11 +111,10 @@
 #define __SANITIZE_ADDRESS__ 1
 #endif
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901
-#if (defined(__GNUC__) && __GNUC__ >= 2) || defined(__clang__) ||              \
-    defined(_MSC_VER)
+#if __GNUC_PREREQ(2, 0) || defined(__clang__) || defined(_MSC_VER)
 #define __func__ __FUNCTION__
 #else
 #define __func__ "__func__"
@@ -134,20 +141,37 @@
 #endif
 #endif
 
-#if !defined(nullptr) && !defined(__cplusplus) ||                              \
-    (__cplusplus < 201103L && !defined(_MSC_VER))
-#define nullptr NULL
+#ifndef __fallthrough
+#if __has_cpp_attribute(fallthrough)
+#define __fallthrough [[fallthrough]]
+#elif __GNUC_PREREQ(8, 0) && defined(__cplusplus) && __cplusplus >= 201103L
+#define __fallthrough [[fallthrough]]
+#elif __GNUC_PREREQ(7, 0)
+#define __fallthrough __attribute__((fallthrough))
+#elif defined(__clang__) && defined(__cplusplus) && __cplusplus >= 201103L &&  \
+    __has_feature(cxx_attributes) && __has_warning("-Wimplicit-fallthrough")
+#define __fallthrough [[clang::fallthrough]]
+#else
+#define __fallthrough
 #endif
+#endif /* __fallthrough */
 
-#if !defined(constexpr) && !defined(__cplusplus) ||                            \
-    (__cplusplus < 201103L && !defined(_MSC_VER))
+#if !defined(nullptr) && (!defined(__cplusplus) || __cplusplus < 201103L)
+#define nullptr NULL
+#endif /* nullptr */
+
+#if !defined(noexcept) && (!defined(__cplusplus) || __cplusplus < 201103L)
+#define noexcept
+#endif /* noexcept */
+
+#if !defined(constexpr) && (!defined(__cplusplus) || __cplusplus < 201103L)
 #define constexpr
-#endif
+#endif /* constexpr */
 
 #if !defined(cxx14_constexpr)
 #if defined(__cplusplus) && __cplusplus >= 201402L &&                          \
     (!defined(_MSC_VER) || _MSC_VER >= 1910) &&                                \
-    (!defined(__GNUC__) || __GNUC__ >= 6)
+    (!defined(__GNUC__) || __GNUC__ >= 5)
 #define cxx14_constexpr constexpr
 #else
 #define cxx14_constexpr
@@ -159,18 +183,30 @@
     (!defined(_MSC_VER) || _MSC_VER >= 1915) &&                                \
     (!defined(__GNUC__) || __GNUC__ >= 7)
 #define cxx17_constexpr constexpr
+#define cxx17_noexcept noexcept
+#define if_constexpr if constexpr
 #else
 #define cxx17_constexpr
+#define cxx17_noexcept
+#define if_constexpr if
 #endif
 #endif /* cxx17_constexpr */
 
-#if __cplusplus >= 201402L
-#define constexpr_assert(foo) assert(foo)
+#if __cplusplus < 201402L
+#define constexpr_assert(foo)
 #else
-#define constexpr_assert(foo) __noop(foo)
-#endif /* constexpr_assert for C++14 */
+#define constexpr_assert(cond) assert(cond)
+#endif /* constexpr_assert */
 
-//----------------------------------------------------------------------------
+#ifndef NDEBUG_CONSTEXPR
+#ifdef NDEBUG
+#define NDEBUG_CONSTEXPR constexpr
+#else
+#define NDEBUG_CONSTEXPR
+#endif
+#endif /* NDEBUG_CONSTEXPR */
+
+//------------------------------------------------------------------------------
 
 #if defined(__GNUC__) || __has_attribute(format)
 #define __printf_args(format_index, first_arg)                                 \
@@ -337,7 +373,7 @@
 #endif
 #endif /* __maybe_unused */
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 #ifndef __dll_hidden
 #if defined(__GNUC__) || __has_attribute(visibility)
@@ -374,6 +410,14 @@
 #define __dll_import
 #endif
 #endif /* __dll_import */
+
+#ifndef __dll_visibility_default
+#if defined(__GNUC__) || __has_attribute(visibility)
+#define __dll_visibility_default __attribute__((visibility("default")))
+#else
+#define __dll_visibility_default
+#endif
+#endif /* __dll_visibility_default */
 
 //----------------------------------------------------------------------------
 
@@ -442,7 +486,7 @@ static __inline void __noop_consume_args(void *anchor, ...) { (void)anchor; }
 #endif
 #endif /* __align */
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 #if !defined(__typeof)
 #ifdef _MSC_VER
@@ -468,3 +512,34 @@ static __inline void __noop_consume_args(void *anchor, ...) { (void)anchor; }
 #define __MAKE_STR(x) #x
 #define STRINGIFY(x) __MAKE_STR(x)
 #endif /* STRINGIFY */
+
+//------------------------------------------------------------------------------
+
+#if defined(__cplusplus) && !defined(DEFINE_ENUM_FLAG_OPERATORS)
+// Define operator overloads to enable bit operations on enum values that are
+// used to define flags (based on Microsoft's DEFINE_ENUM_FLAG_OPERATORS).
+#define DEFINE_ENUM_FLAG_OPERATORS(ENUM)                                       \
+  extern "C++" {                                                               \
+  constexpr inline ENUM operator|(ENUM a, ENUM b) {                            \
+    return ENUM(std::size_t(a) | std::size_t(b));                              \
+  }                                                                            \
+  cxx14_constexpr inline ENUM &operator|=(ENUM &a, ENUM b) {                   \
+    return a = a | b;                                                          \
+  }                                                                            \
+  constexpr inline ENUM operator&(ENUM a, ENUM b) {                            \
+    return ENUM(std::size_t(a) & std::size_t(b));                              \
+  }                                                                            \
+  cxx14_constexpr inline ENUM &operator&=(ENUM &a, ENUM b) {                   \
+    return a = a & b;                                                          \
+  }                                                                            \
+  constexpr inline ENUM operator~(ENUM a) { return ENUM(~std::size_t(a)); }    \
+  constexpr inline ENUM operator^(ENUM a, ENUM b) {                            \
+    return ENUM(std::size_t(a) ^ std::size_t(b));                              \
+  }                                                                            \
+  cxx14_constexpr inline ENUM &operator^=(ENUM &a, ENUM b) {                   \
+    return a = a ^ b;                                                          \
+  }                                                                            \
+  }
+#else                                    /* __cplusplus */
+#define DEFINE_ENUM_FLAG_OPERATORS(ENUM) /* nope, C allows these operators */
+#endif                                   /* !__cplusplus */

@@ -69,6 +69,13 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPERCASE)
 
+if (MSVC)
+  if (MSVC_VERSION LESS 1915)
+    message(FATAL_ERROR At least \"Microsoft C/C++ Compiler\" version 19.15.26730 (Visual Studio 2017 15.8) is required.)
+  else()
+    add_compile_options("/Zc:__cplusplus")
+  endif()
+endif()
 list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_17 HAS_CXX17)
 list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_14 HAS_CXX14)
 
@@ -155,9 +162,12 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_library(erthink INTERFACE)
 
-set(erthink_HEADERS erthink_defs.h erthink_byteorder.h erthink_intrin.h erthink_arch.h
-  erthink_bswap.h erthink_rot.h erthink_carryadd.h erthink_mul.h erthink_clz.h
-  erthink_u2a.h erthink_d2a.h erthink_misc.h erthink.h)
+set(erthink_HEADERS
+  erthink_arch.h erthink_bswap.h erthink_byteorder.h erthink_carryadd.h
+  erthink_clz.h erthink_d2a.h erthink_defs.h erthink_dynamic_constexpr.h
+  erthink_intrin.h erthink_misc.h erthink_mul.h erthink_rot.h erthink_u2a.h
+  erthink_optimize4size.h erthink_optimize4speed.h erthink_short_alloc.h
+  erthink_ifunc.h erthink.h)
 
 target_compile_features(erthink INTERFACE "cxx_std_${ERTHINK_CXX_STANDARD}")
 
