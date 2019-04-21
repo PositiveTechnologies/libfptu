@@ -34,13 +34,13 @@
 #include "fast_positive/tuples.h"
 
 #include "fast_positive/details/bug.h"
-#include "fast_positive/details/exceptions.h"
 #include "fast_positive/details/ro.h"
 #include "fast_positive/details/rw.h"
 
 #include "fast_positive/details/erthink/erthink_optimize4size.h"
+#include "fast_positive/details/exceptions.h"
 
-namespace fptu {
+namespace fptu __dll_visibility_default {
 
 __cold void raise_bug(const bug_location &what_and_where) {
   throw bug(what_and_where);
@@ -197,4 +197,4 @@ __cold __noreturn void throw_tuple_bad(const details::tuple_rw *tuple,
   throw bad_tuple_rw(tuple, details);
 }
 
-} // namespace fptu
+} // namespace fptu__dll_visibility_default
