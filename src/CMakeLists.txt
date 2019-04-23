@@ -76,6 +76,8 @@ set(LIBFPTU_SOURCES
   ../fast_positive/details/erthink/erthink_optimize4size.h
   ../fast_positive/details/erthink/erthink_optimize4speed.h
   ../fast_positive/details/erthink/erthink_ifunc.h
+  ../fast_positive/details/erthink/erthink_misc.h
+  ../fast_positive/details/erthink/erthink.h
 
   ../fast_positive/details/1Hippeus/actor.h
   ../fast_positive/details/1Hippeus/buffer.h
@@ -333,14 +335,14 @@ set(options VERSION BUILD C_COMPILER CXX_COMPILER DEFINITIONS
   ENABLE_GCOV ENABLE_GPROF ENABLE_VALGRIND ENABLE_BACKTRACE BUILD_TARGET
   HAVE_BFD ENABLE_ASAN)
 foreach(option IN LISTS options)
-  if(DEFINED "FPTU_${option}")
-    set(value "${FPTU_${option}}")
-  elseif(DEFINED "${option}")
+  if(DEFINED FPTU_${option})
+    set(value ${FPTU_${option}})
+  elseif(DEFINED ${option})
     set(value "${${option}}")
   else()
     set(value "${CMAKE_${option}}")
   endif()
-  find_package_message(FPTU_${option} "FPTU_${option}: ${value}" "${value}")
+  message(STATUS "FPTU_${option}: ${value}")
 endforeach(option)
 
 if(NOT BUILD_SHARED_LIBS)

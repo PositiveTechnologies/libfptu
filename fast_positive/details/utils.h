@@ -42,7 +42,7 @@ public:
     constexpr_assert(end_ >= begin_);
   }
   constexpr range(const range &) noexcept = default;
-  constexpr range &operator=(const range &) noexcept = default;
+  range &operator=(const range &) noexcept = default;
   constexpr T *begin() const noexcept { return begin_; }
   constexpr T *end() const noexcept { return end_; }
   constexpr bool empty() const noexcept { return begin_ == end_; }

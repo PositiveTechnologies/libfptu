@@ -64,53 +64,6 @@ void tuple_rw::ensure() {
     throw_tuple_bad(this, trouble);
 }
 
-__hot const char *tuple_rw::audit(const tuple_rw *self) noexcept {
-  if (!self)
-    return "hollow tuple (nullptr)";
-
-  if (unlikely(self->head_ > self->pivot_))
-    return "tuple.head > tuple.pivot";
-
-  if (unlikely(self->pivot_ > self->tail_))
-    return "tuple.pivot > tuple.tail";
-
-  if (unlikely(self->tail_ > self->end_))
-    return "tuple.tail > tuple.end";
-
-  if (unlikely(self->pivot_ - self->head_ > fptu::max_fields))
-    return "tuple.loose_fields > fptu::max_fields";
-
-  if (unlikely(self->tail_ - self->head_ > UINT16_MAX))
-    return "tuple.size > max_bytes";
-
-  if (unlikely(self->junk_.holes_count > self->head_))
-    return "tuple.junk.holes_count > tuple.index_size";
-
-  if (unlikely(self->junk_.data_units > self->tail_ - self->pivot_))
-    return "tuple.junk.data_units > tuple.payload_size";
-
-  audit_flags flags = audit_flags::audit_adjacent_holes;
-  if (self->is_sorted())
-    flags |= audit_flags::audit_tuple_sorted_loose;
-  if (self->have_preplaced())
-    flags |= audit_flags::audit_tuple_have_preplaced;
-
-  audit_holes_info holes_info;
-  const char *trouble =
-      audit_tuple(self->schema_, self->begin_index(), self->pivot(),
-                  self->end_data_bytes(), flags, holes_info);
-  if (unlikely(trouble))
-    return trouble;
-
-  if (unlikely(self->junk_.holes_count != holes_info.holes_count))
-    return self->junk_.holes_count ? "tuple.holes_count mismatch"
-                                   : "tuple have holes";
-  if (unlikely(self->junk_.data_units != holes_info.holes_volume))
-    return self->junk_.data_units ? "tuple.junk_volume mismatch"
-                                  : "tuple have unaccounted holes";
-  return nullptr;
-}
-
 #define HERE_GENUS_CASE(RETURN_TYPE, NAME)                                     \
   template <>                                                                  \
   FPTU_API RETURN_TYPE crtp_getter<tuple_rw>::NAME(const token &ident) const { \
@@ -173,7 +126,10 @@ FPTU_API bool crtp_getter<tuple_rw>::is_present(const token &ident) const {
 
 //------------------------------------------------------------------------------
 
-bool tuple_rw::erase(const token &ident) { return remove(ident); }
+bool tuple_rw::erase(const token &ident) {
+  return likely(!ident.is_collection()) ? remove(ident)
+                                        : erase(collection(ident)) > 0;
+}
 
 bool tuple_rw::erase(const dynamic_iterator_rw &it) {
   if (it.exist()) {
@@ -406,6 +362,7 @@ void tuple_rw::reset() noexcept {
     std::memcpy(pivot(), schema_->preplaced_init_image(),
                 schema_->preplaced_bytes());
   }
+  debug_check();
 }
 
 const tuple_ro *tuple_rw::take_asis() const {
@@ -425,6 +382,8 @@ const tuple_ro *tuple_rw::take_asis() const {
       pivot_ - head_,
       (is_sorted() ? stretchy_value_tuple::sorted_flag : 0) |
           (have_preplaced() ? stretchy_value_tuple::preplaced_flag : 0));
+  assert(tuple_ro::audit(header, units2bytes(header->brutto_units), schema_,
+                         junk_.both == 0) == nullptr);
   return erthink::constexpr_pointer_cast<tuple_ro *>(header);
 }
 
@@ -434,6 +393,7 @@ std::pair<const tuple_ro *, bool> tuple_rw::take_optimized() {
 }
 
 tuple_rw::~tuple_rw() {
+  debug_check();
   if (likely(buffer_offset_)) {
     get_buffer()->detach();
   } else {
@@ -449,7 +409,7 @@ inline tuple_rw::tuple_rw(int buffer_offset, std::size_t buffer_size,
   if (unlikely(required_space > buffer_size || buffer_size > buffer_limit))
     throw_invalid_argument();
 
-  end_ = unsigned(buffer_size - sizeof(tuple_rw)) >>
+  end_ = unsigned(buffer_size - pure_tuple_size()) >>
          fptu::fundamentals::unit_shift;
   head_ = tail_ = pivot_ = unsigned(items_limit);
   if (schema_) {
@@ -457,6 +417,7 @@ inline tuple_rw::tuple_rw(int buffer_offset, std::size_t buffer_size,
     std::memcpy(pivot(), schema_->preplaced_init_image(),
                 schema_->preplaced_bytes());
   }
+  debug_check();
 }
 
 tuple_rw *tuple_rw::create_new(std::size_t items_limit, std::size_t data_bytes,
@@ -507,7 +468,7 @@ inline tuple_rw::tuple_rw(const audit_holes_info &holes_info,
   const std::size_t space_needed = tuple_rw::estimate_required_space(
       reserve_items, ro->payload_bytes(), schema);
 
-  end_ = unsigned(buffer_size - sizeof(tuple_rw)) >>
+  end_ = unsigned(buffer_size - pure_tuple_size()) >>
          fptu::fundamentals::unit_shift;
   pivot_ = unsigned(reserve_items);
   if (unlikely(buffer_size < space_needed)) {
@@ -516,9 +477,9 @@ inline tuple_rw::tuple_rw(const audit_holes_info &holes_info,
   }
 
   head_ = pivot_ - unsigned(have_items);
-  tail_ = pivot_ + unsigned(bytes2units(ro->payload_units()));
-  junk_.holes_count = holes_info.holes_count;
-  junk_.data_units = holes_info.holes_volume;
+  tail_ = pivot_ + unsigned(ro->payload_units());
+  junk_.count = holes_info.count;
+  junk_.volume = holes_info.volume;
 
   assert((void *)(&area_[head_]) == (void *)begin_index());
   assert((void *)(ro->flat + 1) == (void *)ro->begin_index());
@@ -533,6 +494,7 @@ inline tuple_rw::tuple_rw(const audit_holes_info &holes_info,
    * стороны, это позволит избежать одного копирования данных. Однако,
    * появление фрагментированных кортежей должно быть редкой ситуацией,
    * а автоматическая оптимизация может быть НЕ лучшей стратегией. */
+  debug_check();
 }
 
 tuple_rw *tuple_rw::create_from_ro(const audit_holes_info &holes_info,
@@ -569,6 +531,7 @@ tuple_rw *tuple_rw::fetch_legacy(const audit_holes_info &holes_info,
                                  const tuple_ro *ro, void *buffer_space,
                                  std::size_t buffer_size,
                                  std::size_t more_items) {
+  assert(ro->audit(nullptr, holes_info.count == 0) == nullptr);
   return new (buffer_space)
       tuple_rw(holes_info, ro, 0, buffer_size, more_items, nullptr);
 }

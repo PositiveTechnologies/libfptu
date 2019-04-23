@@ -1,6 +1,9 @@
 version: 2
 jobs:
   build:
+    environment:
+      - MALLOC_CHECK_: 7
+      - MALLOC_PERTURB_: 42
     docker:
       - image: circleci/buildpack-deps:19.04-browsers
     steps:

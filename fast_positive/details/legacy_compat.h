@@ -42,7 +42,9 @@ struct FPTU_API fptu_field : public fptu::details::field_loose {
   ~fptu_field() = delete;
 
   unsigned constexpr colnum() const { return base::id(); }
-  fptu_type constexpr legacy_type() const { return fptu_type(base::type()); }
+  fptu_type constexpr legacy_type() const {
+    return fptu_type(base::type() | fptu::details::tag_bits::loose_flag);
+  }
 };
 
 struct FPTU_API fptu_rw : public fptu::details::tuple_rw {
@@ -109,11 +111,6 @@ static __inline double fptu_fp64_denil(void) {
 }
 #define FPTU_DENIL_FP64 fptu_fp64_denil()
 
-#define FPTU_DENIL_UINT16 UINT16_MAX
-#define FPTU_DENIL_SINT32 INT32_MIN
-#define FPTU_DENIL_UINT32 UINT32_MAX
-#define FPTU_DENIL_SINT64 INT64_MIN
-#define FPTU_DENIL_UINT64 UINT64_MAX
 #define FPTU_DENIL_CSTR nullptr
 #define FPTU_DENIL_FIXBIN nullptr
 #define FPTU_DENIL_DATETIME fptu::datetime_t::from_fixedpoint_32dot32(0)

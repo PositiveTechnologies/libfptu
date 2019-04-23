@@ -36,7 +36,7 @@ static bool field_filter_none(const fptu_field *, void *context,
 }
 
 TEST(Iterate, Empty) {
-  char space_exactly_noitems[sizeof(fptu_rw)];
+  char space_exactly_noitems[fptu_rw::pure_tuple_size()];
   fptu_rw *pt =
       fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 0);
   ASSERT_NE(nullptr, pt);

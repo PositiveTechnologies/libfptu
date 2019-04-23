@@ -189,6 +189,8 @@ int fptu_erase(fptu_rw *pt, unsigned column,
        pf != end; pf = fptu_next(pf, end, column, type_or_filter)) {
     fptu_erase_field(pt, const_cast<fptu_field *>(pf));
     result++;
+    if (!is_filter(type_or_filter))
+      break;
   }
 
   return result;

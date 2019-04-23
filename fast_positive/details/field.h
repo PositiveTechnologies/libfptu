@@ -68,24 +68,24 @@ union stretchy_value_string {
                                          large.length_suffix * 2u);
   }
 
-  static std::size_t estimate_space(const string_view &value) {
-    const std::size_t string_length = value.size();
+  static std::size_t estimate_space(const std::size_t string_length) {
     if (unlikely(string_length > max_length))
       throw_value_too_long();
     return bytes2units(string_length +
                        ((string_length < tiny_threshold) ? 1u : 3u));
   }
+  static std::size_t estimate_space(const string_view &value) {
+    return estimate_space(value.size());
+  }
 
   void store(const string_view &value) {
     const std::size_t string_length = value.size();
+    // clear the last unit
+    flat[bytes2units(string_length + 3) - 1] = 0;
     tiny.length = uint8_t(string_length);
-    // clear tail for case len < 3
-    tiny.chars[0] = tiny.chars[1] = tiny.chars[2] = '\0';
     char *place = tiny.chars;
     if (string_length >= tiny_threshold) {
       assert(string_length <= max_length);
-      // clear the last unit
-      flat[bytes2units(string_length + 3) - 1] = 0;
       large.length_prefix = uint8_t(tiny_threshold + (string_length & 1u));
       large.length_suffix =
           uint16_t((string_length - large.length_prefix) >> 1);
@@ -93,6 +93,9 @@ union stretchy_value_string {
     }
     assert(string_length == length());
     std::memcpy(place, value.data(), string_length);
+    assert(brutto_units() == estimate_space(value));
+    assert(estimate_space(string_length + 1) > brutto_units() ||
+           begin()[string_length] == '\0');
   }
 
   constexpr const char *begin() const noexcept {
@@ -138,6 +141,7 @@ union stretchy_value_varbin {
     reserved14_tailbytes = value_length & 3;
     std::memcpy(flat + 1, value.data(), value_length);
     assert(value.length() == length());
+    assert(brutto_units == estimate_space(value));
   }
 
   constexpr const void *begin() const noexcept {
@@ -274,6 +278,7 @@ union stretchy_value_property {
     data_length = uint8_t(value_length);
     id = value.second;
     std::memcpy(this->bytes, value.first.data(), value_length);
+    assert(brutto_units() == estimate_space(value));
   }
 
   stretchy_value_property() = delete;
@@ -414,7 +419,7 @@ struct field_loose {
     genius_and_id = uint16_t(details::make_hole(units));
   }
   cxx14_constexpr const unit_t *hole_begin() const {
-    constexpr_assert(is_hole());
+    constexpr_assert(is_hole() && hole_get_units() > 0);
     return relative.payload()->flat;
   }
   const unit_t *hole_end() const { return hole_begin() + hole_get_units(); }
@@ -422,6 +427,14 @@ struct field_loose {
     return relative.have_payload()
                ? relative.payload()->stretchy.brutto_units(type())
                : 0;
+  }
+  void hole_purge() {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    loose_header = details::make_hole(0) << 16;
+#else
+    loose_header = uint16_t(details::make_hole(0));
+#endif
+    assert(hole_get_units() == 0 && !relative.have_payload());
   }
 
   field_loose() = delete;

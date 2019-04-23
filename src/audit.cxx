@@ -40,9 +40,17 @@
 #include <utility>
 #include <vector>
 
+#include "fast_positive/details/warnings_push_pt.h"
+
 namespace fptu {
 namespace details {
 namespace {
+
+#ifdef NDEBUG
+#define AUDIT_FAILURE(x) (x)
+#else
+#define AUDIT_FAILURE(x) (abort(), (x))
+#endif
 
 class auditor {
   using offset = uint16_t;
@@ -116,11 +124,11 @@ bool __maybe_unused auditor::check_map() const {
       assert(map_[i - 1].second < map_[i].first);
       if (map_[i - 1].first >= map_[i].first ||
           map_[i - 1].second >= map_[i].first)
-        return false;
+        return AUDIT_FAILURE(false);
     }
     assert(map_[i].first < map_[i].second);
     if (map_[i].first >= map_[i].second)
-      return false;
+      return AUDIT_FAILURE(false);
   }
   return true;
 }
@@ -172,7 +180,7 @@ bool auditor::map_insert(const offset begin, const offset end) {
   }
 
   assert(begin < here->second && here->first < end) /* paranoia */;
-  return false /* overlapped */;
+  return AUDIT_FAILURE(false) /* overlapped */;
 }
 
 const char *auditor::check_chunk(const unit_t *chunk_begin,
@@ -181,18 +189,18 @@ const char *auditor::check_chunk(const unit_t *chunk_begin,
                                  const unit_t *end_payload) {
   assert(chunk_units > 0);
   if (unlikely(chunk_begin < begin_payload))
-    return "chunk_begin < begin_payload";
+    return AUDIT_FAILURE("chunk_begin < begin_payload");
   if (unlikely(chunk_units > fptu::max_field_bytes))
-    return "chunk_units > fptu::max_field_bytes";
+    return AUDIT_FAILURE("chunk_units > fptu::max_field_bytes");
   if (unlikely(chunk_begin + chunk_units > end_payload))
-    return "chunk_end > end_payload";
+    return AUDIT_FAILURE("chunk_end > end_payload");
 
   const ptrdiff_t offset_begin = chunk_begin - begin_payload;
   const ptrdiff_t offset_end = offset_begin + chunk_units;
   assert(offset_begin >= 0 && offset_begin <= UINT16_MAX);
   assert(offset_end > offset_begin && offset_end <= UINT16_MAX + 1);
   if (unlikely(!map_insert(uint16_t(offset_begin), uint16_t(offset_end))))
-    return "chunk overlaps with field's payload or hole";
+    return AUDIT_FAILURE("chunk overlaps with field's payload or hole");
   return nullptr;
 }
 
@@ -208,18 +216,18 @@ const char *auditor::check_loose(const field_loose *loose,
     holes_count_ += 1;
     if (units == 0) {
       if (unlikely(loose->relative.have_payload()))
-        return "tuple.pure_hole.payload != null";
+        return AUDIT_FAILURE("tuple.pure_hole.payload != null");
       return nullptr;
     }
     if (!loose->relative.have_payload())
-      return "tuple.non_pure_hole.payload == null";
+      return AUDIT_FAILURE("tuple.non_pure_hole.payload == null");
     holes_volume_ += units;
     return check_chunk(loose->hole_begin(), units, begin_payload, end_payload);
   }
 
   if (is_fixed_size(type)) {
     if (!loose->relative.have_payload())
-      return "tuple.fixed_size_loose_field.payload == null";
+      return AUDIT_FAILURE("tuple.fixed_size_loose_field.payload == null");
     return check_chunk(loose->relative.payload()->flat,
                        loose_units_dynamic(type), begin_payload, end_payload);
   }
@@ -255,29 +263,29 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
   for (const field_loose *loose = index_end; --loose >= index_begin;) {
     trouble = validator.check_loose(loose, payload_begin, payload_end);
     if (unlikely(trouble))
-      return trouble;
+      return AUDIT_FAILURE(trouble);
   }
 
   if (unlikely(validator.holes_count() > UINT16_MAX / 2))
-    return "tool many holes";
+    return AUDIT_FAILURE("tool many holes");
   if (unlikely(validator.holes_volume() > UINT16_MAX))
-    return "tool large holes volume";
-  holes_info.holes_count = uint16_t(validator.holes_count());
-  holes_info.holes_volume = uint16_t(validator.holes_volume());
+    return AUDIT_FAILURE("tool large holes volume");
+  holes_info.count = uint16_t(validator.holes_count());
+  holes_info.volume = uint16_t(validator.holes_volume());
 
   const bool tuple_have_preplaced =
       (flags & audit_flags::audit_tuple_have_preplaced) != 0;
   if (tuple_have_preplaced && !schema)
-    return "schema is required for tuples with preplaced fields";
+    return AUDIT_FAILURE("schema is required for tuples with preplaced fields");
   if (tuple_have_preplaced != (preplaced_bytes != 0))
-    return "preplaced-fields presence mismatch with schema";
+    return AUDIT_FAILURE("preplaced-fields presence mismatch with schema");
 
   if (preplaced_bytes) {
     if (!validator.map_empty() &&
         unlikely(preplaced_bytes > validator.map_begin()))
-      return "schema.preplaced > tuple.loose_payload";
+      return AUDIT_FAILURE("schema.preplaced > tuple.loose_payload");
     if (unlikely(ptrdiff_t(preplaced_bytes) > payload_bytes))
-      return "schema.preplaced > tuple.whole_payload";
+      return AUDIT_FAILURE("schema.preplaced > tuple.whole_payload");
     for (const auto field_token : schema->tokens()) {
       if (!field_token.is_preplaced())
         continue;
@@ -298,31 +306,34 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
           payload->flat, payload->stretchy.brutto_units(field_token.type()),
           payload_begin, payload_end);
       if (unlikely(trouble))
-        return trouble;
+        return AUDIT_FAILURE(trouble);
     }
   }
 
   const auto map_begin = validator.map_begin();
   if (unlikely(tuple_have_preplaced != (map_begin > 0)))
-    return tuple_have_preplaced
-               ? "preplaced-flag is ON but corresponding fields absent"
-               : "preplaced-flag is OFF but tuple have hole for ones";
+    return AUDIT_FAILURE(
+        tuple_have_preplaced
+            ? "preplaced-flag is ON but corresponding fields absent"
+            : "preplaced-flag is OFF but tuple have hole for ones");
 
   if (unlikely(map_begin != preplaced_bytes))
-    return tuple_have_preplaced
-               ? "preplaced-flag is ON but corresponding fields absent"
-               : "preplaced-flag is OFF but tuple have hole for ones";
+    return AUDIT_FAILURE(
+        tuple_have_preplaced
+            ? "preplaced-flag is ON but corresponding fields absent"
+            : "preplaced-flag is OFF but tuple have hole for ones");
 
   const unit_t *const allocated_end = payload_begin + validator.map_end();
   if (unlikely(allocated_end != payload_end))
-    return (allocated_end > payload_end) ? "allocated beyond end of tuple"
-                                         : "lose space at the end of tuple";
+    return AUDIT_FAILURE((allocated_end > payload_end)
+                             ? "allocated beyond end of tuple"
+                             : "lose space at the end of tuple");
 
   if (unlikely(validator.map_have_holes()))
-    return "tuple have unaccounted holes";
+    return AUDIT_FAILURE("tuple have unaccounted holes");
 
   if (flags & audit_flags::audit_adjacent_holes) {
-    validator.map_reset(holes_info.holes_count);
+    validator.map_reset(holes_info.count);
     std::size_t count = 0;
     for (const field_loose *loose = index_end; --loose >= index_begin;) {
       if (!loose->is_hole() || loose->hole_get_units() == 0)
@@ -337,7 +348,7 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
       assert(inserted);
       (void)inserted;
       if (unlikely(++count != validator.map_items()))
-        return "tuple have unmerged adjacent holes";
+        return AUDIT_FAILURE("tuple have unmerged adjacent holes");
     }
   }
 
@@ -346,10 +357,109 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
                       [](const field_loose &a, const field_loose &b) {
                         return a.genius_and_id < b.genius_and_id;
                       }))
-    return "loose fields mis-sorted";
+    return AUDIT_FAILURE("loose fields mis-sorted");
 
+  return nullptr;
+}
+
+__always_inline const char *
+tuple_ro::inline_lite_checkup(const void *ptr, std::size_t bytes) noexcept {
+  if (unlikely(ptr == nullptr))
+    return AUDIT_FAILURE("hollow tuple (nullptr)");
+
+  if (unlikely(bytes < sizeof(unit_t)))
+    return AUDIT_FAILURE("hollow tuple (too short)");
+  if (unlikely(bytes > fptu::max_tuple_bytes))
+    return AUDIT_FAILURE("tuple too large");
+  if (unlikely(bytes % sizeof(unit_t)))
+    return AUDIT_FAILURE("odd tuple size");
+
+  const tuple_ro *const self = static_cast<const tuple_ro *>(ptr);
+  if (unlikely(bytes != self->size()))
+    return AUDIT_FAILURE("tuple size mismatch");
+
+  const std::size_t index_size = self->index_size();
+  if (unlikely(index_size > fptu::max_fields))
+    return AUDIT_FAILURE("index too large (many loose fields)");
+
+  if (self->pivot() > self->end_data_bytes())
+    return AUDIT_FAILURE("tuple.pivot > tuple.end");
+
+  return nullptr;
+}
+
+__hot const char *tuple_ro::lite_checkup(const void *ptr,
+                                         std::size_t bytes) noexcept {
+  return inline_lite_checkup(ptr, bytes);
+}
+
+__hot const char *tuple_ro::audit(const void *ptr, std::size_t bytes,
+                                  const fptu::schema *schema,
+                                  audit_holes_info &holes_info) {
+
+  const char *trouble = inline_lite_checkup(ptr, bytes);
+  if (unlikely(trouble != nullptr))
+    return trouble;
+
+  const tuple_ro *const self = static_cast<const tuple_ro *>(ptr);
+  audit_flags flags = audit_flags::audit_default;
+  if (self->is_sorted())
+    flags |= audit_flags::audit_tuple_sorted_loose;
+  if (self->have_preplaced())
+    flags |= audit_flags::audit_tuple_have_preplaced;
+
+  return audit_tuple(schema, self->begin_index(), self->pivot(),
+                     self->end_data_bytes(), flags, holes_info);
+}
+
+__hot const char *tuple_rw::audit(const tuple_rw *self) noexcept {
+  if (!self)
+    return AUDIT_FAILURE("hollow tuple (nullptr)");
+
+  if (unlikely(self->head_ > self->pivot_))
+    return AUDIT_FAILURE("tuple.head > tuple.pivot");
+
+  if (unlikely(self->pivot_ > self->tail_))
+    return AUDIT_FAILURE("tuple.pivot > tuple.tail");
+
+  if (unlikely(self->tail_ > self->end_))
+    return AUDIT_FAILURE("tuple.tail > tuple.end");
+
+  if (unlikely(self->pivot_ - self->head_ > fptu::max_fields))
+    return AUDIT_FAILURE("tuple.loose_fields > fptu::max_fields");
+
+  if (unlikely(self->tail_ - self->head_ > UINT16_MAX))
+    return AUDIT_FAILURE("tuple.size > max_bytes");
+
+  if (unlikely(self->junk_.count > self->pivot_ - self->head_))
+    return AUDIT_FAILURE("tuple.junk.holes_count > tuple.index_size");
+
+  if (unlikely(self->junk_.volume > self->tail_ - self->pivot_))
+    return AUDIT_FAILURE("tuple.junk.data_units > tuple.payload_size");
+
+  audit_flags flags = audit_flags::audit_adjacent_holes;
+  if (self->is_sorted())
+    flags |= audit_flags::audit_tuple_sorted_loose;
+  if (self->have_preplaced())
+    flags |= audit_flags::audit_tuple_have_preplaced;
+
+  audit_holes_info holes_info;
+  const char *trouble =
+      audit_tuple(self->schema_, self->begin_index(), self->pivot(),
+                  self->end_data_bytes(), flags, holes_info);
+  if (unlikely(trouble))
+    return trouble;
+
+  if (unlikely(self->junk_.count != holes_info.count))
+    return AUDIT_FAILURE(self->junk_.count ? "tuple.holes_count mismatch"
+                                           : "tuple have holes");
+  if (unlikely(self->junk_.volume != holes_info.volume))
+    return AUDIT_FAILURE(self->junk_.volume ? "tuple.junk_volume mismatch"
+                                            : "tuple have unaccounted holes");
   return nullptr;
 }
 
 } // namespace details
 } // namespace fptu
+
+#include "fast_positive/details/warnings_pop.h"

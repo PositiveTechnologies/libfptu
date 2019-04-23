@@ -37,36 +37,41 @@ class FPTU_API tuple_ro : private stretchy_value_tuple,
   friend class crtp_getter<tuple_ro>;
   template <typename> friend class crtp_setter;
   friend class tuple_rw;
+  static inline const char *inline_lite_checkup(const void *ptr,
+                                                std::size_t bytes) noexcept;
 
   tuple_ro() = delete;
   ~tuple_ro() = delete;
   tuple_ro &operator=(const tuple_ro &) = delete;
 
 public:
+  static const char *lite_checkup(const void *ptr, std::size_t bytes) noexcept;
   static const char *audit(const void *ptr, std::size_t bytes,
-                           const schema *schema, audit_holes_info &);
+                           const fptu::schema *schema, audit_holes_info &);
   static const char *audit(const void *ptr, std::size_t bytes,
-                           const schema *schema, bool holes_are_not_allowed) {
+                           const fptu::schema *schema,
+                           bool holes_are_not_allowed) {
     audit_holes_info holes_info;
     const char *trouble = audit(ptr, bytes, schema, holes_info);
     if (unlikely(trouble))
       return trouble;
     if (holes_are_not_allowed) {
-      if (unlikely(holes_info.holes_count))
+      if (unlikely(holes_info.count))
         return "tuple have holes";
-      assert(holes_info.holes_volume == 0);
+      assert(holes_info.volume == 0);
     }
     return nullptr;
   }
-  static const char *audit(const tuple_ro *self, const schema *schema,
+  static const char *audit(const tuple_ro *self, const fptu::schema *schema,
                            bool holes_are_not_allowed) {
     return audit(self, self ? self->size() : 0, schema, holes_are_not_allowed);
   }
   static const tuple_ro *make_from_buffer(const void *ptr, std::size_t bytes,
-                                          const schema *schema,
+                                          const fptu::schema *schema,
                                           bool skip_validation);
 
-  const char *audit(const schema *schema, bool holes_are_not_allowed) const {
+  const char *audit(const fptu::schema *schema,
+                    bool holes_are_not_allowed) const {
     return audit(this, schema, holes_are_not_allowed);
   }
   constexpr bool empty() const noexcept {

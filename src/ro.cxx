@@ -51,41 +51,6 @@
 namespace fptu {
 namespace details {
 
-__hot const char *tuple_ro::audit(const void *ptr, std::size_t bytes,
-                                  const schema *schema,
-                                  audit_holes_info &holes_info) {
-
-  if (unlikely(ptr == nullptr))
-    return "hollow tuple (nullptr)";
-
-  if (unlikely(bytes < sizeof(unit_t)))
-    return "hollow tuple (too short)";
-  if (unlikely(bytes > fptu::max_tuple_bytes))
-    return "tuple too large";
-  if (unlikely(bytes % sizeof(unit_t)))
-    return "odd tuple size";
-
-  const tuple_ro *const self = static_cast<const tuple_ro *>(ptr);
-  if (unlikely(bytes != self->size()))
-    return "tuple size mismatch";
-
-  const std::size_t index_size = self->index_size();
-  if (unlikely(index_size > fptu::max_fields))
-    return "index too large (many loose fields)";
-
-  if (self->pivot() > self->end_data_bytes())
-    return "tuple.pivot > tuple.end";
-
-  audit_flags flags = audit_flags::audit_default;
-  if (self->is_sorted())
-    flags |= audit_flags::audit_tuple_sorted_loose;
-  if (self->have_preplaced())
-    flags |= audit_flags::audit_tuple_have_preplaced;
-
-  return audit_tuple(schema, self->begin_index(), self->pivot(),
-                     self->end_data_bytes(), flags, holes_info);
-}
-
 const tuple_ro *tuple_ro::make_from_buffer(const void *ptr, std::size_t bytes,
                                            const schema *schema,
                                            bool skip_validation) {

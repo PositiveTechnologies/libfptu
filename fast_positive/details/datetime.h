@@ -239,6 +239,25 @@ public:
 
   operator const fptu_datetime_C &() const { return value_; }
   operator fptu_datetime_C &() { return value_; }
+
+  friend inline bool operator==(const datetime_t &lhs, const datetime_t &rhs) {
+    return lhs.value_.fixedpoint == rhs.value_.fixedpoint;
+  }
+  friend inline bool operator!=(const datetime_t &lhs, const datetime_t &rhs) {
+    return !operator==(lhs, rhs);
+  }
+  friend inline bool operator<(const datetime_t &lhs, const datetime_t &rhs) {
+    return lhs.value_.fixedpoint < rhs.value_.fixedpoint;
+  }
+  friend inline bool operator>(const datetime_t &lhs, const datetime_t &rhs) {
+    return operator<(rhs, lhs);
+  }
+  friend inline bool operator<=(const datetime_t &lhs, const datetime_t &rhs) {
+    return !operator>(lhs, rhs);
+  }
+  friend inline bool operator>=(const datetime_t &lhs, const datetime_t &rhs) {
+    return !operator<(lhs, rhs);
+  }
 };
 } // namespace fptu
 

@@ -127,7 +127,7 @@ TEST(Compare, EmptyNull) {
   null.sys.iov_len = 0;
   ASSERT_STREQ(nullptr, fptu_check_ro(null));
 
-  char space_exactly_noitems[sizeof(fptu_rw)];
+  char space_exactly_noitems[fptu_rw::pure_tuple_size()];
   fptu_rw *empty_rw =
       fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 0);
   ASSERT_NE(nullptr, empty_rw);

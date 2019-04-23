@@ -20,20 +20,9 @@
 #pragma once
 #include "fast_positive/details/api.h"
 
-#include "fast_positive/details/erthink/erthink_bswap.h"
-#include "fast_positive/details/erthink/erthink_byteorder.h"
+#include "fast_positive/details/erthink/erthink_endian.h"
 #include "fast_positive/details/fixed_binary.h"
 #include <stdint.h>
-
-#if defined(_MSC_VER) && !defined(htobe32)
-/* TODO: move to erthink_byteorder.h */
-#define htobe16(le16) _byteswap_ushort(le16)
-#define be16toh(be16) _byteswap_ushort(be16)
-#define htobe32(le32) _byteswap_ulong(le32)
-#define be32toh(be32) _byteswap_ulong(be32)
-#define htobe64(le64) _byteswap_uint64(le64)
-#define be64toh(be64) _byteswap_uint64(be64)
-#endif
 
 typedef union fptu_ip_address {
   uint8_t u8[16];
@@ -43,7 +32,7 @@ typedef union fptu_ip_address {
 #ifdef __cplusplus
   fptu_ip_address() = default;
   explicit constexpr fptu_ip_address(uint32_t ipv4_be)
-      : u32{0, 0, ipv4_be ? htobe32(0xffffu) : 0u, ipv4_be} {}
+      : u32{0, 0, ipv4_be ? erthink::h2be<uint32_t>(0xffffu) : 0u, ipv4_be} {}
 #endif /* __cplusplus */
 } fptu_ip_address_t;
 

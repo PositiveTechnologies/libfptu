@@ -225,9 +225,9 @@ public:
       : base(ptr, tag) {}
   constexpr tagged_pointer() noexcept : base() {}
 
-  constexpr void set(T *ptr, unsigned tag) noexcept { base::set(ptr, tag); }
-  constexpr void set_ptr(void *ptr) noexcept { base::set_ptr(ptr); }
-  constexpr void set_tag(unsigned tag) noexcept { base::set_tag(tag); }
+  void set(T *ptr, unsigned tag) noexcept { base::set(ptr, tag); }
+  void set_ptr(void *ptr) noexcept { base::set_ptr(ptr); }
+  void set_tag(unsigned tag) noexcept { base::set_tag(tag); }
   constexpr unsigned tag() const noexcept { return base::tag(); }
   constexpr T *get() const noexcept {
     return erthink::constexpr_pointer_cast<T *>(base::ptr());

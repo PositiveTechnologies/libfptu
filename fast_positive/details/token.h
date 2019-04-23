@@ -116,7 +116,7 @@ protected:
 
 public:
   using is_static_token = std::false_type;
-  static constexpr bool is_static_preplaced = false;
+  static constexpr bool is_static_preplaced() noexcept { return false; }
   constexpr tag_t tag() const noexcept { return tag_; }
   constexpr token_nonstatic_tag() noexcept : tag_(~UINT32_C(0)) {
     static_assert(sizeof(tag_) == 4, "WTF?");
@@ -134,7 +134,9 @@ public:
 template <tag_t TAG> struct token_static : public token_static_tag {
   static constexpr tag_t static_tag = TAG;
   static constexpr genus static_genus = tag2genus(TAG);
-  static constexpr bool is_static_preplaced = is_preplaced(TAG);
+  static constexpr bool is_static_preplaced() noexcept {
+    return is_preplaced(TAG);
+  }
   static constexpr ptrdiff_t static_offset =
       is_preplaced(TAG) ? tag2offset(TAG) : PTRDIFF_MAX;
   using traits = meta::genus_traits<static_genus>;

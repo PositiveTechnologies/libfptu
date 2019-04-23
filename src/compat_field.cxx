@@ -40,9 +40,11 @@ bool fptu_field_is_dead(const fptu_field *pf) noexcept {
 }
 
 fptu_type fptu_field_type(const fptu_field *pf) noexcept {
-  return pf->legacy_type();
+  return pf ? pf->legacy_type() : fptu_null;
 }
-int fptu_field_column(const fptu_field *pf) noexcept { return pf->colnum(); }
+int fptu_field_column(const fptu_field *pf) noexcept {
+  return pf ? pf->colnum() : -1;
+}
 
 void fptu_erase_field(fptu_rw *pt, fptu_field *pf) noexcept {
   if (pf && !pf->is_hole())
@@ -52,18 +54,19 @@ void fptu_erase_field(fptu_rw *pt, fptu_field *pf) noexcept {
 //------------------------------------------------------------------------------
 
 struct iovec fptu_field_as_iovec(const fptu_field *pf) noexcept {
-  const auto type = pf->type();
-  if (fptu::details::is_inplaced(type))
-    return fptu::iovec(&pf->inplaced, fptu::details::loose_units(type));
+  if (likely(pf)) {
+    const auto type = pf->type();
+    if (fptu::details::is_inplaced(type))
+      return fptu::iovec(&pf->inplaced, fptu::details::loose_units(type));
 
-  if (fptu::details::is_fixed_size(type))
-    return fptu::iovec(pf->relative.payload(),
-                       fptu::details::loose_units(type));
+    if (fptu::details::is_fixed_size(type))
+      return fptu::iovec(pf->relative.payload(),
+                         fptu::details::loose_units(type));
 
-  if (pf->relative.have_payload())
-    return fptu::iovec(pf->relative.payload(),
-                       pf->relative.payload()->stretchy.length(type));
-
+    if (pf->relative.have_payload())
+      return fptu::iovec(pf->relative.payload(),
+                         pf->relative.payload()->stretchy.length(type));
+  }
   return fptu::iovec(nullptr, 0);
 }
 
@@ -71,19 +74,19 @@ struct iovec fptu_field_as_iovec(const fptu_field *pf) noexcept {
   RETURN_TYPE fptu_field_##LEGACY(const fptu_field *pf) noexcept {             \
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
-      return THUNK_TYPE(fptu::details::get<fptu::genus::GENUS>(pf));           \
+      return THUNK_TYPE(fptu::details::get<fptu::genus::GENUS>(pf, false));    \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return DENIL;                                                            \
     }                                                                          \
   }
 
-FPTU_GET_IMPL(uint16, u16, u16, uint_fast16_t, uint_fast16_t, FPTU_DENIL_UINT16)
+FPTU_GET_IMPL(uint16, u16, u16, uint_fast16_t, uint_fast16_t, 0)
 FPTU_GET_IMPL(bool, bool, boolean, bool, bool, false)
-FPTU_GET_IMPL(int32, i32, i32, int_fast32_t, int_fast32_t, FPTU_DENIL_SINT32)
-FPTU_GET_IMPL(uint32, u32, u32, uint_fast32_t, uint_fast32_t, FPTU_DENIL_UINT32)
-FPTU_GET_IMPL(int64, i64, i64, int_fast64_t, int_fast64_t, FPTU_DENIL_SINT64)
-FPTU_GET_IMPL(uint64, u64, u64, uint_fast64_t, uint_fast64_t, FPTU_DENIL_UINT64)
+FPTU_GET_IMPL(int32, i32, i32, int_fast32_t, int_fast32_t, 0)
+FPTU_GET_IMPL(uint32, u32, u32, uint_fast32_t, uint_fast32_t, 0)
+FPTU_GET_IMPL(int64, i64, i64, int_fast64_t, int_fast64_t, 0)
+FPTU_GET_IMPL(uint64, u64, u64, uint_fast64_t, uint_fast64_t, 0)
 FPTU_GET_IMPL(fp64, f64, f64, double_t, double_t, FPTU_DENIL_FP64)
 FPTU_GET_IMPL(fp32, f32, f32, float_t, float_t, FPTU_DENIL_FP32)
 FPTU_GET_IMPL(datetime, datetime, t64, fptu_datetime_C, fptu_datetime_C,
@@ -100,7 +103,7 @@ FPTU_GET_IMPL(nested, nested, nested, fptu_ro, fptu::details::iovec_thunk,
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
       return erthink::constexpr_pointer_cast<const uint8_t *>(                 \
-          &fptu::details::get<fptu::genus::b##BITS>(pf));                      \
+          &fptu::details::get<fptu::genus::b##BITS>(pf, false));               \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return nullptr;                                                          \
@@ -113,25 +116,38 @@ FPTU_GET_IMPL(160)
 FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
+/* LY: crutch for returning legacy c-string */
+static const char *string_view_to_CAPI(const fptu::string_view &value,
+                                       const char *detend) noexcept {
+  static thread_local std::string holder;
+  if (value.empty())
+    return FPTU_DENIL_CSTR;
+
+  const char *const cstr_begin = value.data();
+  const char *const cstr_end = value.end();
+  if (cstr_end < detend) {
+    assert(*cstr_end == '\0');
+    return cstr_begin;
+  }
+
+  holder.assign(cstr_begin, cstr_end);
+  assert(holder.c_str()[holder.length()] == '\0');
+  return holder.c_str();
+}
+
 const char *fptu_field_cstr(const fptu_field *pf) noexcept {
   error_guard raii(nullptr);
-  try {
-    const fptu::string_view value(fptu::details::get<fptu::genus::text>(pf));
-    if (value.empty())
-      return "";
-
-    const char *const cstr_end = value.cend();
-    const auto payload = pf->relative.payload();
-    const char *const field_end = erthink::constexpr_pointer_cast<const char *>(
-        payload->flat + payload->stretchy.string.brutto_units());
-    if (cstr_end < field_end && *cstr_end == '\0')
-      return value.data();
-
-    /* LY: UNSAFE(!) crutch for returning legacy c-string */
-    static thread_local std::string holder = value;
-    return holder.c_str();
-  } catch (const std::exception &e) {
-    raii.feed(e);
-    return "";
+  if (likely(pf)) {
+    try {
+      const auto payload = pf->relative.payload();
+      const char *const field_end =
+          erthink::constexpr_pointer_cast<const char *>(
+              payload->flat + payload->stretchy.string.brutto_units());
+      return string_view_to_CAPI(
+          fptu::details::get<fptu::genus::text>(pf, false), field_end);
+    } catch (const std::exception &e) {
+      raii.feed(e);
+    }
   }
+  return FPTU_DENIL_CSTR;
 }

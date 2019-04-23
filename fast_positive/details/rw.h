@@ -121,18 +121,15 @@ protected:
     /* Счетчики мусорных 32-битных элементов, которые образовались при
      * удалении/обновлении. */
     struct {
-      uint16_t holes_count, data_units;
+      uint16_t count, volume;
     };
     uint32_t both;
     constexpr inline junk_counters() : both(0) {
       static_assert(sizeof(junk_counters) == 4, "WTF?");
     }
     constexpr inline junk_counters(const struct audit_holes_info &holes_info)
-        : holes_count(uint16_t(holes_info.holes_count)),
-          data_units(uint16_t(holes_info.holes_volume)) {
-      constexpr_assert(holes_info.holes_count <= UINT16_MAX);
-      constexpr_assert(holes_info.holes_volume <= UINT16_MAX);
-    }
+        : count(uint16_t(holes_info.count)),
+          volume(uint16_t(holes_info.volume)) {}
   };
   junk_counters junk_;
 
@@ -609,21 +606,32 @@ public: //----------------------------------------------------------------------
                     const iterator_rw<token> &end);
   std::size_t erase(const collection_rw<token> &collection);
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
-  bool erase(const TOKEN &ident) { return remove(ident); }
+  bool erase(const TOKEN &ident) {
+    return likely(!ident.is_collection()) ? remove(ident)
+                                          : erase(collection(ident)) > 0;
+  }
   bool erase(const token &ident);
   const char *audit() const noexcept { return audit(this); }
 
   std::size_t head_space() const noexcept { return head_; }
-  std::size_t tail_space() const noexcept { return units2bytes(end_ - tail_); }
-  std::size_t junk_space() const noexcept {
-    return units2bytes(junk_.data_units + junk_.holes_count);
+  std::size_t tail_space() const noexcept {
+    assert(end_ >= tail_);
+    return units2bytes(end_ - tail_);
   }
-  bool empty() const noexcept { return head_ + junk_.holes_count == tail_; }
-  std::size_t index_size() const noexcept { return pivot_ - head_; }
+  std::size_t junk_space() const noexcept {
+    return units2bytes(junk_.volume + junk_.count);
+  }
+  bool empty() const noexcept { return head_ + junk_.count == tail_; }
+  std::size_t index_size() const noexcept {
+    assert(pivot_ >= head_);
+    return pivot_ - head_;
+  }
   std::size_t loose_count() const noexcept {
-    return index_size() - junk_.holes_count;
+    assert(index_size() >= junk_.count);
+    return index_size() - junk_.count;
   }
   std::size_t brutto_size() const noexcept {
+    assert(end_ >= tail_);
     return units2bytes(tail_ - end_ + /* header */ 1);
   }
   std::size_t netto_size() const noexcept {
@@ -637,6 +645,10 @@ public: //----------------------------------------------------------------------
     return false;
   }
 
+  static constexpr std::size_t pure_tuple_size() {
+    return sizeof(tuple_rw) - sizeof(tuple_rw::area_);
+  }
+
   static size_t estimate_required_space(size_t items, std::size_t data_bytes,
                                         const fptu::schema *schema,
                                         bool dont_account_preplaced = false) {
@@ -647,7 +659,7 @@ public: //----------------------------------------------------------------------
                  items > max_fields))
       throw_tuple_too_large();
 
-    return sizeof(tuple_rw) + items * unit_size +
+    return pure_tuple_size() + items * unit_size +
            utils::ceil(dont_account_preplaced ? data_bytes
                                               : data_bytes + preplaced_bytes,
                        unit_size);

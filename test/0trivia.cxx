@@ -177,7 +177,7 @@ TEST(Trivia, Apriory) {
 
   ASSERT_EQ(sizeof(struct iovec), sizeof(fptu_ro));
 
-  ASSERT_EQ(sizeof(fptu_rw), fptu_space(0, 0));
+  ASSERT_EQ(fptu_rw::pure_tuple_size(), fptu_space(0, 0));
 }
 
 TEST(Trivia, ColType) {

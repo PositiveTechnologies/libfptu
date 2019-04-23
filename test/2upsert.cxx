@@ -27,11 +27,45 @@
                                    thread-safe */
 #endif                          /* _MSC_VER (warnings) */
 
+static const uint8_t pattern[256] = {
+    /* clang-format off */
+    177, 85,  188, 146, 222, 148, 10,  7,   241, 57,  199, 43,  106, 240, 124,
+    237, 220, 230, 197, 76,  116, 153, 205, 221, 28,  2,   31,  233, 58,  60,
+    159, 228, 109, 20,  66,  214, 111, 15,  18,  44,  208, 72,  249, 210, 113,
+    212, 165, 1,   225, 174, 164, 204, 45,  130, 82,  80,  99,  138, 48,  167,
+    78,  14,  149, 207, 103, 178, 223, 25,  163, 118, 139, 122, 37,  119, 182,
+    26,  4,   236, 96,  64,  196, 75,  29,  95,  252, 33,  185, 87,  110, 202,
+    200, 125, 93,  55,  84,  105, 89,  215, 161, 211, 154, 86,  39,  145, 77,
+    190, 147, 136, 108, 132, 107, 172, 229, 83,  187, 226, 160, 155, 242, 133,
+    23,  8,   6,   151, 184, 195, 17,  16,  140, 191, 131, 156, 61,  239, 127,
+    181, 94,  176, 27,  81,  235, 141, 69,  47,  170, 74,  168, 88,  56,  193,
+    68,  209, 104, 143, 52,  53,  46,  115, 158, 100, 243, 213, 247, 34,  62,
+    238, 203, 232, 92,  49,  54,  42,  245, 171, 227, 123, 24,  186, 63,  112,
+    135, 183, 254, 5,   198, 13,  216, 73,  219, 173, 255, 121, 79,  137, 150,
+    12,  162, 41,  206, 217, 231, 120, 59,  128, 101, 51,  201, 253, 35,  194,
+    166, 70,  71,  11,  189, 50,  234, 218, 30,  0,   134, 32,  152, 90,  19,
+    224, 3,   250, 98,  169, 102, 38,  142, 91,  117, 180, 175, 246, 9,   129,
+    114, 244, 67,  157, 21,  144, 126, 40,  179, 36,  192, 248, 22,  65,  251,
+    97
+    /* clang-format on */
+};
+
+struct iovec opaque_iov(unsigned col, unsigned n, unsigned salt) {
+  struct iovec value;
+  value.iov_base = (void *)(pattern + (n * salt) % 223);
+  value.iov_len = 4 + ((n + col) & 3) * 4;
+  return value;
+}
+
 TEST(Upsert, InvalidColumn) {
-  char space_exactly_noitems[sizeof(fptu_rw)];
+  char space_exactly_noitems[fptu_rw::pure_tuple_size()];
   fptu_rw *pt =
       fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 0);
   ASSERT_NE(nullptr, pt);
+  ASSERT_STREQ(nullptr, fptu::check(pt));
+  ASSERT_EQ(0u, fptu_space4items(pt));
+  ASSERT_EQ(0u, fptu_space4data(pt));
+  ASSERT_EQ(0u, fptu_junkspace(pt));
   ASSERT_STREQ(nullptr, fptu::check(pt));
 
   // column is a stub, expect EINVAL
@@ -112,7 +146,7 @@ TEST(Upsert, InvalidColumn) {
 }
 
 TEST(Upsert, ZeroSpace) {
-  char space_exactly_noitems[sizeof(fptu_rw)];
+  char space_exactly_noitems[fptu_rw::pure_tuple_size()];
   fptu_rw *pt =
       fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 0);
   ASSERT_NE(nullptr, pt);
@@ -194,29 +228,6 @@ TEST(Upsert, ZeroSpace) {
   EXPECT_EQ(0u, fptu_space4data(pt));
   EXPECT_EQ(0u, fptu_junkspace(pt));
 }
-
-static const uint8_t pattern[256] = {
-    /* clang-format off */
-    177, 85,  188, 146, 222, 148, 10,  7,   241, 57,  199, 43,  106, 240, 124,
-    237, 220, 230, 197, 76,  116, 153, 205, 221, 28,  2,   31,  233, 58,  60,
-    159, 228, 109, 20,  66,  214, 111, 15,  18,  44,  208, 72,  249, 210, 113,
-    212, 165, 1,   225, 174, 164, 204, 45,  130, 82,  80,  99,  138, 48,  167,
-    78,  14,  149, 207, 103, 178, 223, 25,  163, 118, 139, 122, 37,  119, 182,
-    26,  4,   236, 96,  64,  196, 75,  29,  95,  252, 33,  185, 87,  110, 202,
-    200, 125, 93,  55,  84,  105, 89,  215, 161, 211, 154, 86,  39,  145, 77,
-    190, 147, 136, 108, 132, 107, 172, 229, 83,  187, 226, 160, 155, 242, 133,
-    23,  8,   6,   151, 184, 195, 17,  16,  140, 191, 131, 156, 61,  239, 127,
-    181, 94,  176, 27,  81,  235, 141, 69,  47,  170, 74,  168, 88,  56,  193,
-    68,  209, 104, 143, 52,  53,  46,  115, 158, 100, 243, 213, 247, 34,  62,
-    238, 203, 232, 92,  49,  54,  42,  245, 171, 227, 123, 24,  186, 63,  112,
-    135, 183, 254, 5,   198, 13,  216, 73,  219, 173, 255, 121, 79,  137, 150,
-    12,  162, 41,  206, 217, 231, 120, 59,  128, 101, 51,  201, 253, 35,  194,
-    166, 70,  71,  11,  189, 50,  234, 218, 30,  0,   134, 32,  152, 90,  19,
-    224, 3,   250, 98,  169, 102, 38,  142, 91,  117, 180, 175, 246, 9,   129,
-    114, 244, 67,  157, 21,  144, 126, 40,  179, 36,  192, 248, 22,  65,  251,
-    97
-    /* clang-format on */
-};
 
 TEST(Upsert, Base) {
   const unsigned data = 34 * 4;
@@ -356,7 +367,8 @@ TEST(Upsert, Base) {
   EXPECT_EQ(fptu_eq, fptu_cmp_96(ro, fptu_max_cols / 2, _96));
   EXPECT_EQ(fptu_eq, fptu_cmp_128(ro, 257, _128));
   EXPECT_EQ(fptu_eq, fptu_cmp_160(ro, 7, _160));
-  EXPECT_EQ(now.fixedpoint, fptu_get_datetime(ro, 8, nullptr).fixedpoint);
+  EXPECT_EQ(now.fixedpoint_32dot32(),
+            fptu_get_datetime(ro, 8, nullptr).fixedpoint);
   EXPECT_EQ(fptu_eq, fptu_cmp_256(ro, fptu_max_cols - 2, _256));
 
   EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 0, 42));
@@ -368,13 +380,6 @@ TEST(Upsert, Base) {
   EXPECT_EQ(0u, fptu_junkspace(pt));
   ASSERT_STREQ(nullptr, fptu::check(pt));
   fptu_destroy(pt);
-}
-
-struct iovec opaque_iov(unsigned col, unsigned n, unsigned salt) {
-  struct iovec value;
-  value.iov_base = (void *)(pattern + (n * salt) % 223);
-  value.iov_len = 4 + ((n + col) & 3) * 4;
-  return value;
 }
 
 TEST(Upsert, Overwrite) {
@@ -389,7 +394,7 @@ TEST(Upsert, Overwrite) {
   EXPECT_EQ(FPTU_OK, fptu_upsert_opaque_iov(pt, 0, opaque_iov(0, n, 23)));
   EXPECT_EQ(FPTU_OK, fptu_upsert_opaque_iov(pt, 1, opaque_iov(1, n, 37)));
   EXPECT_EQ(FPTU_OK, fptu_upsert_opaque_iov(pt, 2, opaque_iov(2, n, 41)));
-  EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 3, n * m));
+  EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 3, uint16_t(n * m)));
   EXPECT_EQ(FPTU_OK, fptu_upsert_uint32(pt, 4, n * m * m));
   EXPECT_EQ(FPTU_OK, fptu_upsert_uint64(pt, 5, n * m * m * m));
   ASSERT_STREQ(nullptr, fptu::check(pt));
@@ -769,7 +774,8 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(bytes_limit - bytes_used, fptu_space4data(pt));
   ro = fptu_take_noshrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(ro));
-  EXPECT_EQ(now1.fixedpoint, fptu_get_datetime(ro, 0, nullptr).fixedpoint);
+  EXPECT_EQ(now1.fixedpoint_32dot32(),
+            fptu_get_datetime(ro, 0, nullptr).fixedpoint);
   // insert the second copy of field(0, datetime)
   EXPECT_EQ(FPTU_OK, fptu_insert_datetime(pt, 0, now2));
   bytes_used += 8;
@@ -778,7 +784,8 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(bytes_limit - bytes_used, fptu_space4data(pt));
   ro = fptu_take_noshrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(ro));
-  EXPECT_EQ(now2.fixedpoint, fptu_get_datetime(ro, 0, nullptr).fixedpoint);
+  EXPECT_EQ(now2.fixedpoint_32dot32(),
+            fptu_get_datetime(ro, 0, nullptr).fixedpoint);
   EXPECT_EQ(0u, fptu_junkspace(pt));
 
   // insert the first copy of field(0, _256)
@@ -872,7 +879,8 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(fptu_eq, fptu_cmp_96(ro, 0, _96 + 43));
   EXPECT_EQ(fptu_eq, fptu_cmp_128(ro, 0, _128 + 43));
   EXPECT_EQ(fptu_eq, fptu_cmp_160(ro, 0, _160 + 43));
-  EXPECT_EQ(now2.fixedpoint, fptu_get_datetime(ro, 0, nullptr).fixedpoint);
+  EXPECT_EQ(now2.fixedpoint_32dot32(),
+            fptu_get_datetime(ro, 0, nullptr).fixedpoint);
   EXPECT_EQ(fptu_eq, fptu_cmp_256(ro, 0, _256 + 43));
 
   EXPECT_EQ(0u, fptu_space4items(pt));
@@ -963,7 +971,8 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(fptu_eq, fptu_cmp_96(ro, 0, _96 - 42));
   EXPECT_EQ(fptu_eq, fptu_cmp_128(ro, 0, _128 - 42));
   EXPECT_EQ(fptu_eq, fptu_cmp_160(ro, 0, _160 - 42));
-  EXPECT_EQ(now3.fixedpoint, fptu_get_datetime(ro, 0, nullptr).fixedpoint);
+  EXPECT_EQ(now3.fixedpoint_32dot32(),
+            fptu_get_datetime(ro, 0, nullptr).fixedpoint);
   EXPECT_EQ(fptu_eq, fptu_cmp_256(ro, 0, _256 - 42));
 
   //------------------------------------------------------------------
@@ -1046,7 +1055,8 @@ TEST(Upsert, InsertUpdate) {
   EXPECT_EQ(fptu_eq, fptu_cmp_96(ro, 0, _96));
   EXPECT_EQ(fptu_eq, fptu_cmp_128(ro, 0, _128));
   EXPECT_EQ(fptu_eq, fptu_cmp_160(ro, 0, _160));
-  EXPECT_EQ(now1.fixedpoint, fptu_get_datetime(ro, 0, nullptr).fixedpoint);
+  EXPECT_EQ(now1.fixedpoint_32dot32(),
+            fptu_get_datetime(ro, 0, nullptr).fixedpoint);
   EXPECT_EQ(fptu_eq, fptu_cmp_256(ro, 0, _256));
 
   //------------------------------------------------------------------

@@ -141,39 +141,4 @@ template <typename TYPE>
 using onstack_short_allocator =
     erthink::short_alloc<TYPE, onstack_allocation_arena>;
 
-/* Здесь условный собирательный класс кортежа */
-class tuple {
-  /* Вспомогательный прокси-класс, похож на итератор */
-  class accessor;
-
-  // работа с простыми полями (не-коллекциями)
-  variant_value get(const token &) const;
-  // TYPE get_TYPE(const token &) const;
-
-  // set(token, mode = {always, if_null, if_non_null}, varian_value)
-  // set<type>(token, mode = {always, if_null, if_non_null}, typed_value)
-
-  // для коллекций
-  // foreach(accessor: this->collection(token))
-  //   varian_value get(accessor)
-  //   typed_value get<type>(accessor)
-  //   set(accessor, varian_value)
-  //   set<type>(accessor, typed_value)
-  //   erase(accessor)
-  // accessor = append(token, varian_value);
-  // accessor = append<type>(token, typed_value);
-  // erase_all(token)
-
-  // для inlay
-  // foreach(accessor: this->inlay(token))
-  //   varian_value get(accessor, token)
-  //   typed_value get<type>(accessor, token)
-  //   set(accessor, token, mode = {always, if_null, if_non_null}, varian_value)
-  //   set<type>(accessor, token, mode = {always, if_null, if_non_null},
-  //   typed_value) erase(accessor)
-  // accessor = append(token, varian_value);
-  // accessor = append<type>(token, typed_value);
-  // erase_all(token)
-};
-
 } // namespace fptu

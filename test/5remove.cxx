@@ -138,10 +138,10 @@ TEST(Remove, Serie) {
   for (unsigned n = 1; n < 11; ++n) {
     ASSERT_STREQ(nullptr, fptu::check(pt));
     for (unsigned i = 0; i < n; ++i) {
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0, i));
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 0, i));
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 1, i));
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 1, i));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0, uint16_t(i)));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 0, uint16_t(i)));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 1, uint16_t(i)));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 1, uint16_t(i)));
     }
     ASSERT_STREQ(nullptr, fptu::check(pt));
     EXPECT_EQ(n * 4, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
@@ -194,13 +194,13 @@ TEST(Remove, Shuffle) {
           default:
             assert(false);
           case 0:
-            EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, i, i));
+            EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, i, uint16_t(i)));
             break;
           case 1:
-            EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, i, i));
+            EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, i, uint16_t(i)));
             break;
           case 2:
-            EXPECT_EQ(FPTU_OK, fptu_insert_uint64(pt, i, i));
+            EXPECT_EQ(FPTU_OK, fptu_insert_uint64(pt, i, uint16_t(i)));
             break;
           }
           created_count++;

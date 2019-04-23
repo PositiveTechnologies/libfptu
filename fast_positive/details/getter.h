@@ -70,27 +70,31 @@ template <genus GENUS, typename erthink::enable_if_t<
                            meta::genus_traits<GENUS>::physique !=
                            meta::physique_kind::stretchy> * = nullptr>
 inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
-get(const field_loose *loose) {
+get(const field_loose *loose, const bool quietabsence) {
   if (likely(loose)) {
     if (unlikely(loose->type() != GENUS))
       throw_type_mismatch();
     return meta::genus_traits<GENUS>::read(loose);
   }
-  return meta::genus_traits<GENUS>::empty();
+  if (likely(quietabsence))
+    return meta::genus_traits<GENUS>::empty();
+  throw_field_absent();
 }
 
 template <genus GENUS, typename erthink::enable_if_t<
                            meta::genus_traits<GENUS>::physique ==
                            meta::physique_kind::stretchy> * = nullptr>
 inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
-get(const field_loose *loose) {
+get(const field_loose *loose, const bool quietabsence) {
   if (likely(loose)) {
     if (unlikely(loose->type() != GENUS))
       throw_type_mismatch();
     if (likely(loose->relative.have_payload()))
       return meta::genus_traits<GENUS>::read(loose->relative.payload());
   }
-  return meta::genus_traits<GENUS>::empty();
+  if (likely(quietabsence))
+    return meta::genus_traits<GENUS>::empty();
+  throw_field_absent();
 }
 
 template <typename TOKEN> class accessor_ro {

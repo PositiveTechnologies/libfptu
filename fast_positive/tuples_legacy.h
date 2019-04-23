@@ -200,6 +200,7 @@ enum fptu_bits {
  * а значения начиная с fptu_flag_filter используются как маски для
  * поиска/фильтрации полей (и видимо будут выделены в отдельный enum). */
 enum fptu_type : unsigned {
+  fptu_null = ~0u,
   // fixed length, without ex-data (descriptor only)
   fptu_uint16 = fptu::details::make_tag(fptu::genus::u16, 0, true),
   fptu_bool = fptu::details::make_tag(fptu::genus::boolean, 0, true),
@@ -263,13 +264,18 @@ DEFINE_ENUM_FLAG_OPERATORS(fptu_filter)
 
 #ifdef __cplusplus
 static inline constexpr fptu_filter fptu_filter_mask(fptu_type type) {
-  constexpr_assert(type < 31);
-  return fptu_filter(UINT32_C(1) << type);
+  constexpr_assert((type & fptu::details::tag_bits::loose_flag) != 0);
+  static_assert(UINT32_C(0x80000000) ==
+                    uint32_t(fptu::details::tag_bits::loose_flag),
+                "WTF?");
+  constexpr_assert(uint32_t(fptu::details::tag2genus(type)) ==
+                   (uint32_t(type) & 31));
+  return fptu_filter(UINT32_C(1) << fptu::details::tag2genus(type));
 }
 #else
 static __inline fptu_filter fptu_filter_mask(fptu_type type) {
-  assert(type < 31);
-  return (fptu_filter)(UINT32_C(1) << type);
+  assert((type & UINT32_C(0x80000000)) != 0);
+  return (fptu_filter)(UINT32_C(1) << (type & 31));
 }
 #endif
 

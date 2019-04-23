@@ -77,7 +77,11 @@ const fptu_field *fptu_end_ro(fptu_ro ro) noexcept {
 
 const fptu_field *fptu_lookup_ro(fptu_ro ro, unsigned column,
                                  fptu_type_or_filter type_or_filter) noexcept {
-  return fptu_first(fptu_begin_ro(ro), fptu_end_ro(ro), column, type_or_filter);
+  const auto begin = fptu_begin_ro(ro);
+  const auto end = fptu_end_ro(ro);
+  const auto pf =
+      const_cast<fptu_field *>(fptu_first(begin, end, column, type_or_filter));
+  return (pf != end) ? pf : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -95,12 +99,12 @@ const fptu_field *fptu_lookup_ro(fptu_ro ro, unsigned column,
     }                                                                          \
   }
 
-FPTU_GET_IMPL(uint16, u16, u16, uint_fast16_t, uint_fast16_t, FPTU_DENIL_UINT16)
+FPTU_GET_IMPL(uint16, u16, u16, uint_fast16_t, uint_fast16_t, 0)
 FPTU_GET_IMPL(bool, bool, boolean, bool, bool, false)
-FPTU_GET_IMPL(int32, i32, i32, int_fast32_t, int_fast32_t, FPTU_DENIL_SINT32)
-FPTU_GET_IMPL(uint32, u32, u32, uint_fast32_t, uint_fast32_t, FPTU_DENIL_UINT32)
-FPTU_GET_IMPL(int64, i64, i64, int_fast64_t, int_fast64_t, FPTU_DENIL_SINT64)
-FPTU_GET_IMPL(uint64, u64, u64, uint_fast64_t, uint_fast64_t, FPTU_DENIL_UINT64)
+FPTU_GET_IMPL(int32, i32, i32, int_fast32_t, int_fast32_t, 0)
+FPTU_GET_IMPL(uint32, u32, u32, uint_fast32_t, uint_fast32_t, 0)
+FPTU_GET_IMPL(int64, i64, i64, int_fast64_t, int_fast64_t, 0)
+FPTU_GET_IMPL(uint64, u64, u64, uint_fast64_t, uint_fast64_t, 0)
 FPTU_GET_IMPL(fp64, f64, f64, double_t, double_t, FPTU_DENIL_FP64)
 FPTU_GET_IMPL(fp32, f32, f32, float_t, float_t, FPTU_DENIL_FP32)
 FPTU_GET_IMPL(datetime, datetime, t64, fptu_datetime_C, fptu_datetime_C,
@@ -133,27 +137,13 @@ FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
 const char *fptu_get_cstr(fptu_ro ro, unsigned column, int *error) noexcept {
-  error_guard raii(error);
-  try {
-    const fptu::token id(fptu::genus::text, column, false);
-    const fptu::string_view value(impl(ro)->get_string(id));
-    if (value.empty())
-      return "";
-
-    const char *const cstr_end = value.cend();
-    const char *const tuple_end =
-        erthink::constexpr_pointer_cast<const char *>(ro.sys.iov_base) +
-        ro.sys.iov_len;
-    if (cstr_end < tuple_end && *cstr_end == '\0')
-      return value.data();
-
-    /* LY: UNSAFE(!) crutch for returning legacy c-string */
-    static thread_local std::string holder = value;
-    return holder.c_str();
-  } catch (const std::exception &e) {
-    raii.feed(e);
-    return "";
-  }
+  const fptu_field *pf = fptu::lookup(ro, column, fptu_cstr);
+  if (pf)
+    return fptu_field_cstr(pf);
+  fptu_set_error(FPTU_ENOFIELD, "fptu: no such field");
+  if (error)
+    *error = FPTU_ENOFIELD;
+  return "";
 }
 
 //------------------------------------------------------------------------------

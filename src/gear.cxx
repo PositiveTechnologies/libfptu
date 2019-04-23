@@ -48,6 +48,7 @@
 #include <vector>
 
 #include "fast_positive/details/erthink/erthink_optimize4speed.h"
+#include "fast_positive/details/warnings_push_pt.h"
 
 //------------------------------------------------------------------------------
 
@@ -129,7 +130,7 @@ best_fit(unsigned units, field_loose *left, field_loose *right) {
 
 template <gear::hole_search_mode MODE>
 __pure_function field_loose *gear::lookup_hole(unsigned units) noexcept {
-  if (junk_.holes_count < 1 || junk_.data_units < units)
+  if (junk_.count < 1 || junk_.volume < units)
     return nullptr;
 
   if_constexpr(MODE == hole_search_mode::exactly_size) return const_cast<
@@ -143,7 +144,7 @@ __pure_function field_loose *gear::lookup_hole(unsigned units) noexcept {
                                                           make_hole(units)));
   else {
     field_loose *found = nullptr;
-    std::size_t left_holes = junk_.holes_count;
+    std::size_t left_holes = junk_.count;
     /* TODO: SIMD */
     for (field_loose *scan = begin_index(); left_holes > 0; ++scan) {
       assert(scan != end_index());
@@ -165,45 +166,59 @@ std::pair<field_loose *, field_loose *>
 gear::lookup_adjacent_holes(const unit_t *chunk_begin,
                             const unit_t *chunk_end) noexcept {
   assert(chunk_begin < chunk_end);
-  std::size_t left_holes = junk_.holes_count;
+  std::size_t left_holes = junk_.count;
   field_loose *before = nullptr, *after = nullptr;
 
   /* TODO: SIMD */
   for (field_loose *scan = begin_index(); left_holes > 0; ++scan) {
     assert(scan != end_index());
-    if (scan->is_hole() && scan->hole_get_units()) {
+    if (!scan->is_hole())
+      continue;
+    if (scan->hole_get_units()) {
       after = (chunk_end == scan->hole_begin()) ? scan : after;
       before = (scan->hole_end() == chunk_begin) ? scan : before;
-      left_holes -= 1;
     }
+    left_holes -= 1;
   }
   return std::make_pair(before, after);
 }
 
 void gear::trim_hole(const field_loose *hole) noexcept {
-  assert(hole == begin_index() && hole->is_hole() && junk_.holes_count > 0 &&
-         head_ < pivot_);
-  assert(hole->hole_get_units() == 0 || hole->hole_begin() == end_data_units());
-  (void)hole;
-  /* удаляем использованныую дырку из индекса */
-  junk_.holes_count -= 1;
-  head_ += 1;
-  /* если в начале индекса еще одна дырка, которая примыкает к концу
-   * распределенного участка, то удаляем и её */
-  if (head_ < pivot_ && begin_index()->is_hole() &&
-      begin_index()->hole_end() == end_data_units()) {
-    const unsigned next_hole_units = begin_index()->hole_get_units();
-    assert(junk_.data_units >= next_hole_units &&
-           tail_ >= pivot_ + next_hole_units);
-    assert(junk_.holes_count > 0 && head_ < pivot_);
-    /* удаляем, возвращая место в нераспредененное пространство */
-    FPTU_ENSURE(junk_.holes_count > 0 && junk_.data_units >= next_hole_units);
-    junk_.holes_count -= 1;
-    junk_.data_units -= uint16_t(next_hole_units);
+  while (true) {
+    assert(hole == begin_index() && hole->is_hole() && junk_.count > 0 &&
+           head_ < pivot_);
+    assert(hole->hole_get_units() == 0 ||
+           hole->hole_begin() == end_data_units());
+
+    /* удаляем использованныую дырку из индекса */
+    junk_.count -= 1;
     head_ += 1;
+
+    /* если следом в в начале индекса еще одна пустая дырка, либо дырка
+     * примыкающая к концу распределенного участка, то удаляем и её */
+    if (head_ == pivot_)
+      return;
+    hole = begin_index();
+    if (likely(!hole->is_hole()))
+      return;
+
+    const unsigned next_hole_units = hole->hole_get_units();
+    if (next_hole_units == 0) {
+      /* дырка нулевого размера, таких может быть несколько подряд */
+      continue;
+    }
+
+    /* дыра ненулевого размера, такие не должны идти подряд, но могу
+     * перемежаться дырками нулевого размера. */
+    if (likely(hole->hole_end() != end_data_units()))
+      return;
+
+    assert(junk_.volume >= next_hole_units &&
+           tail_ >= pivot_ + next_hole_units);
+    assert(junk_.count > 0 && head_ < pivot_);
+    /* удаляем, возвращая место в нераспредененное пространство */
+    junk_.volume -= uint16_t(next_hole_units);
     tail_ -= next_hole_units;
-    /* дырки не могут располагаться последовательно в данных (в этом случае они
-     * сливаются), поэтому не может быть еще одной дырки примыкающей к концу. */
   }
 }
 
@@ -217,12 +232,12 @@ unit_t *gear::tail_alloc(unsigned units) {
 }
 
 field_loose *gear::index_alloc() {
-  if (junk_.holes_count > 0) {
+  if (junk_.count > 0) {
     /* пробуем найти в индексе дыру без связанного зазора в данных */
     field_loose *hole = const_cast<field_loose *>(
         lookup(is_sorted(), begin_index(), end_index(), make_hole(0)));
     if (hole) {
-      junk_.holes_count -= 1;
+      junk_.count -= 1;
       return hole;
     }
   }
@@ -238,20 +253,20 @@ relative_payload *gear::alloc_data(unsigned units, field_loose *const hole) {
     return erthink::constexpr_pointer_cast<relative_payload *>(
         tail_alloc(units));
 
-  assert(junk_.data_units >= units && junk_.holes_count >= 1);
-  junk_.data_units -= uint16_t(units);
+  assert(junk_.volume >= units && junk_.count >= 1);
+  junk_.volume -= uint16_t(units);
   unsigned excess = hole->hole_get_units() - units;
   relative_payload *chunk = hole->relative.payload();
   if (likely(excess == 0)) {
     /* дырка использована полностью */
-    hole->hole_set_units(0);
+    hole->hole_purge();
     /* если дырка первая в индексе, то её нужно удалить и проверить
      * возможность удаления последующей дырки */
     if (hole == begin_index())
       trim_hole(hole);
   } else {
     /* дырка использована не полностью */
-    hole->relative.add_delta(excess);
+    hole->relative.add_delta(units);
     hole->hole_set_units(excess);
   }
 
@@ -285,13 +300,12 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
     return hole;
   }
 
-  assert(junk_.data_units >= units && junk_.holes_count >= 1);
+  assert(junk_.volume >= units && junk_.count >= 1);
   unsigned excess = hole->hole_get_units() - units;
   if (excess == 0) {
     /* дырка использована полностью */
-    FPTU_ENSURE(junk_.holes_count > 0 && junk_.data_units >= units);
-    junk_.data_units -= uint16_t(units);
-    junk_.holes_count -= 1;
+    junk_.volume -= uint16_t(units);
+    junk_.count -= 1;
     hole->genius_and_id = uint16_t(tag);
     mark_unsorted();
     return hole;
@@ -303,39 +317,43 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
   loose->relative.set_payload(hole->hole_begin());
   hole->relative.add_delta(excess);
   hole->hole_set_units(excess);
-  FPTU_ENSURE(junk_.data_units >= units);
-  junk_.data_units -= uint16_t(units);
+  junk_.volume -= uint16_t(units);
   mark_unsorted();
   return loose;
 }
 
 field_loose *gear::merge_holes(field_loose *first,
                                field_loose *second) noexcept {
+  assert(first->hole_get_units() && second->hole_get_units());
   assert(first->hole_end() == second->hole_begin());
-  unsigned units = first->hole_get_units() + second->hole_get_units();
+  const unsigned units = first->hole_get_units() + second->hole_get_units();
   if (first != begin_index()) {
     /* вливаем вторую в первую, чтобы убрать из индекса вторую дырку, на случай
      * если она в начале индекса */
     first->hole_set_units(units);
-    second->hole_set_units(0);
+    second->hole_purge();
     if (second == begin_index())
       trim_hole(second);
     return first;
   } else {
     /* вливаем первую во вторую,
      * чтобы убрать из начала индекса первую дырку */
-    second->relative.sub_delta(units);
+    second->relative.sub_delta(first->hole_get_units());
     second->hole_set_units(units);
-    first->hole_set_units(0);
+    first->hole_purge();
     trim_hole(first);
     return second;
   }
 }
 
 void gear::release_loose(field_loose *loose, unsigned units) {
-  loose->hole_set_units(units);
+  junk_.count += 1;
   if (units) {
     /* дыра с данными, т.е. НЕ только в индексе */
+    loose->hole_set_units(units);
+
+    /* добавляем в счетчики, чтобы прошли проверки внутри merge и trim */
+    junk_.volume += uint16_t(units);
 
     const auto before_after = lookup_adjacent_holes(loose);
     /* объединяем с соседними если они есть */
@@ -344,32 +362,21 @@ void gear::release_loose(field_loose *loose, unsigned units) {
     if (before_after.second)
       loose = merge_holes(loose, before_after.second);
 
-    if (loose->hole_begin() != end_data_units()) {
-      FPTU_ENSURE(junk_.holes_count < UINT16_MAX &&
-                  junk_.data_units + units <= UINT16_MAX);
-      /* дырка НЕ примыкает к концу данных, поэтому освобождаемое место
-       * возможно можно вернуть только в junk */
-      junk_.holes_count += 1;
-      /* (!) прибавляем БЕЗ УЧЕТА слияния дыр */
-      junk_.data_units += (uint16_t)units;
+    if (loose->hole_end() != end_data_units()) {
+      /* дырка НЕ примыкает к концу данных, больше сделать ничего нельзя */
       return;
     }
 
-    FPTU_ENSURE(junk_.holes_count > 0 &&
-                junk_.data_units >= int(loose->hole_get_units() - units));
+    /* (!) получаем размер С УЧЕТОМ слияния дыр */
+    units = loose->hole_get_units();
     /* дырка примыкает к концу данных, возвращем место в нераспределенное */
-    /* (!) вычитаем С УЧЕТОМ слияния дыр */
-    tail_ -= loose->hole_get_units();
-    junk_.data_units -=
-        uint16_t(loose->hole_get_units() - /* еще не было в junk */ units);
-    /* обнуляем размер дыры и продолжаем */
-    loose->hole_set_units(0);
+    tail_ -= units;
+    junk_.volume -= uint16_t(units);
+    /* далее обнуляем размер дыры */
   }
 
-  assert(loose->hole_get_units() == 0);
-  FPTU_ENSURE(junk_.holes_count < UINT16_MAX);
   /* дыра только в индексе, т.е. без данных */
-  junk_.holes_count += 1;
+  loose->hole_purge();
   if (loose == begin_index())
     trim_hole(loose);
 }
@@ -381,12 +388,36 @@ gear::release_data(relative_payload *chunk, unsigned units,
   assert(units > 0);
   assert(!hole0 || hole0->hole_get_units() == 0);
 
+  if (chunk->flat + units == end_data_units()) {
+    /* кусок примыкает к концу данных, просто возвращем место в нераспределенное
+     */
+    tail_ -= units;
+    if (before_after.first) {
+      /* если есть предыдущая дырка, то она теперь примыкает к новом уконцу
+       * данных */
+      assert(before_after.second == nullptr &&
+             before_after.first->hole_end() == end_data_units());
+      units = before_after.first->hole_get_units();
+      tail_ -= units;
+      junk_.volume -= uint16_t(units);
+      before_after.first->hole_purge();
+      if (before_after.first == begin_index())
+        trim_hole(before_after.first);
+    }
+    return nullptr;
+  }
+
+  /* добавляем в счетчики, чтобы прошли проверки внутри merge и trim */
+  junk_.volume += uint16_t(units);
+
   field_loose *merged = nullptr;
   if (before_after.first) {
+    assert(chunk->flat == before_after.first->hole_end());
     merged = before_after.first;
     merged->hole_set_units(units + merged->hole_get_units());
   }
   if (before_after.second) {
+    assert(chunk->flat + units == before_after.second->hole_begin());
     if (merged)
       merged = merge_holes(merged, before_after.second);
     else {
@@ -398,42 +429,20 @@ gear::release_data(relative_payload *chunk, unsigned units,
 
   if (merged == nullptr) {
     /* не нашлось соседних дырок для объединения с куском */
-    if (chunk->flat + units == end_data_units()) {
-      /* кусок примыкает к концу данных, возвращем место в нераспределенное */
-      tail_ -= units;
-      return nullptr;
-    }
-
-    /* кусок НЕ примыкает к концу данных, оформляем дыркой */
-    if (hole0 == nullptr)
+    assert(chunk->flat + units != end_data_units());
+    /* кусок НЕ может примыкать к концу данных, оформляем дыркой */
+    if (hole0 == nullptr) {
       hole0 = index_alloc();
+      junk_.count += 1;
+    }
     hole0->hole_set_units(units);
     hole0->relative.set_payload(chunk);
-    FPTU_ENSURE(junk_.data_units + units <= UINT16_MAX);
-    junk_.data_units += uint16_t(units);
     return hole0;
   }
-
   /* кусок был слит с соседней дыркой */
-  if (merged->hole_end() == end_data_units()) {
-    FPTU_ENSURE(junk_.data_units >= unsigned(merged->hole_get_units() -
-                                             /* еще не было в junk */ units));
-    /* дырка примыкает к концу данных, возвращем место в нераспределенное */
-    /* (!) вычитаем С УЧЕТОМ слияния дыр */
-    tail_ -= merged->hole_get_units();
-    junk_.data_units -=
-        uint16_t(merged->hole_get_units() - /* еще не было в junk */ units);
-    /* обнуляем размер дыры и продолжаем */
-    merged->hole_set_units(0);
-    if (merged == begin_index())
-      trim_hole(merged);
-    return nullptr;
-  }
 
-  FPTU_ENSURE(junk_.data_units + units <= UINT16_MAX);
-  /* дырка НЕ примыкает к концу данных, поэтому освобождаемое место
-   * возможно можно вернуть только в junk */
-  junk_.data_units += uint16_t(units);
+  assert(merged->hole_end() != end_data_units());
+  /* дырка НЕ может примыкать к концу данных */
   return merged;
 }
 
@@ -464,7 +473,7 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
    *     и первая в опасных случаях (при нехватке места).
    */
 
-  if (junk_.data_units == 0) {
+  if (junk_.volume == 0) {
     /* Если в кортеже нет зазоров/дыр, то возможны только три случая, которые
      * можно обработать по-быстрому без поиска и других лишних действий. */
     if (ref.payload()->flat + have == end_data_units()) {
@@ -481,9 +490,8 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
       /* Внутри нет зазоров и места требуется БОЛЬШЕ чем есть. В этом случае
        * нет других вариантов, кроме как сначала выделить новое место,
        * а затем освободить старое. */
-      if (unlikely(tail_space() < needed ||
-                   head_space() + junk_.holes_count < 1))
-        throw_insufficient_space((head_space() + junk_.holes_count) ? 0 : 1,
+      if (unlikely(tail_space() < needed || head_space() + junk_.count < 1))
+        throw_insufficient_space((head_space() + junk_.count) ? 0 : 1,
                                  (tail_space() < needed) ? needed : 0);
         /* Далее исключений быть не должно */
 #ifndef NDEBUG
@@ -492,10 +500,8 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
         field_loose *hole = index_alloc();
         hole->hole_set_units(have);
         hole->relative.set_payload(ref.payload());
-        FPTU_ENSURE(junk_.holes_count < UINT16_MAX &&
-                    junk_.data_units + have <= UINT16_MAX);
-        junk_.holes_count += 1;
-        junk_.data_units += uint16_t(have);
+        junk_.count += 1;
+        junk_.volume += uint16_t(have);
         ref.set_payload(tail_alloc(needed));
 #ifndef NDEBUG
       } catch (const insufficient_space &) {
@@ -513,10 +519,8 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
     field_loose *hole = index_alloc() /* Тут может выскочить исключение */;
     hole->hole_set_units(have - needed);
     hole->relative.set_payload(ref.payload()->flat + needed);
-    FPTU_ENSURE(junk_.holes_count < UINT16_MAX &&
-                unsigned(junk_.data_units + have - needed) <= UINT16_MAX);
-    junk_.holes_count += 1;
-    junk_.data_units += uint16_t(have - needed);
+    junk_.count += 1;
+    junk_.volume += uint16_t(have - needed);
     return ref.payload();
   }
 
@@ -598,17 +602,15 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
       ref.set_payload(hole4alloc->hole_begin());
       hole4alloc->relative.set_payload(chunk);
       hole4alloc->hole_set_units(have);
-      FPTU_ENSURE(unsigned(junk_.data_units + have - needed) <= UINT16_MAX);
-      junk_.data_units += uint16_t(have - needed);
+      junk_.volume += uint16_t(have - needed);
 
       /* если дырка примыкает к концу данных, то её нужно "испарить" */
       if (chunk == end_data_units()) {
         /* возвращем место в нераспределенное */
         tail_ -= have;
-        FPTU_ENSURE(junk_.data_units >= have);
-        junk_.data_units -= uint16_t(have);
+        junk_.volume -= uint16_t(have);
         /* обнуляем размер дыры */
-        hole4alloc->hole_set_units(0);
+        hole4alloc->hole_purge();
         if (hole4alloc == begin_index())
           trim_hole(hole4alloc);
       }
@@ -776,8 +778,8 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
       ;
 
   /* LY: при необходимости сначала убираем дырки/зазоры из индекса */
-  if (junk_.holes_count) {
-    assert(audit() == nullptr);
+  if (junk_.count) {
+    debug_check();
     field_loose *src, *dst;
     /* копируем индекс пропуская дырки, одновременно подсчитываем перемещаемые
      * элементы для оценки размера вектора */
@@ -793,19 +795,19 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
       }
       --dst;
     }
-    assert(dst - src == junk_.holes_count);
-    assert(dst == begin_index() - junk_.holes_count);
+    assert(dst - src == junk_.count);
+    assert(dst == begin_index() - junk_.count);
     assert(src == begin_index());
     assert(dst > erthink::constexpr_pointer_cast<field_loose *>(area_) &&
            dst < end_index());
-    head_ += junk_.holes_count;
-    junk_.holes_count = 0;
-    assert(audit() == nullptr);
+    head_ += junk_.count;
+    junk_.count = 0;
+    debug_check();
   }
 
   /* теперь при необходимости дефрагментируем данные */
-  if (junk_.data_units) {
-    assert(audit() == nullptr);
+  if (junk_.volume) {
+    debug_check();
 
     /* считаем требуемый размер вектора подсчитывая перемещаемые элементы */
     if (moveable_count < 0) {
@@ -874,10 +876,10 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
       }
       dst += chunk.length;
     }
-    assert(dst == end_data_units() - junk_.data_units);
-    tail_ -= junk_.data_units;
-    junk_.data_units = 0;
-    assert(audit() == nullptr);
+    assert(dst == end_data_units() - junk_.volume);
+    tail_ -= junk_.volume;
+    junk_.volume = 0;
+    debug_check();
   }
 }
 
@@ -916,13 +918,13 @@ struct sort_item {
 using sort_vector = std::vector<sort_item, onstack_short_allocator<sort_item>>;
 
 bool gear::sort(onstack_allocation_arena &onstack_arena) {
-  assert(audit() == nullptr);
+  debug_check();
   if (std::is_sorted(begin_index(), end_index(),
                      [](const field_loose &a, const field_loose &b) {
                        return a.genius_and_id > b.genius_and_id;
                      })) {
     mark_sorted();
-    assert(audit() == nullptr);
+    debug_check();
     return false;
   }
 
@@ -951,10 +953,10 @@ bool gear::sort(onstack_allocation_arena &onstack_arena) {
                         [](const field_loose &a, const field_loose &b) {
                           return a.genius_and_id > b.genius_and_id;
                         }));
-  assert(audit() == nullptr);
+  debug_check();
 
   mark_sorted();
-  assert(audit() == nullptr);
+  debug_check();
   return true;
 }
 
@@ -993,7 +995,7 @@ __hot bool tuple_rw::optimize(const optimize_flags flags) {
 
   bool interators_invalidated = false;
   if ((flags & optimize_flags::compactify) && junk_.both != 0) {
-    interators_invalidated = junk_.holes_count > 0;
+    interators_invalidated = junk_.count > 0;
     static_cast<class gear *>(this)->compactify(arena);
   }
 
@@ -1009,3 +1011,5 @@ __hot bool tuple_rw::optimize(const optimize_flags flags) {
 
 } // namespace details
 } // namespace fptu
+
+#include "fast_positive/details/warnings_pop.h"

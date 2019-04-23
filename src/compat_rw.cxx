@@ -133,9 +133,29 @@ fptu_rw *fptu_fetch(fptu_ro ro, void *buffer_space, std::size_t buffer_bytes,
     return nullptr;
   }
 
-  const fptu::details::tuple_ro *tuple_ro =
-      static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base);
+  fptu::details::unit_t stub_empty;
+  if (unlikely(ro.sys.iov_len == 0)) {
+    static_assert(sizeof(stub_empty) == sizeof(fptu::details::tuple_ro),
+                  "Oops");
+    auto *stub =
+        reinterpret_cast<fptu::details::stretchy_value_tuple *>(&stub_empty);
+    stub->brutto_units = 1;
+    stub->looseitems_flags = 0;
+    ro.sys.iov_base = &stub_empty;
+    ro.sys.iov_len = sizeof(stub_empty);
+  }
+
+  const char *trouble =
+      fptu::details::tuple_ro::lite_checkup(ro.sys.iov_base, ro.sys.iov_len);
+  if (unlikely(trouble != nullptr)) {
+    fptu_set_error(FPTU_EINVAL, trouble);
+    return nullptr;
+  }
+
   try {
+    const fptu::details::tuple_ro *tuple_ro =
+        static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base);
+
     const auto tuple_rw = fptu::details::tuple_rw::fetch_legacy(
         {0, 0}, tuple_ro, buffer_space, buffer_bytes, more_items);
     return static_cast<fptu_rw *>(tuple_rw);
@@ -169,8 +189,8 @@ fptu_rw *fptu_fetch_ex(fptu_ro ro, void *buffer_space, std::size_t buffer_bytes,
   }
 
   fptu::details::audit_holes_info holes_info;
-  holes_info.holes_count = cbfs->holes_count;
-  holes_info.holes_volume = cbfs->holes_volume;
+  holes_info.count = cbfs->holes_count;
+  holes_info.volume = cbfs->holes_volume;
   const fptu::details::tuple_ro *tuple_ro =
       static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base);
   try {
@@ -207,10 +227,10 @@ fptu_check_and_get_buffer_size_ex(fptu_ro ro, unsigned more_items,
         tuple_ro, more_items, more_payload, nullptr);
     cbfs->err = FPTU_OK;
     cbfs->err_msg = cbfs_ok_sign;
-    assert(holes_info.holes_count <= UINT16_MAX);
-    cbfs->holes_count = uint16_t(holes_info.holes_count);
-    assert(holes_info.holes_volume <= UINT16_MAX);
-    cbfs->holes_volume = uint16_t(holes_info.holes_volume);
+    assert(holes_info.count <= UINT16_MAX);
+    cbfs->holes_count = uint16_t(holes_info.count);
+    assert(holes_info.volume <= UINT16_MAX);
+    cbfs->holes_volume = uint16_t(holes_info.volume);
     return result;
   } catch (const std::exception &e) {
     const auto &error_info = fptu_set_error(e);
@@ -230,8 +250,11 @@ bool fptu_is_empty_rw(const fptu_rw *pt) noexcept { return pt->empty(); }
 
 fptu_field *fptu_lookup_rw(fptu_rw *pt, unsigned column,
                            fptu_type_or_filter type_or_filter) noexcept {
-  return const_cast<fptu_field *>(
-      fptu_first(pt->begin_index(), pt->end_index(), column, type_or_filter));
+  const auto begin = pt->begin_index();
+  const auto end = pt->end_index();
+  const auto pf =
+      const_cast<fptu_field *>(fptu_first(begin, end, column, type_or_filter));
+  return (pf != end) ? pf : nullptr;
 }
 
 //------------------------------------------------------------------------------

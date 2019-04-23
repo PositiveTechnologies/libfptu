@@ -31,19 +31,19 @@ endif()
 add_ut(modern_internals TIMEOUT 42 SOURCE modern/internals.cxx LIBRARY fptu)
 add_ut(fptu0_trivia TIMEOUT ${fptu0_trivia_timeout} SOURCE 0trivia.cxx LIBRARY fptu)
 add_ut(fptu1_create TIMEOUT 42 SOURCE 1create.cxx LIBRARY fptu)
+add_ut(fptu2_upsert TIMEOUT 5 SOURCE 2upsert.cxx LIBRARY fptu)
 add_ut(fptu3_iterate TIMEOUT 42 SOURCE 3iterate.cxx LIBRARY fptu)
+add_ut(fptu4_fetch TIMEOUT 5 SOURCE 4fetch.cxx LIBRARY fptu)
 
 ##FIXME
-#add_ut(fptu2_upsert TIMEOUT 5 SOURCE 2upsert.cxx LIBRARY fptu)
-#add_ut(fptu4_fetch TIMEOUT 5 SOURCE 4fetch.cxx LIBRARY fptu)
-#add_ut(fptu5_remove TIMEOUT ${fptu5_remove_timeout} SOURCE 5remove.cxx shuffle6.hpp LIBRARY fptu)
+add_ut(fptu5_remove TIMEOUT ${fptu5_remove_timeout} SOURCE 5remove.cxx shuffle6.hpp LIBRARY fptu)
 #add_ut(fptu6_shrink TIMEOUT ${fptu6_shrink_timeout} SOURCE 6shrink.cxx shuffle6.hpp LIBRARY fptu)
 
 ##TODO
-#add_ut(fptu7_compare TIMEOUT ${fptu7_compare_timeout} SOURCE 7compare.cxx shuffle6.hpp LIBRARY fptu)
-#add_ut(fptu8_emit2json TIMEOUT ${fptu8_emit_timeout} SOURCE 8emit2json.cxx LIBRARY fptu)
+#add_ut(fptu7_compare TIMEOUT ${fptu7_compare_timeout} SOURCE TODO/7compare.cxx shuffle6.hpp LIBRARY fptu)
+#add_ut(fptu8_emit2json TIMEOUT ${fptu8_emit_timeout} SOURCE TODO/8emit2json.cxx LIBRARY fptu)
 
-#add_executable(fptu_c_mode c_mode.c)
+#add_executable(fptu_c_mode TODO/c_mode.c)
 #target_link_libraries(fptu_c_mode fptu)
 #if(LIBFPTU_TYPE STREQUAL "PILE")
 #  set_target_properties(fptu_c_mode PROPERTIES LINKER_LANGUAGE CXX)

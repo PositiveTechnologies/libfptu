@@ -64,7 +64,7 @@ TEST(Token, StaticPreplaced) {
   EXPECT_FALSE(token.is_collection());
   EXPECT_EQ(fptu::genus::i32, token.type());
   EXPECT_TRUE(probe2static(token));
-  EXPECT_TRUE(MyToken_FooBar_int::is_static_preplaced);
+  EXPECT_TRUE(MyToken_FooBar_int::is_static_preplaced());
   EXPECT_TRUE(MyToken_FooBar_int::is_static_token::value);
 
 #ifndef __clang__

@@ -27,7 +27,7 @@ TEST(Init, Invalid) {
             fptu_init(nullptr, fptu_max_tuple_bytes, fptu::max_fields));
   EXPECT_EQ(nullptr, fptu_init(nullptr, ~0u, ~0u));
 
-  char space_exactly_noitems[sizeof(fptu_rw)];
+  char space_exactly_noitems[fptu_rw::pure_tuple_size()];
   EXPECT_EQ(nullptr,
             fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 1));
   EXPECT_EQ(nullptr,
@@ -63,9 +63,17 @@ TEST(Init, Invalid) {
 TEST(Init, Base) {
   char space[fptu::buffer_enough];
 
+  fptu_rw *pt0 = fptu_init(space, fptu_rw::pure_tuple_size(), 0);
+  ASSERT_NE(nullptr, pt0);
+  ASSERT_STREQ(nullptr, fptu::check(pt0));
+  ASSERT_EQ(0u, fptu_space4items(pt0));
+  ASSERT_EQ(0u, fptu_space4data(pt0));
+  ASSERT_EQ(0u, fptu_junkspace(pt0));
+  ASSERT_STREQ(nullptr, fptu::check(pt0));
+
   static const size_t extra_space_cases[] = {
       /* clang-format off */
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 42, sizeof(fptu_rw),
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 42, fptu_rw::pure_tuple_size(),
         fptu_max_tuple_bytes / 3, fptu_max_tuple_bytes / 2,
         fptu_max_tuple_bytes
       /* clang-format on */
@@ -80,7 +88,7 @@ TEST(Init, Base) {
   };
 
   for (auto extra : extra_space_cases) {
-    size_t bytes = sizeof(fptu_rw) + extra;
+    size_t bytes = fptu_rw::pure_tuple_size() + extra;
     ASSERT_LE(bytes, sizeof(space));
 
     for (auto items : items_cases) {

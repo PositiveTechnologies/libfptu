@@ -50,7 +50,7 @@ enum audit_flags {
 DEFINE_ENUM_FLAG_OPERATORS(audit_flags)
 
 struct audit_holes_info {
-  uint16_t holes_count, holes_volume;
+  uint16_t count, volume;
 };
 
 const char *audit_tuple(const fptu::schema *const schema,
