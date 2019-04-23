@@ -249,7 +249,7 @@ install(TARGETS fptu
   PRIVATE_HEADER DESTINATION include/fast_positive INCLUDES DESTINATION include COMPONENT devel
   )
 
-###############################################################################
+################################################################################
 #
 # library build info (used in library version output)
 #
@@ -340,7 +340,7 @@ foreach(option IN LISTS options)
   else()
     set(value "${CMAKE_${option}}")
   endif()
-  find_package_message("FPTU_${option}" "FPTU_${option}: ${value}" "${value}")
+  find_package_message(FPTU_${option} "FPTU_${option}: ${value}" "${value}")
 endforeach(option)
 
 if(NOT BUILD_SHARED_LIBS)

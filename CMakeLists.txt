@@ -32,9 +32,17 @@
 ##
 
 cmake_minimum_required(VERSION 3.8.2)
-cmake_policy(SET CMP0054 NEW)
+cmake_policy(PUSH)
+cmake_policy(VERSION 3.8.2)
 if(NOT CMAKE_VERSION VERSION_LESS 3.12)
   cmake_policy(SET CMP0075 NEW)
+endif()
+if(NOT CMAKE_VERSION VERSION_LESS 3.9)
+  cmake_policy(SET CMP0069 NEW)
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE)
+else()
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE FALSE)
 endif()
 
 if(DEFINED PROJECT_NAME)
@@ -43,6 +51,9 @@ else()
   set(SUBPROJECT OFF)
   project(libfptu C CXX)
 endif()
+
+# only for compatibility testing
+# set(CMAKE_CXX_STANDARD 14)
 
 if(NOT "$ENV{TEAMCITY_PROCESS_FLOW_ID}" STREQUAL "")
   set(CI TEAMCITY)
@@ -77,10 +88,13 @@ include(CheckFunctionExists)
 include(FindPackageMessage)
 include(CheckStructHasMember)
 include(CMakeDependentOption)
+include(GNUInstallDirs)
 
-option(PROVIDE_VERSIONINFO "Provide library's version information." ON)
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC" AND MSVC_VERSION LESS 1900)
+  message(SEND_ERROR "MSVC compiler ${MSVC_VERSION} is too old for building FPTU."
+    "At least 'Microsoft Visual Studio 2015' is required.")
+endif()
 
-#
 # Set default build type to Release. This is to ease a User's life.
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING
@@ -93,7 +107,7 @@ list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_17 HAS_CXX17)
 list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_14 HAS_CXX14)
 list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_relaxed_constexpr HAS_RELAXED_CONSTEXPR)
 if(NOT DEFINED FPTU_CXX_STANDARD)
-  if(SUBPROJECT AND DEFINED CMAKE_CXX_STANDARD)
+  if(DEFINED CMAKE_CXX_STANDARD)
     set(FPTU_CXX_STANDARD ${CMAKE_CXX_STANDARD})
   elseif(NOT HAS_CXX17 LESS 0)
     set(FPTU_CXX_STANDARD 17)
@@ -103,31 +117,15 @@ if(NOT DEFINED FPTU_CXX_STANDARD)
     set(FPTU_CXX_STANDARD 11)
   endif()
 endif()
-#set(FPTU_CXX_STANDARD 14)
 message(STATUS "Use C++${FPTU_CXX_STANDARD} for libfptu")
-
-if(NOT CMAKE_VERSION VERSION_LESS 3.9)
-  cmake_policy(SET CMP0069 NEW)
-  include(CheckIPOSupported)
-  check_ipo_supported(RESULT CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE)
-else()
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE FALSE)
+if(NOT SUBPROJECT OR NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD ${FPTU_CXX_STANDARD})
 endif()
 
-# Define GNU standard installation directories
-include(GNUInstallDirs)
-
-include(cmake.fptu/utils.cmake)
-# the order is significant: we need to know os and compiler to configure libs
-include(cmake.fptu/arch.cmake)
-include(cmake.fptu/os.cmake)
-include(cmake.fptu/profile.cmake)
-include(cmake.fptu/compiler.cmake)
-
-if(CMAKE_C_COMPILER_ID STREQUAL "MSVC" AND MSVC_VERSION LESS 1900)
-  message(SEND_ERROR "MSVC compiler ${MSVC_VERSION} is too old for building FPTU."
-    "At least 'Microsoft Visual Studio 2015' is required.")
-endif()
+include(fast_positive/details/erthink/cmake/utils.cmake)
+include(fast_positive/details/erthink/cmake/compiler.cmake)
+include(fast_positive/details/erthink/cmake/profile.cmake)
+option(PROVIDE_VERSIONINFO "Provide library's version information." ON)
 
 find_program(ECHO echo)
 find_program(CAT cat)
@@ -142,6 +140,8 @@ CHECK_INCLUDE_FILES(sys/uio.h HAVE_SYS_UIO_H)
 CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_STRUCT_HAS_MEMBER("struct timeval" tv_usec sys/select.h HAVE_TIMEVAL_TV_USEC)
 CHECK_STRUCT_HAS_MEMBER("struct timespec" tv_nsec time.h HAVE_TIMESPEC_TV_NSEC)
+
+find_package(Threads REQUIRED)
 
 CHECK_FUNCTION_EXISTS(pow NOT_NEED_LIBM)
 if(NOT_NEED_LIBM)
@@ -158,6 +158,8 @@ endif()
 CHECK_SYMBOL_EXISTS(nan math.h HAVE_nan)
 CHECK_SYMBOL_EXISTS(nanf math.h HAVE_nanf)
 CHECK_INCLUDE_FILES(ieee754.h HAVE_IEEE754_H)
+
+option(FPTU_ENABLE_TESTS "Build FPTU tests." ${BUILD_TESTING})
 
 if(NOT SUBPROJECT)
   option(CMAKE_POSITION_INDEPENDENT_CODE "Generate position independed (PIC)." ON)
@@ -216,11 +218,6 @@ if(NOT SUBPROJECT)
     set(VALGRIND_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS}" CACHE STRING "Valgrind options" FORCE)
   endif()
 
-  if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD ${FPTU_CXX_STANDARD})
-  endif()
-  include(cmake.fptu/testing.cmake)
-
   #
   # Enable 'make tags' target.
   find_program(CTAGS ctags)
@@ -245,8 +242,6 @@ if(NOT SUBPROJECT)
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   endif()
 
-  include(cmake.fptu/multilib.cmake)
-
   if(NOT "${PROJECT_BINARY_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
     add_custom_target(distclean)
     add_custom_command(TARGET distclean
@@ -262,11 +257,10 @@ if(NOT SUBPROJECT)
   endif()
 
   setup_compile_flags()
+  include(fast_positive/details/erthink/cmake/testing.cmake)
 endif(NOT SUBPROJECT)
 
-#######################################################################
-
-find_package(Threads REQUIRED)
+################################################################################
 
 if(PROVIDE_VERSIONINFO)
   set(HAVE_FPTU_VERSIONINFO TRUE)
@@ -281,7 +275,9 @@ include_directories("${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 set(LIBERTHINK_TYPE STATIC)
 add_subdirectory(fast_positive/details/erthink)
 add_subdirectory(src)
-add_subdirectory(test)
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 if(HAVE_FPTU_VERSIONINFO)
   set(PACKAGE "libfptu")
@@ -292,3 +288,5 @@ if(HAVE_FPTU_VERSIONINFO)
   set(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.${CPACK_PACKAGE_VERSION_COMMIT}")
   message(STATUS "libfptu package version is ${PACKAGE_VERSION}")
 endif()
+
+cmake_policy(POP)
