@@ -58,7 +58,7 @@ struct malloc_deleter {
 };
 } // namespace
 
-void tuple_rw::ensure() {
+void tuple_rw::ensure() const {
   const char *trouble = audit();
   if (unlikely(trouble))
     throw_tuple_bad(this, trouble);

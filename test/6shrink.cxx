@@ -110,7 +110,7 @@ TEST(Shrink, Shuffle) {
             default:
               assert(false);
             case 0:
-              EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, i, 7717 * i));
+              EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, i, uint16_t(7717 * i)));
               break;
             case 1:
               EXPECT_EQ(FPTU_OK, fptu_insert_int32(pt, i, -14427139 * (int)i));

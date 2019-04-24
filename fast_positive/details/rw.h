@@ -572,8 +572,8 @@ private:
   }
 
 public: //----------------------------------------------------------------------
-  void ensure();
-  void debug_check() {
+  void ensure() const;
+  void debug_check() const {
 #ifndef NDEBUG
     ensure();
 #endif

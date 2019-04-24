@@ -37,7 +37,7 @@ add_ut(fptu4_fetch TIMEOUT 5 SOURCE 4fetch.cxx LIBRARY fptu)
 
 ##FIXME
 add_ut(fptu5_remove TIMEOUT ${fptu5_remove_timeout} SOURCE 5remove.cxx shuffle6.hpp LIBRARY fptu)
-#add_ut(fptu6_shrink TIMEOUT ${fptu6_shrink_timeout} SOURCE 6shrink.cxx shuffle6.hpp LIBRARY fptu)
+add_ut(fptu6_shrink TIMEOUT ${fptu6_shrink_timeout} SOURCE 6shrink.cxx shuffle6.hpp LIBRARY fptu)
 
 ##TODO
 #add_ut(fptu7_compare TIMEOUT ${fptu7_compare_timeout} SOURCE TODO/7compare.cxx shuffle6.hpp LIBRARY fptu)

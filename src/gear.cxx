@@ -723,7 +723,7 @@ struct compact_item {
     const ptrdiff_t offset =
         erthink::constexpr_pointer_cast<const char *>(relative) -
         erthink::constexpr_pointer_cast<const char *>(basis);
-    constexpr_assert(offset > 0 && offset < fptu::max_tuple_bytes);
+    constexpr_assert(offset >= 0 && offset < fptu::max_tuple_bytes);
     return static_cast<uint32_t>(offset);
   }
 
@@ -740,11 +740,15 @@ struct compact_item {
   cxx14_constexpr compact_item(const unit_t *const basis,
                                const field_loose *const field) noexcept
       : payload_offset(payload2offset(basis, field->relative)),
-        length(uint16_t(field->stretchy_units())),
+        length(uint16_t(is_fixed_size(field->type())
+                            ? loose_units_dynamic(field->type())
+                            : field->stretchy_units())),
         referrer_offset(referrer2offset(basis, &field->relative)) {
     constexpr_assert(!field->is_hole() && !is_inplaced(field->type()) &&
                      field->relative.have_payload());
-    const std::size_t length_units = field->stretchy_units();
+    const std::size_t length_units = is_fixed_size(field->type())
+                                         ? loose_units_dynamic(field->type())
+                                         : field->stretchy_units();
     constexpr_assert(length_units > 0 && length_units <= UINT16_MAX);
     (void)length_units;
   }
@@ -783,7 +787,9 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
     field_loose *src, *dst;
     /* копируем индекс пропуская дырки, одновременно подсчитываем перемещаемые
      * элементы для оценки размера вектора */
+    moveable_count = 0;
     for (src = dst = end_index() - 1; src >= begin_index(); --src) {
+      /* TODO: SIMD? */
       if (src->is_hole())
         continue;
       moveable_count +=
@@ -796,22 +802,22 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
       --dst;
     }
     assert(dst - src == junk_.count);
-    assert(dst == begin_index() - junk_.count);
-    assert(src == begin_index());
+    assert(dst + 1 == begin_index() + junk_.count);
+    assert(src + 1 == begin_index());
     assert(dst > erthink::constexpr_pointer_cast<field_loose *>(area_) &&
            dst < end_index());
     head_ += junk_.count;
     junk_.count = 0;
-    debug_check();
+    if (junk_.volume == 0)
+      debug_check();
   }
 
   /* теперь при необходимости дефрагментируем данные */
   if (junk_.volume) {
-    debug_check();
-
     /* считаем требуемый размер вектора подсчитывая перемещаемые элементы */
     if (moveable_count < 0) {
       moveable_count = 0;
+      /* TODO: SIMD */
       for (field_loose *loose = begin_index(); loose < end_index(); ++loose) {
         assert(!loose->is_hole());
         moveable_count +=
@@ -833,7 +839,8 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
     assert(moveable_count > 0);
 
     /* заполняем вектор описаниями чанков данных */
-    compact_vector vector(moveable_count, onstack_arena);
+    compact_vector vector(onstack_arena);
+    vector.reserve(moveable_count);
     const unit_t *const basis = &area_[head_];
     if (schema_) {
       for (const token &ident : schema_->tokens()) {
@@ -871,7 +878,7 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
       const unit_t *const src = chunk.payload(basis);
       assert(src >= dst && src + chunk.length <= end_data_units());
       if (src != dst) {
-        chunk.referrer(basis).add_delta(src - dst);
+        chunk.referrer(basis).sub_delta(src - dst);
         overlapped_copy(dst, src, chunk.length);
       }
       dst += chunk.length;
