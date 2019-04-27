@@ -46,7 +46,7 @@ void tuple_rw_managed::expand_underlying_buffer(
                                     const VALUE_TYPE value) {                  \
     while (true /* может быть повторное исключение */) {                       \
       try {                                                                    \
-        base::set_##NAME(ident, value);                                        \
+        return base::set_##NAME(ident, value);                                 \
       } catch (const insufficient_space &deficit) {                            \
         expand_underlying_buffer(deficit);                                     \
         continue;                                                              \

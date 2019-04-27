@@ -79,9 +79,6 @@
 typedef struct hippeus_handle_C hippeus_handle_t;
 typedef struct hippeus_object_C hippeus_object_t;
 
-#ifdef HIPPEUS
-#endif /* HIPPEUS */
-
 //-----------------------------------------------------------------------------
 
 /* typedefs for C */
@@ -110,12 +107,12 @@ struct hippeus_allot_C {
 /* LY: Флажки в заголовках буферов. */
 enum hippeus_buffer_flags {
   HIPPEUS_READONLY = 1 /*!< Буфер с данными только для чтения */,
-  HIPPEUS_LOCALWEAK = 2 /*!< Локальный псевдо-буфер,
-                           управляемый классом С++
-                           с виртуальным деструктором */
+  HIPPEUS_LOCALWEAK =
+      2 /*!< Локальный псевдо-разделяемый буфер, управляемый локальным
+           аллокатором (внутри адресного пространства текущего процесса), либо
+           классом С++ с виртуальным деструктором */
   ,
-  HIPPEUS_SCARCE = 4 /*!< Дефицитный буфер,
-                        следует вернуть как можно скорее */
+  HIPPEUS_SCARCE = 4 /*!< Дефицитный буфер, следует вернуть как можно скорее */
   ,
 };
 DEFINE_ENUM_FLAG_OPERATORS(hippeus_buffer_flags)
@@ -123,7 +120,6 @@ DEFINE_ENUM_FLAG_OPERATORS(hippeus_buffer_flags)
 /* Тэг для привязки буфера к аллокатору, а также пометки самих буферов (см.
  * определения выше). Все флажки и значения хранятся как битовые поля в одном
  * opacity и доступны только через методы. */
-
 struct hippeus_buffer_tag_C {
   union casting {
     uintptr_t uint;
@@ -133,7 +129,7 @@ struct hippeus_buffer_tag_C {
     constexpr casting(const casting &) noexcept = default;
     constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
     constexpr casting(uintptr_t uint) noexcept : uint(uint) {}
-#endif
+#endif /* __cplusplus */
   } opacity_;
 
 #if __cplusplus
@@ -141,7 +137,7 @@ protected:
   constexpr hippeus_buffer_tag_C(uintptr_t uint) noexcept : opacity_(uint) {}
   constexpr hippeus_buffer_tag_C(const hippeus_buffer_tag_C &) noexcept =
       default;
-#endif
+#endif /* __cplusplus */
 };
 
 #ifdef __cplusplus
@@ -167,6 +163,7 @@ struct buffer_tag : public hippeus_buffer_tag_C {
     HIPPEUS_TAG_ALLOT_MASK = (1u << HIPPEUS_TAG_ALLOT_BITS) - 1,
     HIPPEUS_TAG_DEPOT_MASK = (1u << HIPPEUS_TAG_DEPOT_BITS) - 1,
     HIPPEUS_TAG_CRATE_MASK = (1u << HIPPEUS_TAG_CRATE_BITS) - 1,
+    HIPPEUS_TAG_LOCALPTR_THRESHOLD = HIPPEUS_TAG_FLAGS_MASK + 1
   };
 
   using base = hippeus_buffer_tag_C;
@@ -259,6 +256,8 @@ struct buffer_tag : public hippeus_buffer_tag_C {
         u2p(opacity_.uint & ~uintptr_t(HIPPEUS_TAG_FLAGS_MASK)));
   }
 
+  constexpr uintptr_t raw() const noexcept { return opacity_.uint; }
+
   constexpr bool operator==(const hippeus_buffer_tag_C &ditto) const noexcept {
     return opacity_.uint == ditto.opacity_.uint;
   }
@@ -310,7 +309,7 @@ struct hippeus_buffer_C {
   hippeus::buffer_tag host;
 #else
   hippeus_buffer_tag_t host;
-#endif
+#endif /* __cplusplus */
 
   HIPAGUT_DECLARE(guard_under);
 
@@ -321,6 +320,7 @@ struct hippeus_buffer_C {
 __extern_C bool hippeus_buffer_force_deep_checking;
 
 //-----------------------------------------------------------------------------
+#ifdef __cplusplus
 
 namespace hippeus {
 
@@ -455,9 +455,14 @@ __always_inline void intrusive_ptr_release(buffer *ptr) { ptr->detach(); }
  * утилитарный. */
 class buffer_solid final : public buffer {
 public:
+  static constexpr std::size_t space_overhead() noexcept {
+    return sizeof(buffer) + HIPAGUT_SPACE;
+  }
   buffer_solid(buffer_tag host, std::size_t gross_bytes)
-      : buffer(host, _inplace, gross_bytes - sizeof(buffer) - HIPAGUT_SPACE) {
-    assert(!is_localweak());
+      : buffer(host, _inplace, gross_bytes - space_overhead()) {
+    assert(!is_localweak() ||
+           this->host.raw() >
+               uintptr_t(hippeus::buffer_tag::HIPPEUS_TAG_LOCALPTR_THRESHOLD));
   }
 };
 
@@ -524,7 +529,16 @@ inline buffer_ptr clone(const buffer_ptr &ditto) {
 }
 
 } // namespace hippeus
+#endif /* __cplusplus */
 
 extern FPTU_API hippeus_allot_t hippeus_allot_stdcxx;
+
+#ifdef __cplusplus
+namespace hippeus {
+static inline buffer_tag default_allot_tag() {
+  return hippeus::buffer_tag(&hippeus_allot_stdcxx, false);
+}
+} // namespace hippeus
+#endif /* __cplusplus */
 
 #include "fast_positive/details/warnings_pop.h"

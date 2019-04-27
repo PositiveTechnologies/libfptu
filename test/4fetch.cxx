@@ -396,11 +396,11 @@ TEST(Fetch, Variate) {
 TEST(Fetch, DeNils) {
   EXPECT_EQ(-1, fptu_field_column(nullptr));
 
-  EXPECT_EQ(0, fptu_field_uint16(nullptr));
+  EXPECT_EQ(0u, fptu_field_uint16(nullptr));
   EXPECT_EQ(0, fptu_field_int32(nullptr));
-  EXPECT_EQ(0, fptu_field_uint32(nullptr));
+  EXPECT_EQ(0u, fptu_field_uint32(nullptr));
   EXPECT_EQ(0, fptu_field_int64(nullptr));
-  EXPECT_EQ(0, fptu_field_uint64(nullptr));
+  EXPECT_EQ(0u, fptu_field_uint64(nullptr));
   if (!__FINITE_MATH_ONLY__) {
     EXPECT_TRUE(std::isnan(/*FPTU_DENIL_FP32*/ fptu_field_fp32(nullptr)));
     EXPECT_TRUE(std::isnan(/*FPTU_DENIL_FP64*/ fptu_field_fp64(nullptr)));

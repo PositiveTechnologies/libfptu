@@ -389,11 +389,11 @@ gear::release_data(relative_payload *chunk, unsigned units,
   assert(!hole0 || hole0->hole_get_units() == 0);
 
   if (chunk->flat + units == end_data_units()) {
-    /* кусок примыкает к концу данных, просто возвращем место в нераспределенное
-     */
+    /* кусок примыкает к концу распределенных данных,
+     * просто возвращем место в нераспределенное */
     tail_ -= units;
     if (before_after.first) {
-      /* если есть предыдущая дырка, то она теперь примыкает к новом уконцу
+      /* если есть предыдущая дырка, то она теперь примыкает к новому концу
        * данных */
       assert(before_after.second == nullptr &&
              before_after.first->hole_end() == end_data_units());

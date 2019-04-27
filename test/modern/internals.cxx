@@ -146,6 +146,16 @@ TEST(ScanIndex, SSE2) {
 
 //------------------------------------------------------------------------------
 
+TEST(fptu2_cxx, smoke) {
+  fptu::tuple_rw_managed rw;
+  fptu::token token(fptu::u16, 0);
+  rw.set_u16(token, 42);
+  auto value = rw.get_u16(token);
+  EXPECT_EQ(42, value);
+}
+
+//------------------------------------------------------------------------------
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

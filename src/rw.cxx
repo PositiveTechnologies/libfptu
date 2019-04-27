@@ -554,6 +554,8 @@ tuple_rw *tuple_rw::create_from_buffer(const void *ptr, std::size_t bytes,
 
 } // namespace details
 
+//------------------------------------------------------------------------------
+
 // template class tuple_crtp_writer<tuple_rw_fixed>;
 
 FPTU_API __cold __noreturn void
@@ -561,5 +563,42 @@ tuple_rw_fixed::throw_managed_buffer_required() const {
   throw managed_buffer_required(
       "tuple_rw_fixed: managed 1Hippeus's buffer required for instance");
 }
+
+std::unique_ptr<fptu::schema> defaults::schema;
+hippeus::buffer_tag defaults::allot_tag = hippeus::default_allot_tag();
+initiation_scale defaults::scale = tiny;
+
+void defaults::setup(const fptu::initiation_scale &_scale,
+                     std::unique_ptr<fptu::schema> &&_schema,
+                     const hippeus::buffer_tag &_allot_tag) {
+  defaults::scale = _scale;
+  defaults::schema = std::move(_schema);
+  defaults::allot_tag = _allot_tag ? _allot_tag : hippeus::default_allot_tag();
+}
+
+tuple_rw_fixed::tuple_rw_fixed(const initiation_scale scale)
+    : tuple_rw_fixed(scale, defaults::schema.get(), defaults::allot_tag) {}
+
+static const unsigned scale2items[unsigned(initiation_scale::extreme) + 1] = {
+    (max_fields + 1) / 256,
+    (max_fields + 1) / 64,
+    (max_fields + 1) / 16,
+    (max_fields + 1) / 4,
+    max_fields,
+};
+
+static const unsigned scale2bytes[unsigned(initiation_scale::extreme) + 1] = {
+    max_tuple_bytes / 256, max_tuple_bytes / 64, max_tuple_bytes / 16,
+    max_tuple_bytes / 4, max_tuple_bytes};
+
+tuple_rw_fixed::tuple_rw_fixed(const initiation_scale scale,
+                               const fptu::schema *schema,
+                               const hippeus::buffer_tag &allot_tag)
+    : tuple_rw_fixed(scale2items[scale], scale2bytes[scale], schema,
+                     allot_tag) {}
+
+tuple_rw_fixed::tuple_rw_fixed(const defaults &)
+    : tuple_rw_fixed(defaults::scale, defaults::schema.get(),
+                     defaults::allot_tag) {}
 
 } // namespace fptu

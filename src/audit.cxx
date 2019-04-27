@@ -332,7 +332,8 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
   if (unlikely(validator.map_have_holes()))
     return AUDIT_FAILURE("tuple have unaccounted holes");
 
-  if (flags & audit_flags::audit_adjacent_holes) {
+  if ((flags & audit_flags::audit_adjacent_holes) != 0 &&
+      holes_info.count > 1) {
     validator.map_reset(holes_info.count);
     std::size_t count = 0;
     for (const field_loose *loose = index_end; --loose >= index_begin;) {

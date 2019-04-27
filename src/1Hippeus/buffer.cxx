@@ -184,19 +184,24 @@ __hot __flatten void buffer::detach(const buffer *self) {
   }
 
   drown(const_cast<buffer *>(self));
-  /* TODO: подумать как сделать надежнее, один бит не должен все разваливать. */
-  if (unlikely(self->is_localweak())) {
-    auto local = static_cast<buffer_weak *>(const_cast<buffer *>(self));
-    assert(self == local);
-    ::delete local;
-    return;
+  hippeus_allot_C *allot = nullptr;
+  if (self->is_localweak() /* TODO: подумать как сделать надежнее,
+    один бит не должен все разваливать. */) {
+    if (self->host.raw() <
+        uintptr_t(hippeus::buffer_tag::HIPPEUS_TAG_LOCALPTR_THRESHOLD)) {
+      /* тег не является адресом аллокатора, вызываем виртуальный деструктор */
+      auto local = static_cast<buffer_weak *>(const_cast<buffer *>(self));
+      assert(self == local);
+      ::delete local;
+      return;
+    }
+    allot = self->host.local_allot();
+  } else {
+#ifdef HIPPEUS
+    allot = binder::tag2allot(self->host);
+#endif
   }
 
-#ifdef HIPPEUS
-  hippeus_allot_C *allot = binder::tag2allot(self->host);
-#else
-  hippeus_allot_C *allot = self->host.local_allot();
-#endif
   if (unlikely(!allot))
     fptu::throw_invalid_allot();
   allot->repay(allot, const_cast<buffer *>(self), thread_actor());
@@ -204,16 +209,19 @@ __hot __flatten void buffer::detach(const buffer *self) {
 
 __hot buffer *buffer::borrow(buffer_tag host, std::size_t wanna,
                              bool leastwise) {
+  if (unlikely(!host))
+    host = hippeus::default_allot_tag();
+
+  hippeus_allot_C *allot = nullptr;
+  if (host.flags() & HIPPEUS_LOCALWEAK) {
+    allot = host.local_allot();
+  } else {
 #ifdef HIPPEUS
-  hippeus_allot_t *allot = binder::tag2allot(host);
-  if (unlikely(allot != 0))
-  fptu:
-    throw_invalid_allot();
-#else
-  if (unlikely(host != 0))
-    fptu::throw_invalid_allot();
-  hippeus_allot_t *allot = &hippeus_allot_stdcxx;
+    allot = binder::tag2allot(host);
 #endif
+  }
+  if (unlikely(!allot))
+    fptu::throw_invalid_allot();
 
   buffer *buf = static_cast<buffer *>(
       allot->borrow(allot, wanna, leastwise, thread_actor()));

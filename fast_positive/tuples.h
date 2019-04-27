@@ -135,6 +135,28 @@ class variant_value /* Класс поддержки динамической т
   /* TBD / TODO */
 };
 
+/* Для удобного создания кортежей нужного масштаба */
+enum initiation_scale {
+  tiny /* 1/256 ≈1K */,
+  small /* 1/64 ≈4K */,
+  medium /* 1/16 ≈16K */,
+  large /* 1/4 ≈64K */,
+  extreme /* максимальный ≈256K */
+};
+
+/* Параметры по-умолчанию.
+ * Пустотелая структура используется как теговый тип при вызове конструкторов.
+ * Актуальные значения хранятся в статических членах внутри FPTU и
+ * устанавливаются статическим методом. */
+struct FPTU_API defaults {
+  static std::unique_ptr<fptu::schema> schema;
+  static hippeus::buffer_tag allot_tag;
+  static initiation_scale scale;
+  static void setup(const initiation_scale &scale,
+                    std::unique_ptr<fptu::schema> &&schema,
+                    const hippeus::buffer_tag &allot_tag);
+};
+
 //------------------------------------------------------------------------------
 
 /* forward-декларация основных классов для взаимодействия между ними */
@@ -144,8 +166,8 @@ class tuple_rw_fixed;
 class tuple_rw_managed;
 
 /* аллокатор управляемых буферов по-умолчанию */
-constexpr hippeus::buffer_tag default_buffer_allot() noexcept {
-  return hippeus::buffer_tag(&hippeus_allot_stdcxx, false);
+static inline hippeus::buffer_tag default_buffer_allot() noexcept {
+  return defaults::allot_tag;
 }
 
 template <typename TUPLE>
@@ -879,7 +901,10 @@ protected:
                         const hippeus::buffer_tag &allot_tag);
 
 public:
-  constexpr tuple_rw_fixed() noexcept : pimpl_(nullptr) {}
+  tuple_rw_fixed(const defaults &);
+  tuple_rw_fixed(const initiation_scale = initiation_scale::tiny);
+  tuple_rw_fixed(const initiation_scale, const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
   void release() {
     impl::deleter()(/* accepts nullptr */ pimpl_);
     pimpl_ = nullptr;
@@ -996,7 +1021,14 @@ protected:
       : base(src, allot_tag) {}
 
 public:
-  constexpr tuple_rw_managed() noexcept : base() {}
+  tuple_rw_managed(const defaults &ditto) : base(ditto) {}
+  tuple_rw_managed(const initiation_scale scale = initiation_scale::tiny)
+      : base(scale) {}
+  tuple_rw_managed(
+      const initiation_scale scale, const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : base(scale, schema, allot_tag) {}
+
   tuple_rw_managed(
       std::size_t items_limit, std::size_t data_bytes,
       const fptu::schema *schema,
