@@ -28,7 +28,44 @@
 
 #ifdef __cplusplus
 
+#include <limits>
 #include <memory>
+
+namespace hippeus {
+template <class ALLOCATOR> class hipagut_allocator;
+}
+
+// Partial specialization std::allocator_traits<> for hipagut_allocator<>
+namespace std {
+template <typename ALLOCATOR>
+struct allocator_traits<hippeus::hipagut_allocator<ALLOCATOR>>
+    : public allocator_traits<ALLOCATOR> {
+  using unchecked_allocator_type = ALLOCATOR;
+  using unchecked_base = allocator_traits<ALLOCATOR>;
+  using allocator_type = hippeus::hipagut_allocator<ALLOCATOR>;
+
+  using value_type = typename unchecked_base::value_type;
+  using size_type = typename unchecked_base::size_type;
+  /* using pointer = typename unchecked_base::pointer;
+  using difference_type = typename unchecked_base::difference_type;
+  using const_pointer = typename unchecked_base::const_pointer;
+  using reference = typename unchecked_base::reference;
+  using const_reference = typename unchecked_base::const_reference; */
+
+  static constexpr size_type hipagut_gap() {
+    return (HIPAGUT_SPACE + sizeof(value_type) - 1) / sizeof(value_type);
+  }
+
+  static size_type max_size(const allocator_type &a) noexcept {
+    return unchecked_base::max_size(a) - hipagut_gap() * 2;
+  }
+
+  template <typename T>
+  using rebind_alloc = typename allocator_type::template rebind<T>::other;
+  template <typename T> using rebind_traits = allocator_traits<rebind_alloc<T>>;
+};
+
+} // namespace std
 
 namespace hippeus {
 /* LY: STL-аллокатор с контролем записи за границы выделяемых участков памяти.
@@ -37,64 +74,41 @@ namespace hippeus {
  *
  * По-сути аналогичный функционал есть и в glibc (см. MALLOC_CHECK_). Однако
  * иногда удобно иметь независимый уровень явного контроля для подмножества
- * классов.
- */
+ * классов. */
 template <class ALLOCATOR> class hipagut_allocator : public ALLOCATOR {
 public:
-  using inherited = ALLOCATOR;
-  using value_type = typename inherited::value_type;
-  using size_type = typename inherited::size_type;
-  using difference_type = typename inherited::difference_type;
-#if __cplusplus >= 201402L
-  using propagate_on_container_move_assignment =
-      typename inherited::propagate_on_container_move_assignment;
-#endif
-#if __cplusplus >= 201703L
-  using is_always_equal = typename inherited::is_always_equal;
-#endif
-#if __cplusplus <= 201703L
-  using pointer = typename inherited::pointer;
-  using const_pointer = typename inherited::const_pointer;
-  using reference = typename inherited::reference;
-  using const_reference = typename inherited::const_reference;
+  using unchecked_base = ALLOCATOR;
+  using unchecked_traits = std::allocator_traits<unchecked_base>;
+  using traits = typename std::allocator_traits<hipagut_allocator>;
 
-  template <typename T> struct rebind {
-    using other_unchecked = typename inherited::template rebind<T>::other;
-    using other = hipagut_allocator<other_unchecked>;
+  using value_type = typename unchecked_traits::value_type;
+  using size_type = typename unchecked_traits::size_type;
+  using pointer = typename unchecked_traits::pointer;
+
+  template <typename T /*, typename ...Args*/> struct rebind {
+    typedef typename unchecked_base::template rebind<T /*, Args...*/>::other
+        other_unchecked;
+    typedef hipagut_allocator<other_unchecked> other;
   };
-#endif
 
   constexpr hipagut_allocator() noexcept {}
-  hipagut_allocator(inherited &__a) noexcept : inherited(__a) {}
-  constexpr hipagut_allocator(const inherited &__a) noexcept : inherited(__a) {}
+  hipagut_allocator(unchecked_base &a) noexcept : unchecked_base(a) {}
+  constexpr hipagut_allocator(const unchecked_base &a) noexcept
+      : unchecked_base(a) {}
   template <typename T>
-  hipagut_allocator(hipagut_allocator<T> &__a) noexcept : inherited(__a) {}
+  hipagut_allocator(hipagut_allocator<T> &a) noexcept : unchecked_base(a) {}
   template <typename T>
-  constexpr hipagut_allocator(const hipagut_allocator<T> &__a) noexcept
-      : inherited(__a) {}
-
-  size_type max_size() const noexcept {
-    return
-#if __cplusplus > 201703L
-        return std::numeric_limits<size_type>::max() / sizeof(value_type)
-#else
-        inherited::max_size()
-#endif
-               - hipagut_gap() * 2;
-  }
-
-  static constexpr std::size_t hipagut_gap() {
-    return (HIPAGUT_SPACE + sizeof(value_type) - 1) / sizeof(value_type);
-  }
+  constexpr hipagut_allocator(const hipagut_allocator<T> &a) noexcept
+      : unchecked_base(a) {}
 
 #if __cplusplus < 201703L
   pointer allocate(size_type n, const void *hint = nullptr) {
-    if (unlikely(!n || n > max_size()))
+    if (unlikely(!n || n > traits::max_size(*this)))
       return nullptr;
 
-    pointer ptr = inherited::allocate(n + hipagut_gap() * 2, hint);
+    pointer ptr = unchecked_base::allocate(n + traits::hipagut_gap() * 2, hint);
     if (likely(ptr != nullptr)) {
-      ptr += hipagut_gap();
+      ptr += traits::hipagut_gap();
       HIPAGUT_SETUP_ASIDE(ptr, chkU, -HIPAGUT_SPACE);
       HIPAGUT_SETUP_ASIDE(ptr, chkO, n * sizeof(value_type));
     }
@@ -105,12 +119,13 @@ public:
 
 #if __cplusplus == 201703L
   value_type *allocate(size_type n, const void *hint) {
-    if (unlikely(!n || n > max_size()))
+    if (unlikely(!n || n > traits::max_size(*this)))
       return nullptr;
 
-    value_type *ptr = inherited::allocate(n + hipagut_gap() * 2, hint);
+    value_type *ptr =
+        unchecked_base::allocate(n + traits::hipagut_gap() * 2, hint);
     if (likely(ptr != nullptr)) {
-      ptr += hipagut_gap();
+      ptr += traits::hipagut_gap();
       HIPAGUT_SETUP_ASIDE(ptr, chkU, -HIPAGUT_SPACE);
       HIPAGUT_SETUP_ASIDE(ptr, chkO, n * sizeof(value_type));
     }
@@ -121,12 +136,12 @@ public:
 
 #if __cplusplus >= 201703L
   value_type *allocate(size_type n) {
-    if (unlikely(!n || n > max_size()))
+    if (unlikely(!n || n > traits::max_size(*this)))
       return nullptr;
 
-    value_type *ptr = inherited::allocate(n + hipagut_gap() * 2);
+    value_type *ptr = unchecked_base::allocate(n + traits::hipagut_gap() * 2);
     if (likely(ptr != nullptr)) {
-      ptr += hipagut_gap();
+      ptr += traits::hipagut_gap();
       HIPAGUT_SETUP_ASIDE(ptr, chkU, -HIPAGUT_SPACE);
       HIPAGUT_SETUP_ASIDE(ptr, chkO, n * sizeof(value_type));
     }
@@ -137,7 +152,7 @@ public:
 
   void deallocate(pointer p, size_type n) {
     if (likely(n > 0)) {
-      assert(p != nullptr && n <= max_size());
+      assert(p != nullptr && n <= traits::max_size(*this));
 
       HIPAGUT_ENSURE_ASIDE(p, chkU, -HIPAGUT_SPACE);
       HIPAGUT_ENSURE_ASIDE(p, chkO, n * sizeof(value_type));
@@ -145,24 +160,41 @@ public:
       HIPAGUT_DROWN_ASIDE(p, -HIPAGUT_SPACE);
       HIPAGUT_DROWN_ASIDE(p, n * sizeof(value_type));
 
-      inherited::deallocate(p - hipagut_gap(), n + hipagut_gap() * 2);
+      unchecked_base::deallocate(p - traits::hipagut_gap(),
+                                 n + traits::hipagut_gap() * 2);
     } else
       assert(p == nullptr);
   }
 };
 
+template <class T, class U>
+bool operator==(hipagut_allocator<T> const &x,
+                hipagut_allocator<U> const &y) noexcept {
+  return static_cast<typename hipagut_allocator<T>::unchecked_base>(x) ==
+         static_cast<typename hipagut_allocator<U>::unchecked_base>(y);
+}
+
+template <class T, class U>
+bool operator!=(hipagut_allocator<T> const &x,
+                hipagut_allocator<U> const &y) noexcept {
+  return !(x == y);
+}
+
+} // namespace hippeus
+
+namespace hippeus {
 template <typename T>
 class hipagut_std_allocator : public hipagut_allocator<std::allocator<T>> {
 public:
-  using inherited = hipagut_allocator<std::allocator<T>>;
+  using base = hipagut_allocator<std::allocator<T>>;
+  using traits = typename base::traits;
 
   hipagut_std_allocator() throw() {}
-  hipagut_std_allocator(const inherited &__a) throw() : inherited(__a) {}
-  hipagut_std_allocator(inherited &__a) throw() : inherited(__a) {}
+  hipagut_std_allocator(const base &a) throw() : base(a) {}
+  hipagut_std_allocator(base &a) throw() : base(a) {}
 
   template <typename TT>
-  hipagut_std_allocator(const hipagut_std_allocator<TT> &__a) throw()
-      : inherited(__a) {}
+  hipagut_std_allocator(const hipagut_std_allocator<TT> &a) throw() : base(a) {}
 };
 
 } /* namespace hippeus */
