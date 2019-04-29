@@ -30,3 +30,9 @@
 #else
 #define FPTU_API
 #endif /* fptu_EXPORTS */
+
+#ifdef __cplusplus
+#define FPTU_API_TYPE FPTU_API
+#else
+#define FPTU_API_TYPE
+#endif

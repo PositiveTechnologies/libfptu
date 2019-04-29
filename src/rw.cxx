@@ -206,9 +206,9 @@ FPTU_API dynamic_accessor_rw tuple_rw::operator[](const token &ident) {
   return at(ident);
 }
 
-// template class FPTU_API tuple_rw::accessor_rw<token>;
-// template class FPTU_API tuple_rw::iterator_rw<token>;
-// template class FPTU_API tuple_rw::collection_rw<token>;
+// template class FPTU_API_TYPE tuple_rw::accessor_rw<token>;
+// template class FPTU_API_TYPE tuple_rw::iterator_rw<token>;
+// template class FPTU_API_TYPE tuple_rw::collection_rw<token>;
 
 //------------------------------------------------------------------------------
 

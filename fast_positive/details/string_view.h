@@ -42,7 +42,7 @@ namespace fptu {
  *  - отсутствуют сервисные методы: remove_prefix, remove_suffix, substr, copy,
  *    starts_with, ends_with, find, rfind, find_first_of, find_last_of,
  *    find_first_not_of, find_last_not_of, operator<<(std::ostream). */
-class string_view {
+class FPTU_API_TYPE string_view {
 protected:
   const char *str;
   intptr_t len /* LY: здесь намеренно используется intptr_t:

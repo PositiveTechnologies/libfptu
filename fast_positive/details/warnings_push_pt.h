@@ -23,4 +23,7 @@
 #pragma warning(disable : 4661) /* no suitable definition provided for         \
                                    explicit template instantiation request*/
 
-#endif /* _MSC_VER (warnings) */
+#pragma warning(disable : 4251) /* class 'FOO' needs to have dll-interface     \
+                                 * a to be used by clients of class 'BAR'      \
+                                 * (FALSE-POSITIVE in the MOST CASES). */
+#endif                          /* _MSC_VER (warnings) */

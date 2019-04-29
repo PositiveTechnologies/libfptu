@@ -86,7 +86,7 @@ typedef struct hippeus_buffer_C hippeus_buffer_t;
 typedef struct hippeus_allot_C hippeus_allot_t;
 typedef struct hippeus_buffer_tag_C hippeus_buffer_tag_t;
 
-struct hippeus_allot_C {
+struct FPTU_API_TYPE hippeus_allot_C {
 #ifdef HIPPEUS
   hippeus_object_t obj;
   hippeus_handle_t handle;
@@ -120,19 +120,19 @@ DEFINE_ENUM_FLAG_OPERATORS(hippeus_buffer_flags)
 /* Тэг для привязки буфера к аллокатору, а также пометки самих буферов (см.
  * определения выше). Все флажки и значения хранятся как битовые поля в одном
  * opacity и доступны только через методы. */
-struct hippeus_buffer_tag_C {
-  union casting {
+struct FPTU_API_TYPE hippeus_buffer_tag_C {
+  union FPTU_API_TYPE casting {
     uintptr_t uint;
     void *ptr;
     const void *const_ptr;
-#if __cplusplus
+#ifdef __cplusplus
     constexpr casting(const casting &) noexcept = default;
     constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
     constexpr casting(uintptr_t uint) noexcept : uint(uint) {}
 #endif /* __cplusplus */
   } opacity_;
 
-#if __cplusplus
+#ifdef __cplusplus
 protected:
   constexpr hippeus_buffer_tag_C(uintptr_t uint) noexcept : opacity_(uint) {}
   constexpr hippeus_buffer_tag_C(const hippeus_buffer_tag_C &) noexcept =
@@ -143,7 +143,7 @@ protected:
 #ifdef __cplusplus
 namespace hippeus {
 
-struct buffer_tag : public hippeus_buffer_tag_C {
+struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
   /* LY: Флаги для управления буфером (readonly, local и т.д.).
    * При некоторых комбинациях (когда установлен флаг HIPPEUS_LOCALWEAK)
    * остальные поля теряют смысл, а общее значение opacity соответствует
@@ -279,7 +279,7 @@ struct buffer_tag : public hippeus_buffer_tag_C {
  * форме различные варианты организации буферов. В частности, данные могут
  * следовать непосредственно за заголовком буфера, либо располагаться в другом
  * месте. */
-struct hippeus_buffer_C {
+struct FPTU_API_TYPE hippeus_buffer_C {
   HIPAGUT_DECLARE(guard_head);
 
   // Относительный указатель на место размещения данных,
@@ -327,7 +327,7 @@ namespace hippeus {
 /*! \brief Основной интерфейсный класс для всех видов буферов.
  * Не должен использоваться для создания буферов. Для этого предназначены
  * производные классы и аллокаторы. */
-class FPTU_API buffer : public hippeus_buffer_C {
+class FPTU_API_TYPE buffer : public hippeus_buffer_C {
   /*! Class is closed and noncopyable. */
   buffer(const buffer &) = delete;
   buffer &operator=(buffer const &) = delete;
@@ -453,7 +453,7 @@ __always_inline void intrusive_ptr_release(buffer *ptr) { ptr->detach(); }
  * Наследование не допускается, иначе возможны проблемы с разделяемой памятью.
  * Такие буфера должны создаваться только аллокаторами, конструктор сугубо
  * утилитарный. */
-class buffer_solid final : public buffer {
+class FPTU_API_TYPE buffer_solid final : public buffer {
 public:
   static constexpr std::size_t space_overhead() noexcept {
     return sizeof(buffer) + HIPAGUT_SPACE;
@@ -482,7 +482,7 @@ public:
  *
  * В отличии от "хлипкого" буфера (см. далее) косвенный буфер может размещаться
  * в разделяемой памяти и переходить границы адресных пространств процессов. */
-class buffer_indirect final : public buffer {
+class FPTU_API_TYPE buffer_indirect final : public buffer {
 public:
   buffer_indirect(const buffer_tag host, void *payload,
                   std::size_t payload_bytes)
@@ -504,7 +504,7 @@ public:
  * Не допускается размещение в разделяемой памяти и пересечение границы
  * процесса. Вызов виртуального деструктора заложено в логику кода управления
  * буферами и происходит автоматически при наличии флажка HIPPEUS_WEAK. */
-class FPTU_API buffer_weak : public buffer {
+class FPTU_API_TYPE buffer_weak : public buffer {
 protected:
   buffer_weak(const buffer_tag host, void *payload, std::size_t payload_bytes)
       : buffer(host, payload, payload_bytes) {
@@ -516,7 +516,7 @@ public:
   virtual ~buffer_weak();
 };
 
-struct buffer_deleter {
+struct FPTU_API_TYPE buffer_deleter {
   void operator()(buffer *ditto) const { ditto->detach(); }
 };
 

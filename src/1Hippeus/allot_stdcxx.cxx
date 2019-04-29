@@ -50,7 +50,7 @@ static hippeus_buffer_t *borrow(hippeus_allot_t *allot, std::size_t wanna_size,
         "requested allocation of a buffer of invalid size");
 
   const size_t overhead =
-      buffer_allocator::hipagut_gap() * 2 + sizeof(void *) * 2;
+      buffer_allocator::traits::hipagut_gap() * 2 + sizeof(void *) * 2;
   const size_t bytes =
       fptu::utils::ceil(
           wanna_size + hippeus::buffer_solid::space_overhead() + overhead, 64) -

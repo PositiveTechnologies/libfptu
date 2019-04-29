@@ -40,7 +40,7 @@ class tuple_rw_managed;
 
 namespace details {
 
-class FPTU_API tuple_rw : public crtp_getter<tuple_rw> {
+class FPTU_API_TYPE tuple_rw : public crtp_getter<tuple_rw> {
   friend class crtp_getter<tuple_rw>;
   friend class fptu::tuple_rw_managed;
 
@@ -117,7 +117,7 @@ protected:
   ~tuple_rw();
   unsigned options_;
 
-  union FPTU_API junk_counters {
+  union FPTU_API_TYPE junk_counters {
     /* Счетчики мусорных 32-битных элементов, которые образовались при
      * удалении/обновлении. */
     struct {

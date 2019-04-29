@@ -25,14 +25,14 @@
 
 #pragma pack(push, 1)
 
-typedef union fptu_binary96 {
+typedef union FPTU_API_TYPE fptu_binary96 {
   uint8_t u8[96 / 8];
   uint16_t u16[96 / 16];
   uint32_t u32[96 / 32];
   uint64_t u64;
 } fptu_binary96_t;
 
-typedef union fptu_binary128 {
+typedef union FPTU_API_TYPE fptu_binary128 {
   uint8_t u8[128 / 8];
   uint16_t u16[128 / 16];
   uint32_t u32[128 / 32];
@@ -41,47 +41,47 @@ typedef union fptu_binary128 {
   fptu_int128_t i128;
 } fptu_binary128_t;
 
-typedef union fptu_binary160 {
+typedef union FPTU_API_TYPE fptu_binary160 {
   uint8_t u8[160 / 8];
   uint16_t u16[160 / 16];
   uint32_t u32[160 / 32];
 } fptu_binary160_t;
 
-typedef union fptu_binary192 {
+typedef union FPTU_API_TYPE fptu_binary192 {
   uint8_t u8[192 / 8];
   uint16_t u16[192 / 16];
   uint32_t u32[192 / 32];
   uint64_t u64[192 / 64];
 } fptu_binary192_t;
 
-typedef union fptu_binary224 {
+typedef union FPTU_API_TYPE fptu_binary224 {
   uint8_t u8[224 / 8];
   uint16_t u16[224 / 16];
   uint32_t u32[224 / 32];
 } fptu_binary224_t;
 
-typedef union fptu_binary256 {
+typedef union FPTU_API_TYPE fptu_binary256 {
   uint8_t u8[256 / 8];
   uint16_t u16[256 / 16];
   uint32_t u32[256 / 32];
   uint64_t u64[256 / 64];
 } fptu_binary256_t;
 
-typedef union fptu_binary320 {
+typedef union FPTU_API_TYPE fptu_binary320 {
   uint8_t u8[320 / 8];
   uint16_t u16[320 / 16];
   uint32_t u32[320 / 32];
   uint64_t u64[320 / 64];
 } fptu_binary320_t;
 
-typedef union fptu_binary384 {
+typedef union FPTU_API_TYPE fptu_binary384 {
   uint8_t u8[384 / 8];
   uint16_t u16[384 / 16];
   uint32_t u32[384 / 32];
   uint64_t u64[384 / 64];
 } fptu_binary384_t;
 
-typedef union fptu_binary512 {
+typedef union FPTU_API_TYPE fptu_binary512 {
   uint8_t u8[512 / 8];
   uint16_t u16[512 / 16];
   uint32_t u32[512 / 32];

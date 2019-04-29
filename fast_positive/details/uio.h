@@ -38,7 +38,7 @@ struct iovec {
 #ifdef __cplusplus
 
 namespace fptu {
-struct iovec : public ::iovec {
+struct FPTU_API_TYPE iovec : public ::iovec {
   iovec() {
     iov_base = nullptr;
     iov_len = 0;

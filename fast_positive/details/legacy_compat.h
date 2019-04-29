@@ -36,7 +36,7 @@
 #include "fast_positive/tuples_internal.h"
 #include "fast_positive/tuples_legacy.h"
 
-struct FPTU_API fptu_field : public fptu::details::field_loose {
+struct FPTU_API_TYPE fptu_field : public fptu::details::field_loose {
   using base = fptu::details::field_loose;
   fptu_field() = delete;
   ~fptu_field() = delete;
@@ -47,7 +47,7 @@ struct FPTU_API fptu_field : public fptu::details::field_loose {
   }
 };
 
-struct FPTU_API fptu_rw : public fptu::details::tuple_rw {
+struct FPTU_API_TYPE fptu_rw : public fptu::details::tuple_rw {
 #ifdef FRIEND_TEST
   FRIEND_TEST(Fetch, Base);
   FRIEND_TEST(Fetch, Variate);

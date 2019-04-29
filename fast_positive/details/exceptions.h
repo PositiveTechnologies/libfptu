@@ -86,7 +86,7 @@ FPTU_API __noreturn void throw_insufficient_space(size_t index,
 
 namespace fptu __dll_visibility_default {
 
-class FPTU_API bug : public std::runtime_error {
+class FPTU_API_TYPE bug : public std::runtime_error {
   const bug_location &location_;
 
 public:
@@ -95,7 +95,7 @@ public:
   virtual ~bug() noexcept;
 };
 
-class FPTU_API bad_tuple : public std::runtime_error {
+class FPTU_API_TYPE bad_tuple : public std::runtime_error {
   using base = std::runtime_error;
 
 public:
@@ -104,7 +104,7 @@ public:
   virtual ~bad_tuple() noexcept;
 };
 
-class FPTU_API bad_tuple_ro : public bad_tuple {
+class FPTU_API_TYPE bad_tuple_ro : public bad_tuple {
   const fptu::schema *const schema_;
   const void *const ptr_;
   const std::size_t bytes_;
@@ -123,7 +123,7 @@ public:
   virtual ~bad_tuple_ro() noexcept;
 };
 
-class FPTU_API bad_tuple_rw : public bad_tuple {
+class FPTU_API_TYPE bad_tuple_rw : public bad_tuple {
   const details::tuple_rw *const tuple_;
 
 public:
@@ -136,7 +136,7 @@ public:
 
 //------------------------------------------------------------------------------
 
-class FPTU_API insufficient_space : public std::bad_alloc {
+class FPTU_API_TYPE insufficient_space : public std::bad_alloc {
 public:
   const std::size_t index_space, data_space;
   insufficient_space(size_t index_space, std::size_t data_space) noexcept;
@@ -145,7 +145,7 @@ public:
 };
 
 #define FPTU_DECLARE_EXCEPTION(NAME, BASE)                                     \
-  class FPTU_API NAME : public BASE {                                          \
+  class FPTU_API_TYPE NAME : public BASE {                                     \
     using base = BASE;                                                         \
                                                                                \
   public:                                                                      \

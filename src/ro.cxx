@@ -133,9 +133,9 @@ crtp_getter<tuple_ro>::is_present(const token &ident) const {
   return have(self(), ident);
 }
 
-// template class FPTU_API accessor_ro<token>;
-// template class FPTU_API iterator_ro<token>;
-// template class FPTU_API collection_ro<token>;
+// template class FPTU_API_TYPE accessor_ro<token>;
+// template class FPTU_API_TYPE iterator_ro<token>;
+// template class FPTU_API_TYPE collection_ro<token>;
 
 } // namespace details
 

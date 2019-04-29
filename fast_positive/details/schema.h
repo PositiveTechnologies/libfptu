@@ -27,6 +27,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "fast_positive/details/warnings_push_pt.h"
+
 namespace fptu {
 namespace details {
 
@@ -35,7 +37,7 @@ namespace details {
 
 } // namespace details
 
-class schema {
+class FPTU_API_TYPE schema {
 public:
   using token_vector = std::vector<token>;
 
@@ -67,3 +69,5 @@ public:
 };
 
 } // namespace fptu
+
+#include "fast_positive/details/warnings_pop.h"

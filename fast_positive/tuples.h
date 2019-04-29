@@ -66,8 +66,6 @@
 
 #endif /* __cplusplus */
 
-#include "fast_positive/details/warnings_pop.h"
-
 //------------------------------------------------------------------------------
 
 namespace fptu {
@@ -148,7 +146,7 @@ enum initiation_scale {
  * Пустотелая структура используется как теговый тип при вызове конструкторов.
  * Актуальные значения хранятся в статических членах внутри FPTU и
  * устанавливаются статическим методом. */
-struct FPTU_API defaults {
+struct FPTU_API_TYPE defaults {
   static std::unique_ptr<fptu::schema> schema;
   static hippeus::buffer_tag allot_tag;
   static initiation_scale scale;
@@ -297,7 +295,7 @@ public:
   }
 };
 
-class tuple_ro_weak : public tuple_crtp_reader<tuple_ro_weak>
+class FPTU_API_TYPE tuple_ro_weak : public tuple_crtp_reader<tuple_ro_weak>
 /* Не-управляемый R/O-кортеж с данными в отдельном (внешнем) буфере.
   Фактически это просто указатель, поэтому кортеж
   валиден только пока доступны и не изменены данные во внешнем буфере.
@@ -349,7 +347,8 @@ public:
   inline bool operator!=(const tuple_rw_fixed &ditto) const noexcept;
 };
 
-class tuple_ro_managed : public tuple_crtp_reader<tuple_ro_managed>
+class FPTU_API_TYPE tuple_ro_managed
+    : public tuple_crtp_reader<tuple_ro_managed>
 /* Управляемый R/O-кортеж с данными в управляемом буфере со счётчиком ссылок.
   Поддерживает std::move(), clone(), RAII для счётчика ссылок.
   Может быть создан из tuple_rw_managed без копирования данных, а из
@@ -884,7 +883,7 @@ public:
  *  - с выделением нового буфера и копированием в него данных. Технически
  *    это реализуется функцией take_managed_clone(), а также копирующий
  *    конструктор tuple_ro_managed из tuple_rw_fixed. */
-class FPTU_API tuple_rw_fixed : public tuple_crtp_writer<tuple_rw_fixed> {
+class FPTU_API_TYPE tuple_rw_fixed : public tuple_crtp_writer<tuple_rw_fixed> {
   friend class tuple_crtp_writer<tuple_rw_fixed>;
   friend class tuple_ro_managed;
 
@@ -1003,7 +1002,7 @@ public:
  *    места.
  *
  * Остальные свойства и поведение tuple_rw_managed аналогично tuple_rw_fixed. */
-class FPTU_API tuple_rw_managed : public tuple_rw_fixed {
+class FPTU_API_TYPE tuple_rw_managed : public tuple_rw_fixed {
   using base = tuple_rw_fixed;
   void expand_underlying_buffer(const insufficient_space &deficit);
 
@@ -1365,3 +1364,5 @@ FPTU_API std::string hexadecimal(const void *data, std::size_t bytes);
 } /* namespace fptu */
 
 #endif /* __cplusplus */
+
+#include "fast_positive/details/warnings_pop.h"

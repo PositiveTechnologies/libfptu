@@ -24,7 +24,7 @@
 #include "fast_positive/details/fixed_binary.h"
 #include <stdint.h>
 
-typedef union fptu_ip_address {
+typedef union FPTU_API_TYPE fptu_ip_address {
   uint8_t u8[16];
   uint16_t u16[8];
   uint32_t u32[4];
@@ -37,7 +37,7 @@ typedef union fptu_ip_address {
 } fptu_ip_address_t;
 
 #pragma pack(push, 1)
-typedef struct fptu_ip_net {
+typedef struct FPTU_API_TYPE fptu_ip_net {
   fptu_ip_address_t address;
   uint8_t cidr;
 #ifdef __cplusplus

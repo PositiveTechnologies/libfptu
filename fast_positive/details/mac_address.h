@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-typedef union fptu_mac_address {
+typedef union FPTU_API_TYPE fptu_mac_address {
   uint8_t u8[6];
   uint8_t u16[3];
   uint64_t raw64;

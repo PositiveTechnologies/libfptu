@@ -39,7 +39,7 @@
 namespace fptu {
 
 #if defined(__ia32__)
-struct ia32_cpu_features {
+struct FPTU_API_TYPE ia32_cpu_features {
   struct {
     uint32_t ebx;
     uint32_t ecx;

@@ -90,7 +90,7 @@ __extern_C FPTU_API union fptu_datetime_C fptu_now_coarse(void);
 #ifdef __cplusplus
 namespace fptu {
 
-class FPTU_API datetime_t {
+class FPTU_API_TYPE datetime_t {
   fptu_datetime_C value_;
 
   union casting {

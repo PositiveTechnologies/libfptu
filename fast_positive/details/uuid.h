@@ -23,7 +23,7 @@
 #include "fast_positive/details/fixed_binary.h"
 #include <stdint.h>
 
-typedef struct fptu_uuid {
+typedef struct FPTU_API_TYPE fptu_uuid {
   fptu_binary128_t bin128;
 #ifdef __cplusplus
 #endif

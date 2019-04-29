@@ -32,8 +32,8 @@
 namespace fptu {
 namespace details {
 
-class FPTU_API tuple_ro : private stretchy_value_tuple,
-                          public crtp_getter<tuple_ro> {
+class FPTU_API_TYPE tuple_ro : private stretchy_value_tuple,
+                               public crtp_getter<tuple_ro> {
   friend class crtp_getter<tuple_ro>;
   template <typename> friend class crtp_setter;
   friend class tuple_rw;

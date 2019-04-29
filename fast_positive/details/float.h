@@ -33,7 +33,7 @@ typedef __float128 fptu_float128_t;
 
 /* Non-operational stub 128-bit float point, just for place holding */
 
-typedef union fptu_float128 {
+typedef union FPTU_API_TYPE fptu_float128 {
   fptu_uint128_t u128;
   fptu_int128_t i128;
 } fptu_float128_t;
@@ -47,7 +47,7 @@ typedef union fptu_float128 {
  */
 
 /* Non-operational stub 16-bit float point, just for place holding */
-typedef union fptu_float16 {
+typedef union FPTU_API_TYPE fptu_float16 {
   int16_t i16;
   uint16_t u16;
 } fptu_float16_t;

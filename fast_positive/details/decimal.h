@@ -36,7 +36,7 @@ using std::decimal::decimal64;
 
 /* Non-operational stub decimal float point types, just for place holding */
 
-typedef union fptu_decimal32 {
+typedef union FPTU_API_TYPE fptu_decimal32 {
   uint32_t u32;
   int32_t i32;
 #ifdef __cplusplus
@@ -47,7 +47,7 @@ typedef union fptu_decimal32 {
 #endif /* __cplusplus */
 } fptu_decimal32_t;
 
-typedef union fptu_decimal64 {
+typedef union FPTU_API_TYPE fptu_decimal64 {
   uint64_t u64;
   int64_t i64;
 #ifdef __cplusplus
@@ -58,7 +58,7 @@ typedef union fptu_decimal64 {
 #endif /* __cplusplus */
 } fptu_decimal64_t;
 
-typedef union fptu_decimal128 {
+typedef union FPTU_API_TYPE fptu_decimal128 {
   fptu_int128_t u128;
   fptu_int128_t i128;
 #ifdef __cplusplus

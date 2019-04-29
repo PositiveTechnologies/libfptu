@@ -26,6 +26,13 @@
 
 #include <type_traits> // for std::is_standard_layout
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4275) /* non dll-interface class 'FOO' used as base  \
+                                 * for dll-interface class 'BAR'               \
+                                 * (FALSE-POSITIVE in the MOST CASES). */
+#endif
+
 namespace fptu {
 namespace details {
 
@@ -200,7 +207,8 @@ public:
 
 //------------------------------------------------------------------------------
 
-class token : public details::token_operations<details::token_nonstatic_tag> {
+class FPTU_API_TYPE token
+    : public details::token_operations<details::token_nonstatic_tag> {
   using base = details::token_operations<details::token_nonstatic_tag>;
   explicit constexpr token(const details::tag_t tag) noexcept : base(tag) {}
 
@@ -288,6 +296,10 @@ using token_preplaced = cast_preplaced<token>;
 using token_loose = cast_loose<token>;
 
 } // namespace fptu
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 //------------------------------------------------------------------------------
 

@@ -35,7 +35,7 @@
 #include "fast_positive/details/warnings_push_pt.h"
 
 typedef union hippeus_actor_C hippeus_actor_t;
-union hippeus_actor_C {
+union FPTU_API_TYPE hippeus_actor_C {
   struct {
     uint16_t index;
     uint16_t policy;

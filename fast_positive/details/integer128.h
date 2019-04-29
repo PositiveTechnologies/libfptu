@@ -32,7 +32,7 @@ typedef __int128_t fptu_int128_t;
 
 /* Non-operational stub 128-bit integer types, just for place holding */
 
-struct fptu_uint128 {
+struct FPTU_API_TYPE fptu_uint128 {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   uint64_t l, h;
 #else
@@ -50,7 +50,7 @@ struct fptu_uint128 {
 #endif /* __cplusplus */
 };
 
-struct fptu_int128 {
+struct FPTU_API_TYPE fptu_int128 {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   int64_t l, h;
 #else

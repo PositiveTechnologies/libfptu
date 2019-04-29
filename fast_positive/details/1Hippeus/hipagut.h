@@ -72,7 +72,7 @@
 
 typedef union hippeus_hipagut hippeus_hipagut_t;
 
-union hippeus_hipagut {
+union FPTU_API_TYPE hippeus_hipagut {
   struct {
     volatile uint32_t random_chirp, derived_mesh;
   };
