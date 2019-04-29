@@ -81,12 +81,40 @@ typedef struct hippeus_object_C hippeus_object_t;
 
 //-----------------------------------------------------------------------------
 
+/* LY: Флажки в заголовках буферов. */
+enum hippeus_buffer_flags {
+  HIPPEUS_READONLY = 1 /*!< Буфер с данными только для чтения */,
+  HIPPEUS_LOCALWEAK =
+      2 /*!< Локальный псевдо-разделяемый буфер, управляемый локальным
+           аллокатором (внутри адресного пространства текущего процесса), либо
+           классом С++ с виртуальным деструктором */
+  ,
+  HIPPEUS_SCARCE = 4 /*!< Дефицитный буфер, следует вернуть как можно скорее */
+  ,
+  HIPPEUS_FLAG_RESERVED = 8,
+  HIPPEUS_FLAG_BITS = 4
+};
+DEFINE_ENUM_FLAG_OPERATORS(hippeus_buffer_flags)
+
 /* typedefs for C */
 typedef struct hippeus_buffer_C hippeus_buffer_t;
 typedef struct hippeus_allot_C hippeus_allot_t;
 typedef struct hippeus_buffer_tag_C hippeus_buffer_tag_t;
 
-struct FPTU_API_TYPE hippeus_allot_C {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(                                                               \
+    disable : 4324) /* structure was padded due to alignment specifier */
+#endif
+
+struct FPTU_API_TYPE
+#if defined(__GNUC__) /* GCC всех версий болеет, встречая alignas() рядом с \
+                         __attribute__((__visibility__("default"))) */
+    __attribute__((__aligned__(1u << HIPPEUS_FLAG_BITS)))
+#else
+    alignas(1u << HIPPEUS_FLAG_BITS)
+#endif
+    hippeus_allot_C {
 #ifdef HIPPEUS
   hippeus_object_t obj;
   hippeus_handle_t handle;
@@ -102,20 +130,11 @@ struct FPTU_API_TYPE hippeus_allot_C {
                                         bool probe_only, bool deep_checking);
 };
 
-//-----------------------------------------------------------------------------
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
-/* LY: Флажки в заголовках буферов. */
-enum hippeus_buffer_flags {
-  HIPPEUS_READONLY = 1 /*!< Буфер с данными только для чтения */,
-  HIPPEUS_LOCALWEAK =
-      2 /*!< Локальный псевдо-разделяемый буфер, управляемый локальным
-           аллокатором (внутри адресного пространства текущего процесса), либо
-           классом С++ с виртуальным деструктором */
-  ,
-  HIPPEUS_SCARCE = 4 /*!< Дефицитный буфер, следует вернуть как можно скорее */
-  ,
-};
-DEFINE_ENUM_FLAG_OPERATORS(hippeus_buffer_flags)
+//-----------------------------------------------------------------------------
 
 /* Тэг для привязки буфера к аллокатору, а также пометки самих буферов (см.
  * определения выше). Все флажки и значения хранятся как битовые поля в одном
@@ -149,7 +168,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * остальные поля теряют смысл, а общее значение opacity соответствует
    * прямому локальному указателю на интерфейс аллокатора. */
   enum {
-    HIPPEUS_TAG_FLAGS_BITS = 4,
+    HIPPEUS_TAG_FLAGS_BITS = HIPPEUS_FLAG_BITS,
     HIPPEUS_TAG_ALLOT_BITS = (sizeof(uintptr_t) > 4) ? 28 : 12,
     HIPPEUS_TAG_DEPOT_BITS = (sizeof(uintptr_t) > 4) ? 16 : 8,
     HIPPEUS_TAG_CRATE_BITS = (sizeof(uintptr_t) > 4) ? 16 : 8,
