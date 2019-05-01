@@ -275,7 +275,7 @@ include_directories("${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 set(LIBERTHINK_TYPE STATIC)
 add_subdirectory(fast_positive/details/erthink)
 add_subdirectory(src)
-if(BUILD_TESTING)
+if(FPTU_ENABLE_TESTS)
   add_subdirectory(test)
 endif()
 
