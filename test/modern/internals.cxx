@@ -68,10 +68,35 @@ TEST(Token, StaticPreplaced) {
   EXPECT_TRUE(MyToken_FooBar_int::is_static_token::value);
 
 #ifndef __clang__
-  /* FIXME: CLANG 6/7/8 WTF? */
   const fptu::tuple_ro_weak tuple_ro;
-  EXPECT_THROW(tuple_ro.collection(token).empty(), fptu::collection_required);
+  /* FIXME: CLANG ?-6-7-8 WTF? */
+  EXPECT_THROW(tuple_ro.collection(token).empty(), ::fptu::collection_required);
 #endif
+}
+
+#ifdef __clang__
+TEST(clang_WTF, DISABLED_ExceptionHandling) {
+#else
+TEST(clang_WTF, ExceptionHandling) {
+#endif
+  try {
+    bool got_collection_required_exception = false;
+    try {
+      // fptu::throw_collection_required();
+      const fptu::tuple_ro_weak tuple_ro;
+      MyToken_FooBar_int token;
+      tuple_ro.collection(token).empty();
+    } catch (const ::fptu::collection_required &) {
+      got_collection_required_exception = true;
+    }
+    EXPECT_TRUE(got_collection_required_exception);
+  } catch (const ::std::exception &e) {
+    std::string msg = fptu::format("Unexpected exception type '%s': %s",
+                                   typeid(e).name(), e.what());
+    GTEST_FATAL_FAILURE_(msg.c_str());
+  } catch (...) {
+    GTEST_FATAL_FAILURE_("Unknown NOT std::exception");
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -207,7 +232,7 @@ __extern_C __dll_export int fptu2_get_Xint(const fptu::tuple_ro_managed tuple,
   }
   INJECT_ASM("#-dtoken-preplaced--- is_present");
   return a + tuple.is_present(token);
-  INJECT_ASM("#-dtoken-preplaced--- get");
+  INJECT_ASM("#-dtoken-preplaced--- end");
 }
 
 //------------------------------------------------------------------------------
@@ -240,5 +265,5 @@ __extern_C __dll_export int fptu2_rw_get_Xint(fptu::tuple_rw_fixed &tuple,
   }
   INJECT_ASM("#-dtoken-preplaced--- is_present");
   return a + tuple.is_present(token);
-  INJECT_ASM("#-dtoken-preplaced--- get");
+  INJECT_ASM("#-dtoken-preplaced--- end");
 }
