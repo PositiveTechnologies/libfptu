@@ -40,6 +40,10 @@
 #include "fast_positive/details/erthink/erthink_optimize4size.h"
 #include "fast_positive/details/exceptions.h"
 
+#ifdef __GNUC__
+#pragma GCC visibility push(default)
+#endif
+
 namespace fptu __dll_visibility_default {
 
 __cold void raise_bug(const bug_location &what_and_where) {
@@ -198,3 +202,7 @@ __cold __noreturn void throw_tuple_bad(const details::tuple_rw *tuple,
 }
 
 } // namespace fptu__dll_visibility_default
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif

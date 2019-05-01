@@ -43,6 +43,10 @@ class tuple_ro;
 class tuple_rw;
 } // namespace details
 
+#ifdef __GNUC__
+#pragma GCC visibility push(default)
+#endif
+
 FPTU_API __noreturn void throw_tuple_bad(const fptu::schema *schema,
                                          const void *const ptr,
                                          const std::size_t bytes,
@@ -176,4 +180,8 @@ FPTU_DECLARE_EXCEPTION(managed_buffer_required, std::logic_error);
 
 #ifdef _MSC_VER
 #pragma warning(pop)
+#endif
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
 #endif
