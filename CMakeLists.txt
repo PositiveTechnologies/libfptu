@@ -159,8 +159,6 @@ CHECK_SYMBOL_EXISTS(nan math.h HAVE_nan)
 CHECK_SYMBOL_EXISTS(nanf math.h HAVE_nanf)
 CHECK_INCLUDE_FILES(ieee754.h HAVE_IEEE754_H)
 
-option(FPTU_ENABLE_TESTS "Build FPTU tests." ${BUILD_TESTING})
-
 if(NOT SUBPROJECT)
   option(CMAKE_POSITION_INDEPENDENT_CODE "Generate position independed (PIC)." ON)
   option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
@@ -259,6 +257,8 @@ if(NOT SUBPROJECT)
   setup_compile_flags()
   include(fast_positive/details/erthink/cmake/testing.cmake)
 endif(NOT SUBPROJECT)
+
+option(FPTU_ENABLE_TESTS "Build FPTU tests." ${BUILD_TESTING})
 
 ################################################################################
 
