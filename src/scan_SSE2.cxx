@@ -59,6 +59,20 @@ static __always_inline unsigned cmp2mask(const __m128i pattern,
       _mm_cmpeq_epi16(pattern, _mm_loadu_si128((const __m128i *)scan)));
 }
 
+#if __SANITIZE_ADDRESS__
+static __m128i __attribute__((no_sanitize_address, noinline))
+bypass_asan_read_m128(const void *src) {
+  return _mm_loadu_si128((const __m128i *)src);
+}
+#define cmp2mask_bypass_asan(pattern, scan)                                    \
+  ({                                                                           \
+    __m128i copy = bypass_asan_read_m128(scan);                                \
+    cmp2mask(pattern, (field_loose *)&copy);                                   \
+  })
+#else
+#define cmp2mask_bypass_asan(pattern, scan) cmp2mask(pattern, scan)
+#endif
+
 static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
   unsigned long index;
 #ifdef _MSC_VER
@@ -99,11 +113,11 @@ __hot const field_loose *fptu_scan_SSE2(const field_loose *begin,
     unsigned mask = 0x4444u;
     if (likely(/* check for enough on-page offset for '-16' */ 0xff0 &
                (uintptr_t)scan)) {
-      mask &= cmp2mask(pattern, end - 4);
+      mask &= cmp2mask_bypass_asan(pattern, end - 4);
       mask >>= (16 - bytes);
     } else {
       mask >>= (16 - bytes);
-      mask &= cmp2mask(pattern, scan);
+      mask &= cmp2mask_bypass_asan(pattern, scan);
     }
     if (mask2ptr(mask, scan))
       return scan;
