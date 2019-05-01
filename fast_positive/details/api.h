@@ -32,7 +32,11 @@
 #endif /* fptu_EXPORTS */
 
 #ifdef __cplusplus
+#if defined(__clang__) || __has_attribute(type_visibility)
+#define FPTU_API_TYPE FPTU_API __attribute__((type_visibility("default")))
+#else
 #define FPTU_API_TYPE FPTU_API
+#endif
 #else
 #define FPTU_API_TYPE
 #endif
