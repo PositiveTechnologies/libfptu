@@ -54,5 +54,7 @@ script: >
         exit -1;
       fi) &&
     make --keep-going all &&
-    make --keep-going test && ([ ! -x test/fptu_c_mode ] || test/fptu_c_mode);
+    (if [ "${TRAVIS_COMPILER}" != "clang" ]; then make --keep-going test;
+    else echo "Skip tests due clang-CRTP-exceptions-bug"; fi) &&
+    ([ ! -x test/fptu_c_mode ] || test/fptu_c_mode);
   fi
