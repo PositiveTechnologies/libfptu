@@ -77,6 +77,7 @@ set(LIBFPTU_SOURCES
   ../fast_positive/details/erthink/erthink_optimize4speed.h
   ../fast_positive/details/erthink/erthink_ifunc.h
   ../fast_positive/details/erthink/erthink_misc.h
+  ../fast_positive/details/erthink/erthink_endian.h
   ../fast_positive/details/erthink/erthink.h
 
   ../fast_positive/details/1Hippeus/actor.h

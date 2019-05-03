@@ -49,7 +49,7 @@ TEST(Remove, Base) {
   EXPECT_STREQ(nullptr, fptu::check(pt));
 
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   EXPECT_EQ(pt->pivot_, pt->head_);
   EXPECT_EQ(pt->pivot_, pt->tail_);
 
@@ -63,12 +63,12 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   EXPECT_EQ(pt->pivot_, pt->head_);
   EXPECT_EQ(pt->pivot_, pt->tail_);
 
@@ -82,12 +82,12 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(4u, pt->junk_space());
+  EXPECT_EQ(4u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   EXPECT_EQ(pt->pivot_, pt->head_);
   EXPECT_EQ(pt->pivot_, pt->tail_);
 
@@ -101,12 +101,12 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   EXPECT_EQ(pt->pivot_, pt->head_);
   EXPECT_EQ(pt->pivot_, pt->tail_);
 
@@ -120,12 +120,12 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(8u, pt->junk_space());
+  EXPECT_EQ(8u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   EXPECT_EQ(pt->pivot_, pt->head_);
   EXPECT_EQ(pt->pivot_, pt->tail_);
 }

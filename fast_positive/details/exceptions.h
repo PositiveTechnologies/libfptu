@@ -78,6 +78,7 @@ FPTU_API __noreturn void throw_value_too_long();
 FPTU_API __noreturn void throw_tuple_too_large();
 FPTU_API __noreturn void throw_insufficient_space(size_t index,
                                                   std::size_t data);
+FPTU_API __noreturn void throw_tuple_overflow();
 } // namespace fptu
 
 //------------------------------------------------------------------------------
@@ -174,6 +175,7 @@ FPTU_DECLARE_EXCEPTION(value_too_long, std::length_error);
 FPTU_DECLARE_EXCEPTION(tuple_too_large, std::length_error);
 FPTU_DECLARE_EXCEPTION(value_out_of_range, std::out_of_range);
 FPTU_DECLARE_EXCEPTION(managed_buffer_required, std::logic_error);
+FPTU_DECLARE_EXCEPTION(tuple_overflow, std::logic_error);
 #undef FPTU_DECLARE_EXCEPTION
 
 } // namespace fptu__dll_visibility_default

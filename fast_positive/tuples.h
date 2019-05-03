@@ -141,6 +141,8 @@ enum initiation_scale {
   large /* 1/4 ≈64K */,
   extreme /* максимальный ≈256K */
 };
+std::size_t estimate_space_for_tuple(const initiation_scale &scale,
+                                     const schema *schema);
 
 /* Параметры по-умолчанию.
  * Пустотелая структура используется как теговый тип при вызове конструкторов.
@@ -153,6 +155,10 @@ struct FPTU_API_TYPE defaults {
   static void setup(const initiation_scale &scale,
                     std::unique_ptr<fptu::schema> &&schema,
                     const hippeus::buffer_tag &allot_tag);
+  static std::size_t
+  estimate_space_for_tuple(const initiation_scale &_scale = scale) {
+    return fptu::estimate_space_for_tuple(_scale, schema.get());
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -454,10 +460,9 @@ public:
     (void)allot_tag;
   }
 
-  static tuple_ro_managed clone(const tuple_ro_weak &src,
-                                const hippeus::buffer_tag &allot_tag =
-                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                        false)) {
+  static tuple_ro_managed
+  clone(const tuple_ro_weak &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     /* TODO: конструктор из уже проверенной R/O-формы с выделением управляющего
      * буфера.
      *
@@ -483,16 +488,14 @@ public:
     return tuple_ro_managed(src, allot_tag);
   }
 
-  static tuple_ro_managed clone(const tuple_ro_managed &src,
-                                const hippeus::buffer_tag &allot_tag =
-                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                        false)) {
+  static tuple_ro_managed
+  clone(const tuple_ro_managed &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_ro_managed(src, allot_tag);
   }
-  static tuple_ro_managed clone(const tuple_rw_fixed &src,
-                                const hippeus::buffer_tag &allot_tag =
-                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                        false)) {
+  static tuple_ro_managed
+  clone(const tuple_rw_fixed &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_ro_managed(src, allot_tag);
   }
 
@@ -699,6 +702,15 @@ public:
     return get_impl()->insert_nested(ident, value.get_impl());
   }
 
+  template <typename TOKEN>
+  inline void set_string(const TOKEN &ident, const std::string &value) {
+    get_impl()->set_string(ident, fptu::string_view(value));
+  }
+  details::tuple_rw::iterator_rw<token>
+  insert_string(const token &ident, const std::string &value) {
+    return get_impl()->insert_string(ident, fptu::string_view(value));
+  }
+
   __pure_function constexpr const hippeus::buffer *get_buffer() const noexcept {
     return get_impl()->get_buffer();
   }
@@ -716,6 +728,27 @@ public:
   }
   __pure_function constexpr std::size_t index_size() const noexcept {
     return get_impl()->index_size();
+  }
+  __pure_function constexpr std::size_t head_space() const noexcept {
+    return get_impl()->head_space();
+  }
+  __pure_function constexpr std::size_t tail_space_units() const noexcept {
+    return get_impl()->tail_space_units();
+  }
+  __pure_function constexpr std::size_t tail_space_bytes() const noexcept {
+    return get_impl()->tail_space_bytes();
+  }
+  __pure_function constexpr std::size_t junk_units() const noexcept {
+    return get_impl()->junk_units();
+  }
+  __pure_function constexpr std::size_t junk_bytes() const noexcept {
+    return get_impl()->junk_bytes();
+  }
+  __pure_function constexpr bool empty() const noexcept {
+    return get_impl()->empty();
+  }
+  __pure_function constexpr std::size_t capacity() const noexcept {
+    return get_impl()->capacity();
   }
   __pure_function constexpr std::size_t loose_count() const noexcept {
     return get_impl()->loose_count();
@@ -752,19 +785,6 @@ public:
   }
   template <typename TOKEN> bool erase(const TOKEN &ident) {
     return get_impl()->erase(ident);
-  }
-
-  __pure_function constexpr std::size_t head_space() const noexcept {
-    return get_impl()->head_space();
-  }
-  __pure_function constexpr std::size_t tail_space() const noexcept {
-    return get_impl()->tail_space();
-  }
-  __pure_function constexpr std::size_t junk_space() const noexcept {
-    return get_impl()->junk_space();
-  }
-  __pure_function constexpr bool empty() const noexcept {
-    return get_impl()->empty();
   }
 
   __pure_function tuple_ro_weak take_weak_asis() const {
@@ -949,23 +969,19 @@ public:
 
   inline tuple_rw_fixed(tuple_ro_managed &&src);
 
-  static tuple_rw_fixed clone(const tuple_ro_weak &src,
-                              const hippeus::buffer_tag &allot_tag =
-                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                      false)) {
+  static tuple_rw_fixed
+  clone(const tuple_ro_weak &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_rw_fixed(src, allot_tag);
   }
-
-  static tuple_rw_fixed clone(const tuple_ro_managed &src,
-                              const hippeus::buffer_tag &allot_tag =
-                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                      false)) {
+  static tuple_rw_fixed
+  clone(const tuple_ro_managed &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_rw_fixed(src, allot_tag);
   }
-  static tuple_rw_fixed clone(const tuple_rw_fixed &src,
-                              const hippeus::buffer_tag &allot_tag =
-                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                      false)) {
+  static tuple_rw_fixed
+  clone(const tuple_rw_fixed &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_rw_fixed(src, allot_tag);
   }
 
@@ -1004,7 +1020,7 @@ public:
  * Остальные свойства и поведение tuple_rw_managed аналогично tuple_rw_fixed. */
 class FPTU_API_TYPE tuple_rw_managed : public tuple_rw_fixed {
   using base = tuple_rw_fixed;
-  void expand_underlying_buffer(const insufficient_space &deficit);
+  void manage_space_deficit(const insufficient_space &wanna);
 
 protected:
   tuple_rw_managed(const tuple_ro_weak &src,
@@ -1048,10 +1064,9 @@ public:
       : base(source_ptr, source_bytes, more_items, more_payload, schema,
              allot_tag) {}
 
-  static tuple_rw_managed clone(const tuple_ro_weak &src,
-                                const hippeus::buffer_tag &allot_tag =
-                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                        false)) {
+  static tuple_rw_managed
+  clone(const tuple_ro_weak &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_rw_managed(src, allot_tag);
   }
 
@@ -1078,16 +1093,14 @@ public:
     return *this;
   }
 
-  static tuple_rw_managed clone(const tuple_ro_managed &src,
-                                const hippeus::buffer_tag &allot_tag =
-                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                        false)) {
+  static tuple_rw_managed
+  clone(const tuple_ro_managed &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_rw_managed(src, allot_tag);
   }
-  static tuple_rw_managed clone(const tuple_rw_fixed &src,
-                                const hippeus::buffer_tag &allot_tag =
-                                    hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                        false)) {
+  static tuple_rw_managed
+  clone(const tuple_rw_fixed &src,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_rw_managed(src, allot_tag);
   }
 
@@ -1098,7 +1111,7 @@ public:
       try {                                                                    \
         return base::set_##NAME(ident, value);                                 \
       } catch (const insufficient_space &deficit) {                            \
-        expand_underlying_buffer(deficit);                                     \
+        manage_space_deficit(deficit);                                         \
         continue;                                                              \
       }                                                                        \
     }                                                                          \
@@ -1109,6 +1122,7 @@ public:
 
   HERE_THUNK_MAKE(tuple_ro_weak &, nested)
   HERE_THUNK_MAKE(string_view &, string)
+  HERE_THUNK_MAKE(std::string &, string)
   HERE_THUNK_MAKE(string_view &, varbinary)
   HERE_THUNK_MAKE(property_pair &, property)
   HERE_THUNK_MAKE(bool, bool)
@@ -1159,7 +1173,7 @@ public:
       try {
         return base::erase(ident);
       } catch (const insufficient_space &deficit) {
-        expand_underlying_buffer(deficit);
+        manage_space_deficit(deficit);
         continue;
       }
     }

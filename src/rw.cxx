@@ -402,24 +402,6 @@ tuple_rw::~tuple_rw() {
   }
 }
 
-inline tuple_rw::tuple_rw(int buffer_offset, std::size_t buffer_size,
-                          std::size_t items_limit, const fptu::schema *schema)
-    : schema_(schema), buffer_offset_(buffer_offset), options_(0) {
-  const auto required_space = estimate_required_space(items_limit, 0, schema);
-  if (unlikely(required_space > buffer_size || buffer_size > buffer_limit))
-    throw_invalid_argument();
-
-  end_ = unsigned(buffer_size - pure_tuple_size()) >>
-         fptu::fundamentals::unit_shift;
-  head_ = tail_ = pivot_ = unsigned(items_limit);
-  if (schema_) {
-    tail_ += unsigned(schema_->preplaced_units());
-    std::memcpy(pivot(), schema_->preplaced_init_image(),
-                schema_->preplaced_bytes());
-  }
-  debug_check();
-}
-
 tuple_rw *tuple_rw::create_new(std::size_t items_limit, std::size_t data_bytes,
                                const fptu::schema *schema,
                                const hippeus::buffer_tag &allot_tag) {
@@ -468,8 +450,9 @@ inline tuple_rw::tuple_rw(const audit_holes_info &holes_info,
   const std::size_t space_needed = tuple_rw::estimate_required_space(
       reserve_items, ro->payload_bytes(), schema);
 
-  end_ = unsigned(buffer_size - pure_tuple_size()) >>
-         fptu::fundamentals::unit_shift;
+  end_ = std::min(unsigned(max_tuple_units_netto),
+                  unsigned(buffer_size - pure_tuple_size()) >>
+                      fptu::fundamentals::unit_shift);
   pivot_ = unsigned(reserve_items);
   if (unlikely(buffer_size < space_needed)) {
     head_ = tail_ = pivot_;
@@ -588,8 +571,9 @@ static const unsigned scale2items[unsigned(initiation_scale::extreme) + 1] = {
 };
 
 static const unsigned scale2bytes[unsigned(initiation_scale::extreme) + 1] = {
-    max_tuple_bytes / 256, max_tuple_bytes / 64, max_tuple_bytes / 16,
-    max_tuple_bytes / 4, max_tuple_bytes};
+    max_tuple_bytes_netto / 256, max_tuple_bytes_netto / 64,
+    max_tuple_bytes_netto / 16, max_tuple_bytes_netto / 4,
+    max_tuple_bytes_netto};
 
 tuple_rw_fixed::tuple_rw_fixed(const initiation_scale scale,
                                const fptu::schema *schema,
@@ -600,5 +584,11 @@ tuple_rw_fixed::tuple_rw_fixed(const initiation_scale scale,
 tuple_rw_fixed::tuple_rw_fixed(const defaults &)
     : tuple_rw_fixed(defaults::scale, defaults::schema.get(),
                      defaults::allot_tag) {}
+
+std::size_t estimate_space_for_tuple(const initiation_scale &scale,
+                                     const fptu::schema *schema) {
+  return details::tuple_rw::estimate_required_space(scale2items[scale],
+                                                    scale2bytes[scale], schema);
+}
 
 } // namespace fptu

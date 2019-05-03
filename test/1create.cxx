@@ -107,8 +107,9 @@ TEST(Init, Base) {
       EXPECT_EQ(fptu::unit_size, io.total_bytes);
 
       EXPECT_EQ(items, fptu_space4items(pt));
-      size_t avail =
-          FPT_ALIGN_FLOOR(extra, fptu::unit_size) - fptu::unit_size * items;
+      size_t avail = std::min(size_t(fptu::max_tuple_bytes_netto),
+                              FPT_ALIGN_FLOOR(extra, fptu::unit_size)) -
+                     fptu::unit_size * items;
       EXPECT_EQ(avail, fptu_space4data(pt));
       EXPECT_EQ(0u, fptu_junkspace(pt));
 

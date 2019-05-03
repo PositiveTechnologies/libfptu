@@ -171,12 +171,23 @@ TEST(ScanIndex, SSE2) {
 
 //------------------------------------------------------------------------------
 
-TEST(fptu2_cxx, smoke) {
+TEST(Smoke, trivia_set) {
   fptu::tuple_rw_managed rw;
   fptu::token token(fptu::u16, 0);
   rw.set_u16(token, 42);
   auto value = rw.get_u16(token);
   EXPECT_EQ(42, value);
+}
+
+TEST(Smoke, trivia_autogrowth) {
+  fptu::tuple_rw_managed rw;
+  fptu::token token(fptu::text, 0, true);
+  EXPECT_GT(fptu::max_tuple_bytes_netto, rw.capacity());
+  for (int i = 1; i < 555; ++i)
+    rw.insert_string(token,
+                     fptu::format("This is the string #%*d.", i - 555, i));
+
+  EXPECT_EQ(fptu::max_tuple_bytes_netto, rw.capacity());
 }
 
 //------------------------------------------------------------------------------

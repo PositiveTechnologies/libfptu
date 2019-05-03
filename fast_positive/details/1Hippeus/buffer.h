@@ -446,7 +446,6 @@ public:
     ::memset(begin(), 0, size());
   }
 
-  static bool force_deep_checking;
   bool __must_check_result check(bool deep_checking = false) const;
   bool __must_check_result
   check_expect_invalid(bool deep_checking = false) const;

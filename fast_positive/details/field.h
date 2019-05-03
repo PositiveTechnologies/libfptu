@@ -81,7 +81,9 @@ union stretchy_value_string {
   void store(const string_view &value) {
     const std::size_t string_length = value.size();
     // clear the last unit
-    flat[bytes2units(string_length + 3) - 1] = 0;
+    flat[bytes2units(string_length +
+                     ((string_length < tiny_threshold) ? 1u : 3u)) -
+         1] = 0;
     tiny.length = uint8_t(string_length);
     char *place = tiny.chars;
     if (string_length >= tiny_threshold) {
@@ -158,6 +160,8 @@ union stretchy_value_varbin {
 
 struct stretchy_value_tuple {
   union {
+    /* См описание ограничений и компромиссов в комментариях к типу enum
+     * fptu::fundamentals в essentials.h */
     struct {
       uint16_t brutto_units;
       uint16_t looseitems_flags;

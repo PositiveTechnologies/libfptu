@@ -36,7 +36,7 @@
 size_t fptu_space(size_t items, std::size_t data_bytes) noexcept {
   return fptu::details::tuple_rw::estimate_required_space(
       std::min(items, size_t(fptu::max_fields)),
-      std::min(data_bytes, size_t(fptu::max_tuple_bytes)), nullptr);
+      std::min(data_bytes, size_t(fptu::max_tuple_bytes_netto)), nullptr);
 }
 
 fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
@@ -56,7 +56,7 @@ fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
 
 fptu_rw *fptu_alloc(size_t items_limit, std::size_t data_bytes) noexcept {
   if (unlikely(items_limit > fptu::max_fields ||
-               data_bytes > fptu::max_tuple_bytes))
+               data_bytes > fptu::max_tuple_bytes_netto))
     return nullptr;
 
   const std::size_t bytes = fptu_space(items_limit, data_bytes);
@@ -82,9 +82,11 @@ fptu_error fptu_clear(fptu_rw *pt) noexcept {
 
 size_t fptu_space4items(const fptu_rw *pt) noexcept { return pt->head_space(); }
 
-size_t fptu_space4data(const fptu_rw *pt) noexcept { return pt->tail_space(); }
+size_t fptu_space4data(const fptu_rw *pt) noexcept {
+  return pt->tail_space_bytes();
+}
 
-size_t fptu_junkspace(const fptu_rw *pt) noexcept { return pt->junk_space(); }
+size_t fptu_junkspace(const fptu_rw *pt) noexcept { return pt->junk_bytes(); }
 
 const char *fptu_check_rw(const fptu_rw *pt) noexcept { return pt->audit(); }
 

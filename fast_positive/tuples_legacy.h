@@ -173,12 +173,13 @@ enum fptu_bits {
   fptu_unit_shift = fptu::fundamentals::unit_shift,
 
   // максимальный суммарный размер сериализованного представления кортежа,
-  fptu_max_tuple_bytes = fptu::fundamentals::max_tuple_bytes,
+  // включая заголовок
+  fptu_max_tuple_bytes = fptu::fundamentals::max_tuple_bytes_brutto,
 
   // максимальный тег-номер поля/колонки
   fptu_max_cols = fptu::details::tag_bits::max_ident,
 
-  // максимальное кол-во полей/колонок в одном кортеже
+  // максимальное кол-во значений полей (с учетом коллекций) в одном кортеже
   fptu_max_fields = fptu::fundamentals::max_fields,
 
   // максимальный размер поля/колонки

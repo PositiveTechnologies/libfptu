@@ -117,6 +117,8 @@ __cold __noreturn void throw_insufficient_space(size_t index,
   throw insufficient_space(index, data);
 }
 
+__cold __noreturn void throw_tuple_overflow() { throw tuple_overflow(); }
+
 //------------------------------------------------------------------------------
 
 #define FPTU_DEFINE_EXCEPTION(NAME, MESSAGE)                                   \
@@ -143,6 +145,7 @@ FPTU_DEFINE_EXCEPTION(tuple_too_large, "fptu: tuple is too large")
 FPTU_DEFINE_EXCEPTION(value_out_of_range, "fptu: value out of range")
 FPTU_DEFINE_EXCEPTION(managed_buffer_required,
                       "fptu: managed 1Hippeus's buffer required")
+FPTU_DEFINE_EXCEPTION(tuple_overflow, "fptu: tuple size limit reached")
 
 #undef FPTU_DEFINE_EXCEPTION
 

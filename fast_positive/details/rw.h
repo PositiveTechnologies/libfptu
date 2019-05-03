@@ -61,23 +61,20 @@ public:
 
   static tuple_rw *create_new(std::size_t items_limit, std::size_t data_bytes,
                               const fptu::schema *schema,
-                              const hippeus::buffer_tag &allot_tag =
-                                  hippeus::buffer_tag(&hippeus_allot_stdcxx,
-                                                      false));
+                              const hippeus::buffer_tag &allot_tag);
 
-  static tuple_rw *
-  create_from_ro(const audit_holes_info &holes_info, const tuple_ro *ro,
-                 std::size_t more_items, std::size_t more_payload,
-                 const fptu::schema *schema,
-                 const hippeus::buffer_tag &allot_tag =
-                     hippeus::buffer_tag(&hippeus_allot_stdcxx, false));
+  static tuple_rw *create_from_ro(const audit_holes_info &holes_info,
+                                  const tuple_ro *ro, std::size_t more_items,
+                                  std::size_t more_payload,
+                                  const fptu::schema *schema,
+                                  const hippeus::buffer_tag &allot_tag);
 
-  static tuple_rw *
-  create_from_buffer(const void *source_ptr, std::size_t source_bytes,
-                     std::size_t more_items, std::size_t more_payload,
-                     const fptu::schema *schema,
-                     const hippeus::buffer_tag &allot_tag =
-                         hippeus::buffer_tag(&hippeus_allot_stdcxx, false));
+  static tuple_rw *create_from_buffer(const void *source_ptr,
+                                      std::size_t source_bytes,
+                                      std::size_t more_items,
+                                      std::size_t more_payload,
+                                      const fptu::schema *schema,
+                                      const hippeus::buffer_tag &allot_tag);
 
   static tuple_rw *create_legacy(void *buffer_space, std::size_t buffer_size,
                                  std::size_t items_limit);
@@ -92,7 +89,24 @@ public:
 
 protected:
   inline tuple_rw(int buffer_offset, std::size_t buffer_size,
-                  std::size_t items_limit, const fptu::schema *schema);
+                  std::size_t items_limit, const fptu::schema *schema)
+      : schema_(schema), buffer_offset_(buffer_offset), options_(0) {
+    const auto required_space = estimate_required_space(items_limit, 0, schema);
+    if (unlikely(required_space > buffer_size || buffer_size > buffer_limit))
+      throw_invalid_argument();
+
+    end_ = std::min(unsigned(max_tuple_units_netto),
+                    unsigned(buffer_size - pure_tuple_size()) >>
+                        fptu::fundamentals::unit_shift);
+    head_ = tail_ = pivot_ = unsigned(items_limit);
+    if (schema_) {
+      tail_ += unsigned(schema_->preplaced_units());
+      std::memcpy(pivot(), schema_->preplaced_init_image(),
+                  schema_->preplaced_bytes());
+    }
+    debug_check();
+  }
+
   inline tuple_rw(const audit_holes_info &holes_info, const tuple_ro *ro,
                   int buffer_offset, std::size_t buffer_size,
                   std::size_t more_items, const fptu::schema *schema);
@@ -614,13 +628,15 @@ public: //----------------------------------------------------------------------
   const char *audit() const noexcept { return audit(this); }
 
   std::size_t head_space() const noexcept { return head_; }
-  std::size_t tail_space() const noexcept {
+  std::size_t tail_space_units() const noexcept {
     assert(end_ >= tail_);
-    return units2bytes(end_ - tail_);
+    return end_ - tail_;
   }
-  std::size_t junk_space() const noexcept {
-    return units2bytes(junk_.volume + junk_.count);
+  std::size_t tail_space_bytes() const noexcept {
+    return units2bytes(tail_space_units());
   }
+  std::size_t junk_units() const noexcept { return junk_.volume + junk_.count; }
+  std::size_t junk_bytes() const noexcept { return units2bytes(junk_units()); }
   bool empty() const noexcept { return head_ + junk_.count == tail_; }
   std::size_t index_size() const noexcept {
     assert(pivot_ >= head_);
@@ -631,12 +647,13 @@ public: //----------------------------------------------------------------------
     return index_size() - junk_.count;
   }
   std::size_t brutto_size() const noexcept {
-    assert(end_ >= tail_);
-    return units2bytes(tail_ - end_ + /* header */ 1);
+    return units2bytes(tail_ - head_ + /* header */ 1);
   }
   std::size_t netto_size() const noexcept {
-    return brutto_size() - junk_space();
+    return brutto_size() - junk_units();
   }
+  std::size_t capacity() const noexcept { return units2bytes(end_); }
+
   bool have_preplaced() const noexcept {
     return schema_ && schema_->preplaced_bytes() > 0;
   }
@@ -653,16 +670,20 @@ public: //----------------------------------------------------------------------
                                         const fptu::schema *schema,
                                         bool dont_account_preplaced = false) {
     const std::size_t preplaced_bytes = schema ? schema->preplaced_bytes() : 0;
-    if (unlikely(preplaced_bytes > max_tuple_bytes))
+    if (unlikely(preplaced_bytes > fundamentals::max_tuple_bytes_netto))
       throw_invalid_schema();
-    if (unlikely(data_bytes > max_tuple_bytes - preplaced_bytes ||
-                 items > max_fields))
+    if (unlikely(data_bytes >
+                     fundamentals::max_tuple_bytes_netto - preplaced_bytes ||
+                 items > fundamentals::max_fields))
       throw_tuple_too_large();
 
-    return pure_tuple_size() + items * unit_size +
-           utils::ceil(dont_account_preplaced ? data_bytes
-                                              : data_bytes + preplaced_bytes,
-                       unit_size);
+    const std::size_t estimated =
+        pure_tuple_size() + items * unit_size +
+        utils::ceil(dont_account_preplaced ? data_bytes
+                                           : data_bytes + preplaced_bytes,
+                    unit_size);
+    assert(estimated <= fundamentals::buffer_enough);
+    return estimated;
   }
 
   static std::size_t estimate_required_space(const tuple_ro *ro,
@@ -673,16 +694,17 @@ public: //----------------------------------------------------------------------
      * экземпляра tuple_ro и его соответствие схеме. Такая проверка должна
      * выполняться один раз явным вызовом валидирующих функций. Например, внутри
      * конструкторов безопасных объектов. */
-    if (unlikely(more_items > max_fields))
+    if (unlikely(more_items > fundamentals::max_fields))
       throw_invalid_argument("items > fptu::max_fields");
-    if (unlikely(more_payload > fptu::buffer_limit))
+    if (unlikely(more_payload > fundamentals::max_tuple_bytes_netto))
       throw_invalid_argument("more_payload_bytes > fptu::buffer_limit");
 
-    const std::size_t total_items =
-        std::min(size_t(fptu::max_fields), ro->index_size() + more_items);
+    const std::size_t total_items = std::min(size_t(fundamentals::max_fields),
+                                             ro->index_size() + more_items);
 
-    const std::size_t total_payload = std::min(
-        size_t(fptu::max_tuple_bytes), ro->payload_bytes() + more_payload);
+    const std::size_t total_payload =
+        std::min(size_t(fundamentals::max_tuple_bytes_netto),
+                 ro->payload_bytes() + more_payload);
 
     return estimate_required_space(total_items, total_payload, schema,
                                    /* не учитываем размер preplaced-полей,

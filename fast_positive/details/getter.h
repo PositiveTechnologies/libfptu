@@ -416,7 +416,8 @@ template <typename TUPLE> class crtp_getter {
                                                const TOKEN &token) {
     if (likely(token.is_preplaced())) {
       const std::size_t offset = token.preplaced_offset();
-      constexpr_assert(tuple.have_preplaced() && offset < max_tuple_bytes);
+      constexpr_assert(tuple.have_preplaced() &&
+                       offset < max_tuple_bytes_netto);
       constexpr_assert(tuple.begin_data_bytes() + offset <
                        tuple.end_data_bytes());
       const field_preplaced *const target =

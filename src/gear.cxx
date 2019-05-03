@@ -77,7 +77,7 @@ class gear : public tuple_rw {
 
   inline void trim_hole(const field_loose *hole) noexcept;
   inline unit_t *tail_alloc(unsigned units);
-  inline field_loose *index_alloc();
+  inline field_loose *index_alloc(size_t notify_data_space);
   inline field_loose *merge_holes(field_loose *first,
                                   field_loose *second) noexcept;
 
@@ -87,7 +87,7 @@ class gear : public tuple_rw {
 
   inline relative_payload *alloc_data(unsigned units, field_loose *const hole);
   relative_payload *alloc_data(unsigned units) {
-    assert(units > 0 && units < bytes2units(max_tuple_bytes));
+    assert(units > 0 && units < bytes2units(max_tuple_bytes_netto));
     return alloc_data(units, lookup_hole<hole_search_mode::best_fit>(units));
   }
 
@@ -223,15 +223,15 @@ void gear::trim_hole(const field_loose *hole) noexcept {
 }
 
 unit_t *gear::tail_alloc(unsigned units) {
-  const std::size_t avail = tail_space();
+  const std::size_t avail = tail_space_units();
   if (unlikely(avail < units))
-    throw_insufficient_space(0, units - avail);
+    throw_insufficient_space(0, units);
   unit_t *ptr = &area_[tail_];
   tail_ += units;
   return ptr;
 }
 
-field_loose *gear::index_alloc() {
+field_loose *gear::index_alloc(size_t notify_data_space) {
   if (junk_.count > 0) {
     /* пробуем найти в индексе дыру без связанного зазора в данных */
     field_loose *hole = const_cast<field_loose *>(
@@ -244,7 +244,7 @@ field_loose *gear::index_alloc() {
 
   /* проверяем наличие места и двигаем голову индекса */
   if (unlikely(head_space() < 1))
-    throw_insufficient_space(1, 0);
+    throw_insufficient_space(1, notify_data_space);
   return erthink::constexpr_pointer_cast<field_loose *>(&area_[--head_]);
 }
 
@@ -277,22 +277,20 @@ relative_payload *gear::alloc_data(unsigned units, field_loose *const hole) {
 field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
   if (units == 0) {
     assert(is_inplaced(tag));
-    field_loose *loose = index_alloc();
+    field_loose *loose = index_alloc(0);
     loose->genius_and_id = uint16_t(tag);
     loose->relative.reset_payload();
     mark_unsorted();
     return loose;
   }
 
-  assert(units < bytes2units(max_tuple_bytes));
+  assert(units < bytes2units(max_tuple_bytes_netto));
   assert(!is_inplaced(tag));
   field_loose *hole = lookup_hole<hole_search_mode::best_fit>(units);
   if (hole == nullptr) {
-    if (unlikely(tail_space() < units))
-      throw_insufficient_space(
-          head_space() < 1 && !lookup_hole<hole_search_mode::exactly_size>(0),
-          units - tail_space());
-    hole = index_alloc();
+    if (unlikely(tail_space_units() < units))
+      throw_insufficient_space(1, units);
+    hole = index_alloc(units);
     hole->genius_and_id = uint16_t(tag);
     hole->relative.set_payload(&area_[tail_]);
     tail_ += units;
@@ -312,7 +310,7 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
   }
 
   /* дырка использована не полностью */
-  field_loose *loose = index_alloc();
+  field_loose *loose = index_alloc(units);
   loose->genius_and_id = uint16_t(tag);
   loose->relative.set_payload(hole->hole_begin());
   hole->relative.add_delta(excess);
@@ -432,7 +430,7 @@ gear::release_data(relative_payload *chunk, unsigned units,
     assert(chunk->flat + units != end_data_units());
     /* кусок НЕ может примыкать к концу данных, оформляем дыркой */
     if (hole0 == nullptr) {
-      hole0 = index_alloc();
+      hole0 = index_alloc(0);
       junk_.count += 1;
     }
     hole0->hole_set_units(units);
@@ -480,8 +478,8 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
       /* Внутри нет зазоров и место выделено в самом конце. Поэтому пытаемся
        * непосредственно изменить размер выделенного места. Это одновременно
        * самый быстрый и единственно возможный вариант действий. */
-      if (have < needed && unlikely(tail_space() < needed - have))
-        throw_insufficient_space(0, needed - have);
+      if (have < needed && unlikely(tail_space_units() < needed - have))
+        throw_insufficient_space(0, needed);
       tail_ = tail_ - have + needed;
       return ref.payload();
     }
@@ -490,14 +488,14 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
       /* Внутри нет зазоров и места требуется БОЛЬШЕ чем есть. В этом случае
        * нет других вариантов, кроме как сначала выделить новое место,
        * а затем освободить старое. */
-      if (unlikely(tail_space() < needed || head_space() + junk_.count < 1))
-        throw_insufficient_space((head_space() + junk_.count) ? 0 : 1,
-                                 (tail_space() < needed) ? needed : 0);
+      if (unlikely(tail_space_units() < needed ||
+                   head_space() + junk_.count < 1))
+        throw_insufficient_space(1, needed);
         /* Далее исключений быть не должно */
 #ifndef NDEBUG
       try {
 #endif
-        field_loose *hole = index_alloc();
+        field_loose *hole = index_alloc(needed);
         hole->hole_set_units(have);
         hole->relative.set_payload(ref.payload());
         junk_.count += 1;
@@ -516,7 +514,8 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
      * нет других вариантов, кроме как добавить новую дыру и поместить в нее
      * лишнее место. */
     assert(needed < have);
-    field_loose *hole = index_alloc() /* Тут может выскочить исключение */;
+    field_loose *hole =
+        index_alloc(needed) /* Тут может выскочить исключение */;
     hole->hole_set_units(have - needed);
     hole->relative.set_payload(ref.payload()->flat + needed);
     junk_.count += 1;
@@ -620,14 +619,13 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
     if (ref.payload()->flat + have == end_data_units()) {
       /* Место выделено в самом конце, пытаемся непосредственно
        * изменить его размер двигая "хвост". */
-      if (have < needed && unlikely(tail_space() < needed - have))
-        throw_insufficient_space(1, needed - have);
+      if (have < needed && unlikely(tail_space_units() < needed - have))
+        throw_insufficient_space(1, needed);
       tail_ = tail_ - have + needed;
       return ref.payload();
     }
 
-    throw_insufficient_space(
-        1, (needed < have || tail_space() >= needed) ? 0 : needed);
+    throw_insufficient_space(1, needed);
   }
   /* Есть возможность добавить новую дыру или использовать соседние. */
   assert(can_add_a_hole);
@@ -635,7 +633,7 @@ relative_payload *gear::realloc_data(relative_offset &ref, const unsigned have,
   /* УВЕЛИЧЕНИЕ будет успешным если достаточно нераспределенного места
    * и есть возможность добавления дырки. В свою очередь, для УМЕНЬШЕНИЯ
    * достаточно только добавления дырки в индекс. */
-  const bool is_space_enough = have > needed || needed <= tail_space();
+  const bool is_space_enough = have > needed || needed <= tail_space_units();
   if (is_space_enough)
     goto release_and_alloc;
 
@@ -723,7 +721,7 @@ struct compact_item {
     const ptrdiff_t offset =
         erthink::constexpr_pointer_cast<const char *>(relative) -
         erthink::constexpr_pointer_cast<const char *>(basis);
-    constexpr_assert(offset >= 0 && offset < fptu::max_tuple_bytes);
+    constexpr_assert(offset >= 0 && offset < fptu::max_tuple_bytes_netto);
     return static_cast<uint32_t>(offset);
   }
 

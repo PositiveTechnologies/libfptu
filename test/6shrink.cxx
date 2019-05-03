@@ -45,18 +45,18 @@ TEST(Shrink, Base) {
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
 
   // add one more header-only and erase first
   EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0xB, 0xBB43));
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(4u, pt->junk_space());
+  EXPECT_EQ(4u, pt->junk_bytes());
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   fptu_field *fp = fptu::lookup(pt, 0xB, fptu_uint16);
   ASSERT_NE(nullptr, fp);
   EXPECT_EQ(0xBB43u, fptu_field_uint16(fp));
@@ -66,11 +66,11 @@ TEST(Shrink, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(4u, pt->junk_space());
+  EXPECT_EQ(4u, pt->junk_bytes());
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   fp = fptu::lookup(pt, 0xC, fptu_uint32);
   ASSERT_NE(nullptr, fp);
   EXPECT_EQ(42u, fptu_field_uint32(fp));
@@ -80,11 +80,11 @@ TEST(Shrink, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xC, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(8u, pt->junk_space());
+  EXPECT_EQ(8u, pt->junk_bytes());
   fptu_shrink(pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk_space());
+  EXPECT_EQ(0u, pt->junk_bytes());
   fp = fptu::lookup(pt, 0xD, fptu_int64);
   ASSERT_NE(nullptr, fp);
   EXPECT_EQ(-555, fptu_field_int64(fp));
@@ -167,7 +167,7 @@ TEST(Shrink, Shuffle) {
         ASSERT_STREQ(nullptr, fptu::check(pt));
         ASSERT_EQ(count,
                   fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-        EXPECT_EQ(0u, pt->junk_space());
+        EXPECT_EQ(0u, pt->junk_bytes());
 
         if (count) {
           for (unsigned i = 0; i < 6; ++i) {

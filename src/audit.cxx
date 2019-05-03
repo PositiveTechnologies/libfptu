@@ -370,7 +370,7 @@ tuple_ro::inline_lite_checkup(const void *ptr, std::size_t bytes) noexcept {
 
   if (unlikely(bytes < sizeof(unit_t)))
     return AUDIT_FAILURE("hollow tuple (too short)");
-  if (unlikely(bytes > fptu::max_tuple_bytes))
+  if (unlikely(bytes > fptu::max_tuple_bytes_netto))
     return AUDIT_FAILURE("tuple too large");
   if (unlikely(bytes % sizeof(unit_t)))
     return AUDIT_FAILURE("odd tuple size");
@@ -426,11 +426,11 @@ __hot const char *tuple_rw::audit(const tuple_rw *self) noexcept {
   if (unlikely(self->tail_ > self->end_))
     return AUDIT_FAILURE("tuple.tail > tuple.end");
 
+  if (unlikely(self->end_ > max_tuple_units_netto))
+    return AUDIT_FAILURE("tuple.end > fptu::max_tuple_bytes");
+
   if (unlikely(self->pivot_ - self->head_ > fptu::max_fields))
     return AUDIT_FAILURE("tuple.loose_fields > fptu::max_fields");
-
-  if (unlikely(self->tail_ - self->head_ > UINT16_MAX))
-    return AUDIT_FAILURE("tuple.size > max_bytes");
 
   if (unlikely(self->junk_.count > self->pivot_ - self->head_))
     return AUDIT_FAILURE("tuple.junk.holes_count > tuple.index_size");
