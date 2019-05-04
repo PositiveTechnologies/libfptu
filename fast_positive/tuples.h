@@ -81,6 +81,31 @@ class schema /* Минималистический справочник схем
    Полное определение в fast_positive/details/schema.h */
     ;
 
+/* Режимы проверки данных и их соответствия схеме при создании кортежей */
+enum validation_mode {
+  default_validation,
+  enforce_skip_validation,
+  enforce_validation
+};
+inline constexpr bool apply_validation_mode(validation_mode mode,
+                                            bool by_defaults) noexcept {
+  switch (mode) {
+  default:
+    return by_defaults;
+  case enforce_skip_validation:
+    return false;
+  case enforce_validation:
+    return true;
+  }
+}
+
+inline constexpr validation_mode
+combine_validation_mode(validation_mode mode, bool by_default) noexcept {
+  return (mode != default_validation)
+             ? mode
+             : by_default ? enforce_validation : enforce_skip_validation;
+}
+
 class token /* Токен доступа к полю кортежей.
   Является именем поля кортежа оттранслированным в координаты машинного
   представления схемы. В компактном и удобном для машины виде содержит всю
@@ -321,10 +346,12 @@ protected:
 public:
   constexpr tuple_ro_weak() noexcept : tuple_ro_weak(nullptr) {}
   tuple_ro_weak(const void *ptr, std::size_t bytes, const fptu::schema *schema,
-                bool skip_validation = false)
-      : pimpl_(impl::make_from_buffer(ptr, bytes, schema, skip_validation)) {}
+                validation_mode validation = default_validation)
+      : pimpl_(impl::make_from_buffer(
+            ptr, bytes, schema, !apply_validation_mode(validation, true))) {}
   ~tuple_ro_weak() =
-      /* to foo was a literal type*/ default /* { pimpl_ = nullptr; } */;
+      /* to tuple_ro_weak was a literal type */
+      default /* { pimpl_ = nullptr; } */;
 
   constexpr tuple_ro_weak(const tuple_ro_weak &) noexcept = default;
   tuple_ro_weak &operator=(const tuple_ro_weak &) noexcept = default;
@@ -1365,7 +1392,7 @@ typedef int (*fptu_emit_func)(void *emiter_ctx, const char *text,
 
 #ifdef __cplusplus
 //------------------------------------------------------------------------------
-/* Сервисные функции и классы для C++ (будет пополнятся). */
+/* Вспомогательные функции и классы */
 
 namespace fptu {
 

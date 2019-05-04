@@ -336,7 +336,7 @@ struct FPTU_API_TYPE hippeus_buffer_C {
   uint8_t _inplace[1];
 };
 
-__extern_C bool hippeus_buffer_force_deep_checking;
+__extern_C bool hippeus_buffer_enforce_deep_checking;
 
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus

@@ -33,14 +33,14 @@
 #include "fast_positive/details/exceptions.h"
 #include "fast_positive/details/memcheck_valgrind.h"
 
-bool hippeus_buffer_force_deep_checking;
+bool hippeus_buffer_enforce_deep_checking;
 
 namespace hippeus {
 
 namespace {
 template <bool expect_invalid>
 __always_inline bool validate_buffer(const buffer *buf, bool deep_checking) {
-  deep_checking |= hippeus_buffer_force_deep_checking;
+  deep_checking |= hippeus_buffer_enforce_deep_checking;
 
   // if (unlikely(!hippeus_is_readable(buf)))
   //  return false;
@@ -97,7 +97,7 @@ __cold bool buffer::check_expect_invalid(bool deep_checking) const {
 }
 
 __hot __flatten bool buffer::ensure(bool deep_checking) const {
-  deep_checking |= hippeus_buffer_force_deep_checking;
+  deep_checking |= hippeus_buffer_enforce_deep_checking;
   FPTU_ENSURE((ptrdiff_t)space > 0);
   FPTU_ENSURE(host.opacity_.uint != 0);
   FPTU_ENSURE(ref_counter > 0);
@@ -141,7 +141,7 @@ __hot __flatten void buffer::init(buffer *self, buffer_tag host, void *payload,
   } else
     assert(!self->is_solid());
 
-  if (unlikely(hippeus_buffer_force_deep_checking)) {
+  if (unlikely(hippeus_buffer_enforce_deep_checking)) {
     assert(self->ensure(true));
     if (!self->is_readonly() && self->size()) {
       ::memset(self->begin(), 0xCC, self->size());

@@ -598,7 +598,7 @@ public: //----------------------------------------------------------------------
     none = 0,
     compactify = 1,
     sort_index = 2,
-    force_sort_index = 4,
+    enforce_sort_index = 4,
     all = optimize_flags::compactify | optimize_flags::sort_index,
   };
   friend inline optimize_flags operator|(optimize_flags a, optimize_flags b) {
@@ -611,7 +611,7 @@ public: //----------------------------------------------------------------------
   bool optimize(const optimize_flags flags = optimize_flags::all);
   bool compactify() { return optimize(optimize_flags::compactify); }
   bool sort_index(bool force = false) {
-    return optimize(force ? optimize_flags::force_sort_index
+    return optimize(force ? optimize_flags::enforce_sort_index
                           : optimize_flags::sort_index);
   }
 

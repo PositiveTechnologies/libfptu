@@ -1006,7 +1006,7 @@ __hot bool tuple_rw::optimize(const optimize_flags flags) {
 
   if (((flags & optimize_flags::sort_index) &&
        loose_count() >= sort_index_threshold && !is_sorted()) ||
-      unlikely(flags & optimize_flags::force_sort_index)) {
+      unlikely(flags & optimize_flags::enforce_sort_index)) {
     assert(arena.used() == 0);
     interators_invalidated |= static_cast<class gear *>(this)->sort(arena);
   }
