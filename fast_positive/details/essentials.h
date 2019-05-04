@@ -56,7 +56,7 @@ enum fundamentals {
   genus_bitness = 5,
   unit_size = 4,
   unit_shift = 2,
-  tuple_flags_bits = 2,
+  tuple_flags_bits = 3,
   max_tuple_units_brutto = 65535
   /* С размером кортежа связаны такие ограничения и компромиссы:
    *  1) Хотим хранить все смещения внутри кортежа как 16-битные числа,

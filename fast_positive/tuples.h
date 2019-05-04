@@ -133,13 +133,15 @@ class variant_value /* Класс поддержки динамической т
   /* TBD / TODO */
 };
 
-/* Для удобного создания кортежей нужного масштаба */
+/* Линейка масштабов для удобного создания кортежей */
 enum initiation_scale {
-  tiny /* 1/256 ≈1K */,
-  small /* 1/64 ≈4K */,
-  medium /* 1/16 ≈16K */,
-  large /* 1/4 ≈64K */,
-  extreme /* максимальный ≈256K */
+  tiny /* 1/256 ≈1K:32 */,
+  small /* 1/64 ≈4K:128 */,
+  medium /* 1/16 ≈16K:512 */,
+  large /* 1/4 ≈64K:2028 */,
+  extreme /* максимальный ≈256K:8192 */,
+
+  scale_default = tiny
 };
 std::size_t estimate_space_for_tuple(const initiation_scale &scale,
                                      const schema *schema);

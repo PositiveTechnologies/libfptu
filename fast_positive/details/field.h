@@ -168,7 +168,12 @@ struct stretchy_value_tuple {
     };
     unit_t flat[1];
   };
-  enum { flags_bits = 2, sorted_flag = 1, preplaced_flag = 2 };
+  enum {
+    flags_bits = 3,
+    sorted_flag = 1,
+    preplaced_flag = 2,
+    reserved_flag = 4
+  };
 
   constexpr std::size_t length() const noexcept {
     return units2bytes(brutto_units);
@@ -207,12 +212,7 @@ struct stretchy_value_tuple {
   }
 
   constexpr bool is_hollow() const noexcept { return brutto_units < 1; }
-  constexpr const void *pivot() const noexcept {
-    static_assert(sizeof(tag_t) == 4 && sizeof(tag_t) == (1 << flags_bits),
-                  "WTF?");
-    return erthink::constexpr_pointer_cast<const char *>(begin_index()) +
-           (looseitems_flags & ~3);
-  }
+  inline constexpr const void *pivot() const noexcept;
 
   constexpr const field_loose *begin_index() const noexcept {
     static_assert(sizeof(*this) == sizeof(unit_t), "Oops");
@@ -444,6 +444,11 @@ struct field_loose {
   field_loose() = delete;
   ~field_loose() = delete;
 };
+
+inline constexpr const void *stretchy_value_tuple::pivot() const noexcept {
+  static_assert(sizeof(tag_t) == sizeof(field_loose), "WTF?");
+  return begin_index() + index_size();
+}
 
 #pragma pack(pop)
 
