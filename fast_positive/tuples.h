@@ -474,7 +474,7 @@ public:
       : tuple_ro_managed(nested_weak ? nested_weak.get_impl() : nullptr,
                          nested_weak ? managed_master.get_buffer() : nullptr) {}
 
-  explicit tuple_ro_managed(const tuple_ro_managed &src)
+  tuple_ro_managed(const tuple_ro_managed &src)
       : tuple_ro_managed(src.pimpl_, src.hb_) {}
 
   tuple_ro_managed &operator=(const tuple_ro_managed &src);
