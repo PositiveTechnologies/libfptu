@@ -229,9 +229,7 @@ fptu_check_and_get_buffer_size_ex(fptu_ro ro, unsigned more_items,
         tuple_ro, more_items, more_payload, nullptr);
     cbfs->err = FPTU_OK;
     cbfs->err_msg = cbfs_ok_sign;
-    assert(holes_info.count <= UINT16_MAX);
     cbfs->holes_count = uint16_t(holes_info.count);
-    assert(holes_info.volume <= UINT16_MAX);
     cbfs->holes_volume = uint16_t(holes_info.volume);
     return result;
   } catch (const std::exception &e) {
