@@ -203,7 +203,7 @@ tuple_rw_fixed tuple_rw_fixed::clone(const tuple_ro_managed &src,
   return clone(src.take_weak(), more_items, more_payload, schema, allot_tag);
 }
 
-tuple_rw_fixed::tuple_rw_fixed(tuple_ro_managed &&src) : tuple_rw_fixed() {
+tuple_rw_fixed::tuple_rw_fixed(tuple_ro_managed &&src) : pimpl_(nullptr) {
   if (unlikely(!src)) {
     /* Источник пуст (т.е. совсем нет кортежа, схемы и т.д.).
      * Стоит подумать, возможно вместо вброса исключения лучше создать
