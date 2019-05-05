@@ -385,183 +385,107 @@ public:
 class FPTU_API_TYPE tuple_ro_managed
     : public tuple_crtp_reader<tuple_ro_managed>
 /* Управляемый R/O-кортеж с данными в управляемом буфере со счётчиком ссылок.
-  Поддерживает std::move(), clone(), RAII для счётчика ссылок.
-  Может быть создан из tuple_rw_managed без копирования данных, а из
-  кортежей других классов с выделением буфера и полным копированием данных. */
+  Поддерживает std::move(), clone(). Может быть создан из tuple_rw_managed
+  без копирования данных, а из кортежей других классов с выделением буфера
+  и полным копированием данных.
+
+  Во избежание непреднамеренного копирования данных вместо различных копирующих
+  конструкторов предоставлено несколько вариантов статического метода clone().
+
+  Если же способ создания предполагает копирование данных в собственный
+  управляемый буфер, то при этом создается R/W-форма кортежа. В результате,
+  созданный посредством копирования R/O-кортеж может быть преобразован в
+  R/W-форму перемещающим конструктором. По этой причине предложено несколько
+  клонирующих методов с дополнительными параметрами. */
 {
   friend class tuple_crtp_reader<tuple_ro_managed>;
   template <typename TUPLE> friend class tuple_crtp_writer;
+  friend class tuple_rw_fixed;
 
 protected:
   using impl = details::tuple_ro;
   const impl *pimpl_;
   const hippeus::buffer *hb_;
 
-  FPTU_API __cold __noreturn void throw_buffer_mismatch() const;
-  void check_buffer() const {
-    if (unlikely((pimpl_ != nullptr) != (hb_ != nullptr)))
-      throw_buffer_mismatch();
-    if (hb_) {
-      if (unlikely(
-              static_cast<const uint8_t *>(pimpl_->data()) < hb_->begin() ||
-              static_cast<const uint8_t *>(pimpl_->data()) + pimpl_->size() >
-                  hb_->end()))
-        throw_buffer_mismatch();
-    }
-  }
+  __cold __noreturn void throw_buffer_mismatch() const;
+  inline void check_buffer() const;
+  explicit tuple_ro_managed(
+      const impl *ro,
+      const hippeus::buffer *buffer /* увеличивает счетчик ссылок */);
 
-  explicit tuple_ro_managed(const impl *ro,
-                            const hippeus::buffer *buffer) noexcept
-      : pimpl_(ro), hb_(buffer->add_reference(/* accepts nullptr */)) {
-    check_buffer();
-  }
-
-  /* копирующие конструкторы с копированием данных */
-  inline tuple_ro_managed(const tuple_ro_weak &,
-                          const hippeus::buffer_tag &allot_tag);
-  inline tuple_ro_managed(const tuple_ro_managed &,
-                          const hippeus::buffer_tag &allot_tag);
-  inline tuple_ro_managed(const tuple_rw_fixed &,
-                          const hippeus::buffer_tag &allot_tag);
+  /* Клонирующие копирующие конструкторы - спрятаны с предоставлением взамен
+   * статических методов clone(), чтобы не допускать неявного клонирования
+   * данных. */
+  tuple_ro_managed(const tuple_rw_fixed &src,
+                   const hippeus::buffer_tag &allot_tag);
+  /* Возвращает указатель на опорную R/W-форму, если таковая была скрыто
+   * порождена при создании экземпляра tuple_ro_managed посредством копирования
+   * данных в собственный буфер. */
+  __pure_function const details::tuple_rw *peek_basis() const noexcept;
 
 public:
   const hippeus::buffer *get_buffer() const noexcept { return hb_; }
   tuple_ro_managed() noexcept : pimpl_(nullptr), hb_(nullptr) {}
-  void release() {
+  void purge() {
     hb_->detach(/* accepts nullptr */);
     pimpl_ = nullptr;
     hb_ = nullptr;
   }
-  ~tuple_ro_managed() { release(); }
+  ~tuple_ro_managed() { purge(); }
 
+  /* Конструктор из внешнего источника с выделением управляемого буфера
+   * и копированием данных.
+   * (!) Если создаваемый экземпляр tuple_ro_managed впоследствии предполагается
+   * конвертировать в R/W-форму, то его следует создавать из tuple_rw_fixed
+   * примерно так:
+   *    tuple_ro_managed(tuple_rw_fixed(...)) */
   tuple_ro_managed(
       const void *source_ptr, std::size_t source_bytes,
       const fptu::schema *schema,
-      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
-      : tuple_ro_managed() {
-    /* TODO: конструктор из внешнего источника с выделением управляемого буфера
-     * и копированием данных.
-     *
-     * Технически несложно выделить буфер и скопировать в него данные. Однако,
-     * логично чтобы размер буфера и география размещения в нём данных полностью
-     * совпадала с details::tuple_rw. Тогда это подзадача может быть выполнена
-     * общим кодом, а главное можно предоставить перекрестные move и не-move
-     * конструкторы между tuple_ro_managed и details::tuple_rw.
-     *
-     * При этом возникает два подспудных вопроса:
-     *  - details::tuple_rw хранит указатель на схему внутри себя. Поэтому
-     *    следует либо обеспечить полную совместимость с details::tuple_rw.
-     *    Либо дополнительно требовать в перемещающих конструкторах R/W-форм
-     *    указатель на схему, и проводить повторную проверку данных
-     *    на соответствие схеме.
-     *  - Если обеспечивать полную совместимость с details::tuple_rw, то встает
-     *    вопрос о необходимости класса tuple_ro_managed как такового. Ведь
-     *    проще использовать details::tuple_rw, скрыв изменяющие методы.
-     *
-     * Итоговое решение:
-     *  - При создании tuple_ro_managed с выделением буфера и копированием
-     *    в него данных производиться создание полноценного экземпляра
-     *    details::tuple_rw, с последующим перемещением буфера в экземпляр
-     *    tuple_ro_managed.
-     *  - При создании tuple_ro_managed из существующего буфера (например при
-     *    чтении вложенного кортежа) никаких дополнительных действий
-     *    не предпринимается.
-     *  - Перемещающие конструкторы R/W-форм из tuple_ro_managed должны получать
-     *    указатель на схему, самостоятельно определять способ, которым был
-     *    создан tuple_ro_managed и действовать соответствующим образом:
-     *     1) Если буфер НЕ в монопольном использовании, то конструктор должен
-     *        сделать копию данных вне зависимости от способа создание.
-     *     2) Если буфер в монопольном использовании и R/O-форма была
-     *        создана из details::tuple_rw, то внутри буфера, по смещению
-     *        соответствующему полю details::tuple_rw::buffer_offset_ будет
-     *        корректное смещение на сам буфер, а все поля schema_, head_, tail_
-     *        и т.д. соответствовать R/O-форме. В этом случае конструктор
-     *        может задействовать уже готовый, созданный ранее объект.
-     *     3) При любом несоответствии должна быть выполнена проверка данных
-     *        и создание объекта с "чистого листа". Однако, копирование данных
-     *        должно производиться только при необходимости выделения нового
-     *        буфера (если текущее расположение данных не позволяет разместить
-     *        служебные данные details::tuple_rw). */
-    FPTU_NOT_IMPLEMENTED();
-    (void)source_ptr;
-    (void)source_bytes;
-    (void)schema;
-    (void)allot_tag;
-  }
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  /* Клонирование из уже проверенной R/O-формы в собственный буфер.
+   * (!) Если создаваемый экземпляр tuple_ro_managed впоследствии предполагается
+   * конвертировать в R/W-форму, то его следует создавать из tuple_rw_fixed
+   * примерно так:
+   *    tuple_ro_managed(tuple_rw_fixed(...)) */
+  static tuple_ro_managed
+  clone(const tuple_ro_weak &src, const fptu::schema *schema = nullptr,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot(),
+        validation_mode validation = default_validation);
+
+  /* Возвращает указатель на схему из опорной R/W-формы, если таковая была
+   * скрыто порождена при создании экземпляра tuple_ro_managed посредством
+   * копирования данных в собственный буфер, и при этом была задана схема. */
+  __pure_function inline const fptu::schema *peek_schema() const noexcept;
 
   static tuple_ro_managed
-  clone(const tuple_ro_weak &src,
-        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    /* TODO: конструктор из уже проверенной R/O-формы с выделением управляющего
-     * буфера.
-     *
-     * Здесь есть подспудный вопрос со схемой:
-     *  - Схема не требуется для работы с R/O-формой, если считать что данные
-     *    уже были проверены на корректность при создании tuple_ro_weak.
-     *  - Если схему не передавать параметром, то скрытый/промежуточный
-     *    экземпляр details::tuple_rw будет создан без схемы и тогда
-     *    последующее создание R/W-форм приведет к повторной валидации данных.
-     *  - Если же схему передавать, но не делать здесь повторной проверки
-     *    данных, то может быть потенциальное катастрофическое несоответствие
-     *    схемы и данных, которое приведет к неожиданному краху только
-     *    если созданный экземпляр tuple_ro_managed будет преобразован
-     *    в R/W-форму.
-     *
-     * Итоговое решение:
-     *   - Не передаем схему и создаем скрытый/промежуточный экземпляр
-     *     details::tuple_rw без схемы, но и без проверки данных.
-     *   - При последующем преобразовании tuple_ro_managed в R/W-форму будет
-     *     выполнена повторная проверка. Однако, считаем что такой сценарий
-     *     достаточно редкий, либо пользователю следует сразу создавать
-     *     R/W-форму из tuple_ro_weak. */
-    return tuple_ro_managed(src, allot_tag);
-  }
+  clone(const tuple_ro_managed &src, const fptu::schema *schema = nullptr,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
 
-  static tuple_ro_managed
-  clone(const tuple_ro_managed &src,
-        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_ro_managed(src, allot_tag);
-  }
   static tuple_ro_managed
   clone(const tuple_rw_fixed &src,
         const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
     return tuple_ro_managed(src, allot_tag);
   }
 
-  tuple_ro_managed(const tuple_ro_weak &nested_weak,
-                   const tuple_ro_managed &managed_master)
+  explicit tuple_ro_managed(const tuple_ro_weak &nested_weak,
+                            const tuple_ro_managed &managed_master)
       : tuple_ro_managed(nested_weak ? nested_weak.get_impl() : nullptr,
                          nested_weak ? managed_master.get_buffer() : nullptr) {}
 
-  tuple_ro_managed(const tuple_ro_managed &src)
+  explicit tuple_ro_managed(const tuple_ro_managed &src)
       : tuple_ro_managed(src.pimpl_, src.hb_) {}
 
-  tuple_ro_managed &operator=(const tuple_ro_managed &src) {
-    if (likely(hb_ != src.hb_)) {
-      release();
-      hb_ = src.hb_->add_reference();
-    }
-    pimpl_ = src.pimpl_;
-    check_buffer();
-    return *this;
-  }
+  tuple_ro_managed &operator=(const tuple_ro_managed &src);
 
-  inline tuple_ro_managed(tuple_rw_fixed &&src);
-  tuple_ro_managed(tuple_ro_managed &&src) : pimpl_(src.pimpl_), hb_(src.hb_) {
-    check_buffer();
-    src.pimpl_ = nullptr;
-    src.hb_ = nullptr;
-  }
+  tuple_ro_managed(tuple_rw_fixed &&src);
 
-  tuple_ro_managed &operator=(tuple_ro_managed &&src) {
-    release();
-    hb_ = src.hb_;
-    pimpl_ = src.pimpl_;
-    check_buffer();
-    src.pimpl_ = nullptr;
-    src.hb_ = nullptr;
-    return *this;
-  }
+  tuple_ro_managed &operator=(tuple_rw_fixed &&src);
+
+  tuple_ro_managed(tuple_ro_managed &&src);
+
+  tuple_ro_managed &operator=(tuple_ro_managed &&src);
 
   void swap(tuple_ro_managed &ditto) noexcept {
     std::swap(pimpl_, ditto.pimpl_);
@@ -743,6 +667,10 @@ public:
   __pure_function constexpr const hippeus::buffer *get_buffer() const noexcept {
     return get_impl()->get_buffer();
   }
+  __pure_function constexpr const fptu::schema *schema() const noexcept {
+    return get_impl()->schema();
+  }
+
   __pure_function explicit constexpr operator bool() const noexcept {
     return get_impl() != 0;
   }
@@ -757,6 +685,9 @@ public:
   }
   __pure_function constexpr std::size_t index_size() const noexcept {
     return get_impl()->index_size();
+  }
+  __pure_function constexpr std::size_t payload_size_bytes() const noexcept {
+    return get_impl()->payload_size_bytes();
   }
   __pure_function constexpr std::size_t head_space() const noexcept {
     return get_impl()->head_space();
@@ -819,24 +750,25 @@ public:
   __pure_function tuple_ro_weak take_weak_asis() const {
     return tuple_ro_weak(get_impl()->take_asis());
   }
-  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+
+  /* возвращает пару, во втором элементе признак инвалидации итераторов */
   std::pair<tuple_ro_weak, bool> take_weak_optimized() {
     const auto pair = get_impl()->take_optimized();
     return std::make_pair(tuple_ro_weak(pair.first), pair.second);
   }
-  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+
+  /* возвращает пару, во втором элементе признак инвалидации итераторов */
   std::pair<tuple_ro_weak, bool> take_weak(bool dont_optimize = false) {
     return dont_optimize ? take_weak_optimized()
                          : std::make_pair(take_weak_asis(), false);
   }
 
-  __pure_function tuple_ro_managed move_to_ro(bool dont_optimize = false) {
+  tuple_ro_managed move_to_ro(bool dont_optimize = false) {
     if (!dont_optimize)
       optimize();
     return tuple_ro_managed(std::move(self()));
   }
 
-  /* возвращает пару, во втором элементе признак инвалидации итераторв */
   __pure_function tuple_ro_managed take_managed_clone_asis(
       bool hollow_if_empty = false,
       const hippeus::buffer_tag &allot_tag = default_buffer_allot()) const {
@@ -844,9 +776,10 @@ public:
     if (hollow_if_empty && unlikely(weak.empty()))
       return tuple_ro_managed();
 
-    return tuple_ro_managed(weak, allot_tag);
+    return tuple_ro_managed::clone(weak, schema(), allot_tag);
   }
-  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+
+  /* возвращает пару, во втором элементе признак инвалидации итераторов */
   std::pair<tuple_ro_managed, bool> take_managed_clone_optimized(
       bool hollow_if_empty = false,
       const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
@@ -854,9 +787,11 @@ public:
     if (hollow_if_empty && unlikely(pair.first.empty()))
       return std::make_pair(tuple_ro_managed(), pair.second);
 
-    return std::make_pair(tuple_ro_managed(pair.first, allot_tag), pair.second);
+    return std::make_pair(
+        tuple_ro_managed::clone(pair.first, schema(), allot_tag), pair.second);
   }
-  /* возвращает пару, во втором элементе признак инвалидации итераторв */
+
+  /* возвращает пару, во втором элементе признак инвалидации итераторов */
   std::pair<tuple_ro_managed, bool> take_managed_clone(
       bool dont_optimize = false, bool hollow_if_empty = false,
       const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
@@ -939,44 +874,15 @@ class FPTU_API_TYPE tuple_rw_fixed : public tuple_crtp_writer<tuple_rw_fixed> {
 protected:
   using impl = details::tuple_rw;
   impl *pimpl_;
-  __cold __noreturn void throw_managed_buffer_required() const;
-
-  inline tuple_rw_fixed(const tuple_ro_weak &src,
-                        const hippeus::buffer_tag &allot_tag);
-  inline tuple_rw_fixed(const tuple_ro_managed &src,
-                        const hippeus::buffer_tag &allot_tag);
-  inline tuple_rw_fixed(const tuple_rw_fixed &src,
-                        const hippeus::buffer_tag &allot_tag);
+  explicit constexpr tuple_rw_fixed(details::tuple_rw *tuple) noexcept
+      : pimpl_(tuple) {}
 
 public:
-  tuple_rw_fixed(const defaults &);
-  tuple_rw_fixed(const initiation_scale = initiation_scale::tiny);
-  tuple_rw_fixed(const initiation_scale, const fptu::schema *schema,
-                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
-  void release() {
+  void purge() {
     impl::deleter()(/* accepts nullptr */ pimpl_);
     pimpl_ = nullptr;
   }
-  ~tuple_rw_fixed() { release(); }
-
-  tuple_rw_fixed(std::size_t items_limit, std::size_t data_bytes,
-                 const fptu::schema *schema,
-                 const hippeus::buffer_tag &allot_tag = default_buffer_allot())
-      : pimpl_(impl::create_new(items_limit, data_bytes, schema, allot_tag)) {}
-
-  tuple_rw_fixed(const fptu::details::audit_holes_info &holes_info,
-                 const tuple_ro_weak &ro, std::size_t more_items,
-                 std::size_t more_payload, const fptu::schema *schema,
-                 const hippeus::buffer_tag &allot_tag = default_buffer_allot())
-      : pimpl_(impl::create_from_ro(holes_info, ro.get_impl(), more_items,
-                                    more_payload, schema, allot_tag)) {}
-
-  tuple_rw_fixed(const void *source_ptr, std::size_t source_bytes,
-                 std::size_t more_items, std::size_t more_payload,
-                 const fptu::schema *schema,
-                 const hippeus::buffer_tag &allot_tag = default_buffer_allot())
-      : pimpl_(impl::create_from_buffer(source_ptr, source_bytes, more_items,
-                                        more_payload, schema, allot_tag)) {}
+  ~tuple_rw_fixed() { purge(); }
 
   tuple_rw_fixed(const tuple_rw_fixed &) = delete;
   tuple_rw_fixed &operator=(const tuple_rw_fixed &) = delete;
@@ -987,31 +893,117 @@ public:
       : pimpl_(src.pimpl_) {
     src.pimpl_ = nullptr;
   }
-  tuple_rw_fixed &operator=(tuple_rw_fixed &&src) {
-    if (likely(pimpl_ != src.pimpl_)) {
-      release();
-      pimpl_ = src.pimpl_;
-      src.pimpl_ = nullptr;
-    }
-    return *this;
-  }
 
-  inline tuple_rw_fixed(tuple_ro_managed &&src);
+  tuple_rw_fixed &operator=(tuple_rw_fixed &&src);
+
+  tuple_rw_fixed(tuple_ro_managed &&src);
+
+  tuple_rw_fixed &operator=(tuple_ro_managed &&src);
+
+  tuple_rw_fixed(const defaults &);
+
+  tuple_rw_fixed(
+      const initiation_scale scale = initiation_scale::scale_default);
+
+  tuple_rw_fixed(const initiation_scale scale, const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  tuple_rw_fixed(std::size_t items_limit, std::size_t data_bytes,
+                 const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  tuple_rw_fixed(const fptu::details::audit_holes_info &holes_info,
+                 const tuple_ro_weak &ro, const defaults &);
+
+  tuple_rw_fixed(
+      const fptu::details::audit_holes_info &holes_info,
+      const tuple_ro_weak &ro,
+      const initiation_scale scale = initiation_scale::scale_default);
+
+  tuple_rw_fixed(const fptu::details::audit_holes_info &holes_info,
+                 const tuple_ro_weak &ro, const initiation_scale scale,
+                 const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  tuple_rw_fixed(const fptu::details::audit_holes_info &holes_info,
+                 const tuple_ro_weak &ro, std::size_t more_items,
+                 std::size_t more_payload, const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  tuple_rw_fixed(const void *source_ptr, std::size_t source_bytes,
+                 const defaults &);
+
+  tuple_rw_fixed(
+      const void *source_ptr, std::size_t source_bytes,
+      const initiation_scale scale = initiation_scale::scale_default);
+
+  tuple_rw_fixed(const void *source_ptr, std::size_t source_bytes,
+                 const initiation_scale scale, const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  tuple_rw_fixed(const void *source_ptr, std::size_t source_bytes,
+                 std::size_t more_items, std::size_t more_payload,
+                 const fptu::schema *schema,
+                 const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  static tuple_rw_fixed clone(const tuple_ro_weak &src, const defaults &);
 
   static tuple_rw_fixed
   clone(const tuple_ro_weak &src,
-        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_rw_fixed(src, allot_tag);
-  }
+        const initiation_scale scale = initiation_scale::scale_default);
+
+  static tuple_rw_fixed
+  clone(const tuple_ro_weak &src, const initiation_scale scale,
+        const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  static tuple_rw_fixed
+  clone(const tuple_ro_weak &src, std::size_t more_items,
+        std::size_t more_payload, const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  static tuple_rw_fixed clone(const tuple_ro_managed &src, const defaults &);
+
   static tuple_rw_fixed
   clone(const tuple_ro_managed &src,
-        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_rw_fixed(src, allot_tag);
-  }
+        const initiation_scale scale = initiation_scale::scale_default);
+
+  static tuple_rw_fixed
+  clone(const tuple_ro_managed &src, const initiation_scale scale,
+        const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  static tuple_rw_fixed
+  clone(const tuple_ro_managed &src, std::size_t more_items,
+        std::size_t more_payload, const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
   static tuple_rw_fixed
   clone(const tuple_rw_fixed &src,
-        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_rw_fixed(src, allot_tag);
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  static tuple_rw_fixed
+  clone(const tuple_rw_fixed &src, const initiation_scale scale,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  static tuple_rw_fixed
+  clone(const tuple_rw_fixed &src, std::size_t more_items,
+        std::size_t more_payload,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot());
+
+  __pure_function static std::size_t
+  estimate_required_space(const tuple_rw_fixed &rw,
+                          const std::size_t more_items,
+                          const std::size_t more_payload) {
+    return details::tuple_rw::estimate_required_space(
+        rw.index_size() + more_items, rw.payload_size_bytes() + more_payload,
+        rw.schema());
+  }
+
+  __pure_function std::size_t
+  estimate_required_space(const std::size_t more_items,
+                          const std::size_t more_payload) const {
+    return estimate_required_space(*this, more_items, more_payload);
   }
 
   bool operator==(const tuple_ro_weak &ditto) const noexcept {
@@ -1051,23 +1043,39 @@ class FPTU_API_TYPE tuple_rw_managed : public tuple_rw_fixed {
   using base = tuple_rw_fixed;
   void manage_space_deficit(const insufficient_space &wanna);
 
-protected:
-  tuple_rw_managed(const tuple_ro_weak &src,
-                   const hippeus::buffer_tag &allot_tag)
-      : base(src, allot_tag) {}
-
-  tuple_rw_managed(const tuple_ro_managed &src,
-                   const hippeus::buffer_tag &allot_tag)
-      : base(src, allot_tag) {}
-
-  tuple_rw_managed(const tuple_rw_fixed &src,
-                   const hippeus::buffer_tag &allot_tag)
-      : base(src, allot_tag) {}
-
 public:
+  tuple_rw_managed(const tuple_rw_managed &) = delete;
+  tuple_rw_managed &operator=(const tuple_rw_managed &) = delete;
+
+  tuple_rw_managed(tuple_ro_managed &&src) noexcept : base(std::move(src)) {}
+
+  tuple_rw_managed &operator=(tuple_ro_managed &&src) {
+    base::operator=(std::move(src));
+    return *this;
+  }
+
+  cxx14_constexpr tuple_rw_managed(tuple_rw_fixed &&src) noexcept
+      : base(std::move(src)) {}
+
+  tuple_rw_managed &operator=(tuple_rw_fixed &&src) {
+    base::operator=(std::move(src));
+    return *this;
+  }
+
+  cxx14_constexpr tuple_rw_managed(tuple_rw_managed &&src) noexcept
+      : base(std::move(src)) {}
+
+  tuple_rw_managed &operator=(tuple_rw_managed &&src) {
+    base::operator=(std::move(src));
+    return *this;
+  }
+
   tuple_rw_managed(const defaults &ditto) : base(ditto) {}
-  tuple_rw_managed(const initiation_scale scale = initiation_scale::tiny)
+
+  tuple_rw_managed(
+      const initiation_scale scale = initiation_scale::scale_default)
       : base(scale) {}
+
   tuple_rw_managed(
       const initiation_scale scale, const fptu::schema *schema,
       const hippeus::buffer_tag &allot_tag = default_buffer_allot())
@@ -1079,12 +1087,44 @@ public:
       const hippeus::buffer_tag &allot_tag = default_buffer_allot())
       : base(items_limit, data_bytes, schema, allot_tag) {}
 
+  tuple_rw_managed(const fptu::details::audit_holes_info &holes_info,
+                   const tuple_ro_weak &ro, const defaults &ditto)
+      : base(holes_info, ro, ditto) {}
+
+  tuple_rw_managed(
+      const fptu::details::audit_holes_info &holes_info,
+      const tuple_ro_weak &ro,
+      const initiation_scale scale = initiation_scale::scale_default)
+      : base(holes_info, ro, scale) {}
+
+  tuple_rw_managed(
+      const fptu::details::audit_holes_info &holes_info,
+      const tuple_ro_weak &ro, const initiation_scale scale,
+      const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : base(holes_info, ro, scale, schema, allot_tag) {}
+
   tuple_rw_managed(
       const fptu::details::audit_holes_info &holes_info,
       const tuple_ro_weak &ro, std::size_t more_items, std::size_t more_payload,
       const fptu::schema *schema,
       const hippeus::buffer_tag &allot_tag = default_buffer_allot())
       : base(holes_info, ro, more_items, more_payload, schema, allot_tag) {}
+
+  tuple_rw_managed(const void *source_ptr, std::size_t source_bytes,
+                   const defaults &ditto)
+      : base(source_ptr, source_bytes, ditto) {}
+
+  tuple_rw_managed(
+      const void *source_ptr, std::size_t source_bytes,
+      const initiation_scale scale = initiation_scale::scale_default)
+      : base(source_ptr, source_bytes, scale) {}
+
+  tuple_rw_managed(
+      const void *source_ptr, std::size_t source_bytes,
+      const initiation_scale scale, const fptu::schema *schema,
+      const hippeus::buffer_tag &allot_tag = default_buffer_allot())
+      : base(source_ptr, source_bytes, scale, schema, allot_tag) {}
 
   tuple_rw_managed(
       const void *source_ptr, std::size_t source_bytes, std::size_t more_items,
@@ -1093,44 +1133,73 @@ public:
       : base(source_ptr, source_bytes, more_items, more_payload, schema,
              allot_tag) {}
 
+  static tuple_rw_managed clone(const tuple_ro_weak &src,
+                                const defaults &ditto) {
+    return base::clone(src, ditto);
+  }
+
   static tuple_rw_managed
   clone(const tuple_ro_weak &src,
+        const initiation_scale scale = initiation_scale::scale_default) {
+    return base::clone(src, scale);
+  }
+
+  static tuple_rw_managed
+  clone(const tuple_ro_weak &src, const initiation_scale scale,
+        const fptu::schema *schema,
         const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_rw_managed(src, allot_tag);
+    return base::clone(src, scale, schema, allot_tag);
   }
 
-  tuple_rw_managed(const tuple_rw_managed &) = delete;
-  tuple_rw_managed &operator=(const tuple_rw_managed &) = delete;
-
-  tuple_rw_managed(tuple_ro_managed &&src) noexcept : base(std::move(src)) {}
-  tuple_rw_managed &operator=(tuple_ro_managed &&src) {
-    base::operator=(std::move(src));
-    return *this;
+  static tuple_rw_managed
+  clone(const tuple_ro_weak &src, std::size_t more_items,
+        std::size_t more_payload, const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    return base::clone(src, more_items, more_payload, schema, allot_tag);
   }
 
-  cxx14_constexpr tuple_rw_managed(tuple_rw_fixed &&src) noexcept
-      : base(std::move(src)) {}
-  tuple_rw_managed &operator=(tuple_rw_fixed &&src) {
-    base::operator=(std::move(src));
-    return *this;
-  }
-
-  cxx14_constexpr tuple_rw_managed(tuple_rw_managed &&src) noexcept
-      : base(std::move(src)) {}
-  tuple_rw_managed &operator=(tuple_rw_managed &&src) {
-    base::operator=(std::move(src));
-    return *this;
+  static tuple_rw_managed clone(const tuple_ro_managed &src,
+                                const defaults &ditto) {
+    return base::clone(src, ditto);
   }
 
   static tuple_rw_managed
   clone(const tuple_ro_managed &src,
-        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_rw_managed(src, allot_tag);
+        const initiation_scale scale = initiation_scale::scale_default) {
+    return base::clone(src, scale);
   }
+
+  static tuple_rw_managed
+  clone(const tuple_ro_managed &src, const initiation_scale scale,
+        const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    return base::clone(src, scale, schema, allot_tag);
+  }
+
+  static tuple_rw_managed
+  clone(const tuple_ro_managed &src, std::size_t more_items,
+        std::size_t more_payload, const fptu::schema *schema,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    return base::clone(src, more_items, more_payload, schema, allot_tag);
+  }
+
   static tuple_rw_managed
   clone(const tuple_rw_fixed &src,
         const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
-    return tuple_rw_managed(src, allot_tag);
+    return base::clone(src, allot_tag);
+  }
+
+  static tuple_rw_managed
+  clone(const tuple_rw_fixed &src, const initiation_scale scale,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    return base::clone(src, scale, allot_tag);
+  }
+
+  static tuple_rw_managed
+  clone(const tuple_rw_fixed &src, std::size_t more_items,
+        std::size_t more_payload,
+        const hippeus::buffer_tag &allot_tag = default_buffer_allot()) {
+    return base::clone(src, more_items, more_payload, allot_tag);
   }
 
 #define HERE_THUNK_MAKE(VALUE_TYPE, NAME)                                      \
@@ -1139,8 +1208,8 @@ public:
     while (true) {                                                             \
       try {                                                                    \
         return base::set_##NAME(ident, value);                                 \
-      } catch (const insufficient_space &deficit) {                            \
-        manage_space_deficit(deficit);                                         \
+      } catch (const insufficient_space &wanna) {                              \
+        manage_space_deficit(wanna);                                           \
         continue;                                                              \
       }                                                                        \
     }                                                                          \
@@ -1201,43 +1270,13 @@ public:
     while (true) {
       try {
         return base::erase(ident);
-      } catch (const insufficient_space &deficit) {
-        manage_space_deficit(deficit);
+      } catch (const insufficient_space &wanna) {
+        manage_space_deficit(wanna);
         continue;
       }
     }
   }
 };
-
-//------------------------------------------------------------------------------
-
-inline tuple_ro_managed::tuple_ro_managed(const tuple_ro_weak &src,
-                                          const hippeus::buffer_tag &allot_tag)
-    : tuple_ro_managed() {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-  (void)allot_tag;
-}
-inline tuple_ro_managed::tuple_ro_managed(const tuple_ro_managed &src,
-                                          const hippeus::buffer_tag &allot_tag)
-    : tuple_ro_managed() {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-  (void)allot_tag;
-}
-inline tuple_ro_managed::tuple_ro_managed(const tuple_rw_fixed &src,
-                                          const hippeus::buffer_tag &allot_tag)
-    : tuple_ro_managed() {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-  (void)allot_tag;
-}
-
-inline tuple_ro_managed::tuple_ro_managed(tuple_rw_fixed &&src)
-    : tuple_ro_managed() {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-}
 
 //------------------------------------------------------------------------------
 
@@ -1260,6 +1299,12 @@ inline bool tuple_ro_weak::operator!=(const tuple_rw_fixed &ditto) const
 
 //------------------------------------------------------------------------------
 
+__pure_function inline const fptu::schema *tuple_ro_managed::peek_schema() const
+    noexcept {
+  const details::tuple_rw *basis = peek_basis();
+  return likely(basis) ? basis->schema_ : nullptr;
+}
+
 inline bool tuple_ro_managed::operator==(const tuple_rw_fixed &ditto) const
     noexcept {
   return ditto == *this;
@@ -1267,33 +1312,6 @@ inline bool tuple_ro_managed::operator==(const tuple_rw_fixed &ditto) const
 inline bool tuple_ro_managed::operator!=(const tuple_rw_fixed &ditto) const
     noexcept {
   return ditto != *this;
-}
-
-//------------------------------------------------------------------------------
-
-inline tuple_rw_fixed::tuple_rw_fixed(const tuple_ro_weak &src,
-                                      const hippeus::buffer_tag &allot_tag)
-    : tuple_rw_fixed() {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-  (void)allot_tag;
-}
-inline tuple_rw_fixed::tuple_rw_fixed(const tuple_ro_managed &src,
-                                      const hippeus::buffer_tag &allot_tag) {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-  (void)allot_tag;
-}
-inline tuple_rw_fixed::tuple_rw_fixed(const tuple_rw_fixed &src,
-                                      const hippeus::buffer_tag &allot_tag) {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
-  (void)allot_tag;
-}
-inline tuple_rw_fixed::tuple_rw_fixed(tuple_ro_managed &&src)
-    : tuple_rw_fixed() {
-  FPTU_NOT_IMPLEMENTED();
-  (void)src;
 }
 
 } // namespace fptu

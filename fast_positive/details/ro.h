@@ -30,6 +30,7 @@
 #include "fast_positive/details/token.h"
 
 namespace fptu {
+class tuple_ro_managed;
 namespace details {
 
 class FPTU_API_TYPE tuple_ro : private stretchy_value_tuple,
@@ -37,6 +38,7 @@ class FPTU_API_TYPE tuple_ro : private stretchy_value_tuple,
   friend class crtp_getter<tuple_ro>;
   template <typename> friend class crtp_setter;
   friend class tuple_rw;
+  friend class fptu::tuple_ro_managed /* mostly for assertions */;
   static inline const char *inline_lite_checkup(const void *ptr,
                                                 std::size_t bytes) noexcept;
 

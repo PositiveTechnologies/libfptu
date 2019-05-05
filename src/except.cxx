@@ -135,6 +135,7 @@ FPTU_DEFINE_EXCEPTION(tuple_hollow, "fptu: hollow tuple")
 FPTU_DEFINE_EXCEPTION(field_absent, "fptu: no such field")
 FPTU_DEFINE_EXCEPTION(logic_error, "fptu: logic error")
 FPTU_DEFINE_EXCEPTION(type_mismatch, "fptu: field type mismatch")
+FPTU_DEFINE_EXCEPTION(schema_mismatch, "fptu: tuple schema mismatch")
 FPTU_DEFINE_EXCEPTION(index_corrupted,
                       "fptu: field already removed (or index corrupted)")
 FPTU_DEFINE_EXCEPTION(collection_unallowed, "fptu: collection unallowed")
@@ -162,6 +163,11 @@ __cold __noreturn void throw_invalid_allot(const char *details) {
 __cold __noreturn void throw_invalid_schema() { throw invalid_schema(); }
 __cold __noreturn void throw_invalid_schema(const char *details) {
   throw invalid_schema(details);
+}
+
+__cold __noreturn void throw_schema_mismatch() { throw schema_mismatch(); }
+__cold __noreturn void throw_schema_mismatch(const char *details) {
+  throw schema_mismatch(details);
 }
 
 __cold __noreturn void throw_tuple_hollow() { throw tuple_hollow(); }

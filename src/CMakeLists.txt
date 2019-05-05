@@ -140,9 +140,8 @@ set(LIBFPTU_SOURCES
   TODO/json_emit.cxx
   TODO/magic.cxx
 
-  autogrowth.cxx
   audit.cxx
-  tablets.cxx
+  autogrowth.cxx
   debug.cxx
   except.cxx
   gear.cxx
@@ -151,11 +150,13 @@ set(LIBFPTU_SOURCES
   compat_field.cxx
   compat_ro.cxx
   compat_rw.cxx
+  managed.cxx
   misc.cxx
   ro.cxx
   rw.cxx
   scan_ifunc.cxx
   scan_portable.cxx
+  tablets.cxx
   time.cxx
 
   obsolete/internal.h

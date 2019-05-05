@@ -36,12 +36,16 @@
 
 namespace fptu {
 
+class tuple_ro_managed;
+class tuple_rw_fixed;
 class tuple_rw_managed;
 
 namespace details {
 
 class FPTU_API_TYPE tuple_rw : public crtp_getter<tuple_rw> {
   friend class crtp_getter<tuple_rw>;
+  friend class fptu::tuple_ro_managed;
+  friend class fptu::tuple_rw_fixed;
   friend class fptu::tuple_rw_managed;
 
 public:
@@ -59,16 +63,19 @@ public:
     }
   };
 
+  /* TODO: сделать inline во внутреннем включаемом файле */
   static tuple_rw *create_new(std::size_t items_limit, std::size_t data_bytes,
                               const fptu::schema *schema,
                               const hippeus::buffer_tag &allot_tag);
 
+  /* TODO: сделать inline во внутреннем включаемом файле */
   static tuple_rw *create_from_ro(const audit_holes_info &holes_info,
                                   const tuple_ro *ro, std::size_t more_items,
                                   std::size_t more_payload,
                                   const fptu::schema *schema,
                                   const hippeus::buffer_tag &allot_tag);
 
+  /* TODO: сделать inline во внутреннем включаемом файле */
   static tuple_rw *create_from_buffer(const void *source_ptr,
                                       std::size_t source_bytes,
                                       std::size_t more_items,
@@ -76,18 +83,29 @@ public:
                                       const fptu::schema *schema,
                                       const hippeus::buffer_tag &allot_tag);
 
+  /* TODO: сделать inline во внутреннем включаемом файле */
   static tuple_rw *create_legacy(void *buffer_space, std::size_t buffer_size,
                                  std::size_t items_limit);
+
+  /* TODO: сделать inline во внутреннем включаемом файле */
   static tuple_rw *fetch_legacy(const audit_holes_info &holes_info,
                                 const tuple_ro *ro, void *buffer_space,
                                 std::size_t buffer_size,
                                 std::size_t more_items);
+
+  tuple_rw *create_copy(std::size_t more_items, std::size_t more_payload,
+                        const hippeus::buffer_tag &allot_tag) const {
+    const audit_holes_info holes_info = {junk_.count, junk_.volume};
+    return create_from_ro(holes_info, take_asis(), more_items, more_payload,
+                          schema_, allot_tag);
+  }
 
   const hippeus::buffer *get_buffer() const noexcept {
     return const_cast<tuple_rw *>(this)->get_buffer();
   }
 
 protected:
+  /* TODO: перенести как inline во внутренний включаемый файл */
   inline tuple_rw(int buffer_offset, std::size_t buffer_size,
                   std::size_t items_limit, const fptu::schema *schema)
       : schema_(schema), buffer_offset_(buffer_offset), options_(0) {
@@ -107,6 +125,7 @@ protected:
     debug_check();
   }
 
+  /* TODO: перенести как inline во внутренний включаемый файл */
   inline tuple_rw(const audit_holes_info &holes_info, const tuple_ro *ro,
                   int buffer_offset, std::size_t buffer_size,
                   std::size_t more_items, const fptu::schema *schema);
@@ -114,10 +133,10 @@ protected:
   const fptu::schema *schema_;
 
   int buffer_offset_;
-  static int get_buffer_offset(hippeus::buffer *buffer) noexcept {
+  static int get_buffer_offset(const hippeus::buffer *buffer) noexcept {
     const ptrdiff_t full_offset =
-        erthink::constexpr_pointer_cast<char *>(buffer) -
-        erthink::constexpr_pointer_cast<char *>(buffer->data());
+        erthink::constexpr_pointer_cast<const char *>(buffer) -
+        erthink::constexpr_pointer_cast<const char *>(buffer->data());
     assert(full_offset != 0);
     assert(full_offset > INT_MIN && full_offset < INT_MAX);
     return int(full_offset);
@@ -593,6 +612,7 @@ public: //----------------------------------------------------------------------
 #endif
   }
   void reset() noexcept;
+  const fptu::schema *schema() const noexcept { return schema_; }
 
   enum class optimize_flags {
     none = 0,
@@ -642,6 +662,13 @@ public: //----------------------------------------------------------------------
     assert(pivot_ >= head_);
     return pivot_ - head_;
   }
+  std::size_t payload_size_units() const noexcept {
+    assert(tail_ >= pivot_);
+    return tail_ - pivot_;
+  }
+  std::size_t payload_size_bytes() const noexcept {
+    return units2bytes(payload_size_units());
+  }
   std::size_t loose_count() const noexcept {
     assert(index_size() >= junk_.count);
     return index_size() - junk_.count;
@@ -666,6 +693,7 @@ public: //----------------------------------------------------------------------
     return sizeof(tuple_rw) - sizeof(tuple_rw::area_);
   }
 
+  /* TODO: перенести как inline во внутренний включаемый файл */
   static size_t estimate_required_space(size_t items, std::size_t data_bytes,
                                         const fptu::schema *schema,
                                         bool dont_account_preplaced = false) {
@@ -686,6 +714,7 @@ public: //----------------------------------------------------------------------
     return estimated;
   }
 
+  /* TODO: перенести как inline во внутренний включаемый файл */
   static std::size_t estimate_required_space(const tuple_ro *ro,
                                              const std::size_t more_items,
                                              const std::size_t more_payload,

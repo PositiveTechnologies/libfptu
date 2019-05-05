@@ -79,6 +79,8 @@ FPTU_API __noreturn void throw_tuple_too_large();
 FPTU_API __noreturn void throw_insufficient_space(size_t index,
                                                   std::size_t data);
 FPTU_API __noreturn void throw_tuple_overflow();
+FPTU_API __noreturn void throw_schema_mismatch();
+FPTU_API __noreturn void throw_schema_mismatch(const char *details);
 } // namespace fptu
 
 //------------------------------------------------------------------------------
@@ -167,6 +169,7 @@ FPTU_DECLARE_EXCEPTION(tuple_hollow, std::invalid_argument);
 FPTU_DECLARE_EXCEPTION(field_absent, std::runtime_error);
 FPTU_DECLARE_EXCEPTION(logic_error, std::logic_error);
 FPTU_DECLARE_EXCEPTION(type_mismatch, std::logic_error);
+FPTU_DECLARE_EXCEPTION(schema_mismatch, std::logic_error);
 FPTU_DECLARE_EXCEPTION(index_corrupted, std::logic_error);
 FPTU_DECLARE_EXCEPTION(collection_unallowed, std::logic_error);
 FPTU_DECLARE_EXCEPTION(collection_required, std::logic_error);

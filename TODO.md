@@ -1,8 +1,11 @@
+- [ ] fptu::value через tagged_pointer.
+- [ ] сериализация в JSON.
+- [ ] устойчивое сравнение кортежей.
+- [ ] std::hash.
+- [ ] uprobes/SystemTap и perfomance-penalty.
+- [ ] Схема с напонением и примерами для Димы.
 - [ ] Зачистить combo_ptr.
 - [ ] Передвинуть биты в tag/token.
-- [ ] автоматическое расширение буферов.
-- [ ] разные tuple-классы и управление буферами.
-- [ ] value через tagget-pointer;
 - [ ] more SIMD (sort, pattern-search, binary-search);
 - [ ] AVX512;
 - [ ] inlay iteration;
