@@ -211,7 +211,10 @@ public:
   constexpr float get_f32() const { return get<f32>(); }
   constexpr double get_f64() const { return get<f64>(); }
   constexpr decimal64 get_decimal() const { return get<d64>(); }
-  constexpr datetime_t get_datetime() const { return get<t64>(); }
+  constexpr datetime_t get_datetime() const {
+    return unlikely(type() == genus::t32) ? datetime_t::from_seconds(get<t32>())
+                                          : get<t64>();
+  }
   constexpr const uuid_t &get_uuid() const {
     return *erthink::constexpr_pointer_cast<const uuid_t *>(&get<bin128>());
   }

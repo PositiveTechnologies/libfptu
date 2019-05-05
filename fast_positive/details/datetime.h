@@ -177,7 +177,9 @@ public:
 
   static datetime_t now_fine() { return datetime_t(fptu_now_fine()); }
   static datetime_t now_coarse() { return datetime_t(fptu_now_coarse()); }
-  static datetime_t now(int grain_ns) { return datetime_t(fptu_now(grain_ns)); }
+  static datetime_t now(int grain_ns = /* младшие 16 бит будут нулевые */ -16) {
+    return datetime_t(fptu_now(grain_ns));
+  }
 
   constexpr datetime_t(const time_t *utc) : datetime_t(uint64_t(*utc) << 32) {}
 

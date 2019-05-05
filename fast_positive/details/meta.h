@@ -303,7 +303,7 @@ struct genus_traits<f32> : public unit_1<float, -1 /* quied negative nan */> {
       genus_traits<u16>::trivially_convertible_from;
 };
 
-template <> struct genus_traits<t32> : public unit_2<unsigned, 0> {
+template <> struct genus_traits<t32> : public unit_1<unsigned, 0> {
   static constexpr details::genus_mask_t trivially_convertible_from =
       utils::bitset_mask<t32, t64>::value;
 };

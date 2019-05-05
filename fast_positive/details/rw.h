@@ -346,7 +346,11 @@ public:
     void set_f32(const float value) { return assign<f32>(value); }
     void set_f64(const double value) { return assign<f64>(value); }
     void set_decimal(const decimal64 value) { return assign<d64>(value); }
-    void set_datetime(const datetime_t value) { return assign<t64>(value); }
+    void set_datetime(const datetime_t value) {
+      return unlikely(base::type() == genus::t32)
+                 ? assign<t32>(value.utc_seconds())
+                 : assign<t64>(value);
+    }
     void set_uuid(const uuid_t &value) { return assign<bin128>(value.bin128); }
 
     void set_bin96(const binary96_t &value) { return assign<bin96>(value); }
