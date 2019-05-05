@@ -109,7 +109,7 @@ FPTU_DECLARE_TYPE2GENUS(decimal64, genus::d64);
 
 FPTU_DECLARE_TYPE2GENUS(mac_address_t, genus::mac);
 FPTU_DECLARE_TYPE2GENUS(ip_address_t, genus::ip);
-FPTU_DECLARE_TYPE2GENUS(uuid_t, genus::b128);
+FPTU_DECLARE_TYPE2GENUS(uuid_t, genus::bin128);
 
 FPTU_DECLARE_TYPE2GENUS(std::string, genus::text);
 FPTU_DECLARE_TYPE2GENUS(string_view, genus::text);

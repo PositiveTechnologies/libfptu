@@ -299,8 +299,8 @@ fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) noexcept {
   fptu_error fptu_upsert_##BITS(fptu_rw *pt, unsigned column,                  \
                                 const void *data) noexcept {                   \
     try {                                                                      \
-      const fptu::token id(fptu::genus::b##BITS, column, false);               \
-      pt->set_b##BITS(                                                         \
+      const fptu::token id(fptu::genus::bin##BITS, column, false);             \
+      pt->set_bin##BITS(                                                       \
           id,                                                                  \
           *erthink::constexpr_pointer_cast<const fptu::binary##BITS##_t *>(    \
               data));                                                          \
@@ -385,8 +385,8 @@ FPTU_INSERT_IMPL(datetime, datetime, t64, fptu_datetime_t)
   fptu_error fptu_insert_##BITS(fptu_rw *pt, unsigned column,                  \
                                 const void *data) noexcept {                   \
     try {                                                                      \
-      const fptu::token id(fptu::genus::b##BITS, column, true);                \
-      pt->insert_b##BITS(                                                      \
+      const fptu::token id(fptu::genus::bin##BITS, column, true);              \
+      pt->insert_bin##BITS(                                                    \
           id,                                                                  \
           *erthink::constexpr_pointer_cast<const fptu::binary##BITS##_t *>(    \
               data));                                                          \
@@ -471,8 +471,8 @@ FPTU_UPDATE_IMPL(datetime, datetime, t64, fptu_datetime_t)
   fptu_error fptu_update_##BITS(fptu_rw *pt, unsigned column,                  \
                                 const void *data) noexcept {                   \
     try {                                                                      \
-      const fptu::token id(fptu::genus::b##BITS, column, true);                \
-      pt->legacy_update_b##BITS(                                               \
+      const fptu::token id(fptu::genus::bin##BITS, column, true);              \
+      pt->legacy_update_bin##BITS(                                             \
           id,                                                                  \
           *erthink::constexpr_pointer_cast<const fptu::binary##BITS##_t *>(    \
               data));                                                          \

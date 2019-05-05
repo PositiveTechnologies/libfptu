@@ -103,7 +103,7 @@ FPTU_GET_IMPL(nested, nested, nested, fptu_ro, fptu::details::iovec_thunk,
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
       return erthink::constexpr_pointer_cast<const uint8_t *>(                 \
-          &fptu::details::get<fptu::genus::b##BITS>(pf, false));               \
+          &fptu::details::get<fptu::genus::bin##BITS>(pf, false));             \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return nullptr;                                                          \

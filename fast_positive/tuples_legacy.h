@@ -221,12 +221,12 @@ enum fptu_type : unsigned {
       true), // date-time as fixed-point, compatible with UTC
 
   fptu_96 =
-      fptu::details::make_tag(fptu::genus::b96, 0, true), // opaque 12-bytes.
+      fptu::details::make_tag(fptu::genus::bin96, 0, true), // opaque 12-bytes.
   fptu_128 = fptu::details::make_tag(
-      fptu::genus::b128, 0, true), // opaque 16-bytes (uuid, ipv6, etc).
-  fptu_160 = fptu::details::make_tag(fptu::genus::b160, 0,
+      fptu::genus::bin128, 0, true), // opaque 16-bytes (uuid, ipv6, etc).
+  fptu_160 = fptu::details::make_tag(fptu::genus::bin160, 0,
                                      true), // opaque 20-bytes (sha1).
-  fptu_256 = fptu::details::make_tag(fptu::genus::b256, 0,
+  fptu_256 = fptu::details::make_tag(fptu::genus::bin256, 0,
                                      true), // opaque 32-bytes (sha256).
   fptu_ip = fptu::details::make_tag(fptu::genus::ip, 0, true),
   fptu_mac = fptu::details::make_tag(fptu::genus::mac, 0, true),

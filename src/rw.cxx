@@ -90,15 +90,15 @@ HERE_GENUS_CASE(datetime_t, get_datetime)
 HERE_GENUS_CASE(const uuid_t &, get_uuid)
 HERE_GENUS_CASE(int128_t, get_int128)
 HERE_GENUS_CASE(uint128_t, get_uint128)
-HERE_GENUS_CASE(const binary96_t &, get_b96)
-HERE_GENUS_CASE(const binary128_t &, get_b128)
-HERE_GENUS_CASE(const binary160_t &, get_b160)
-HERE_GENUS_CASE(const binary192_t &, get_b192)
-HERE_GENUS_CASE(const binary224_t &, get_b224)
-HERE_GENUS_CASE(const binary256_t &, get_b256)
-HERE_GENUS_CASE(const binary320_t &, get_b320)
-HERE_GENUS_CASE(const binary384_t &, get_b384)
-HERE_GENUS_CASE(const binary512_t &, get_b512)
+HERE_GENUS_CASE(const binary96_t &, get_bin96)
+HERE_GENUS_CASE(const binary128_t &, get_bin128)
+HERE_GENUS_CASE(const binary160_t &, get_bin160)
+HERE_GENUS_CASE(const binary192_t &, get_bin192)
+HERE_GENUS_CASE(const binary224_t &, get_bin224)
+HERE_GENUS_CASE(const binary256_t &, get_bin256)
+HERE_GENUS_CASE(const binary320_t &, get_bin320)
+HERE_GENUS_CASE(const binary384_t &, get_bin384)
+HERE_GENUS_CASE(const binary512_t &, get_bin512)
 HERE_GENUS_CASE(const ip_address_t &, get_ip_address)
 HERE_GENUS_CASE(mac_address_t, get_mac_address)
 HERE_GENUS_CASE(const ip_net_t &, get_ip_net)
@@ -179,15 +179,15 @@ HERE_GENUS_CASE(datetime_t, datetime)
 HERE_GENUS_CASE(uuid_t &, uuid)
 HERE_GENUS_CASE(int128_t &, int128)
 HERE_GENUS_CASE(uint128_t &, uint128)
-HERE_GENUS_CASE(binary96_t &, b96)
-HERE_GENUS_CASE(binary128_t &, b128)
-HERE_GENUS_CASE(binary160_t &, b160)
-HERE_GENUS_CASE(binary192_t &, b192)
-HERE_GENUS_CASE(binary224_t &, b224)
-HERE_GENUS_CASE(binary256_t &, b256)
-HERE_GENUS_CASE(binary320_t &, b320)
-HERE_GENUS_CASE(binary384_t &, b384)
-HERE_GENUS_CASE(binary512_t &, b512)
+HERE_GENUS_CASE(binary96_t &, bin96)
+HERE_GENUS_CASE(binary128_t &, bin128)
+HERE_GENUS_CASE(binary160_t &, bin160)
+HERE_GENUS_CASE(binary192_t &, bin192)
+HERE_GENUS_CASE(binary224_t &, bin224)
+HERE_GENUS_CASE(binary256_t &, bin256)
+HERE_GENUS_CASE(binary320_t &, bin320)
+HERE_GENUS_CASE(binary384_t &, bin384)
+HERE_GENUS_CASE(binary512_t &, bin512)
 HERE_GENUS_CASE(ip_address_t &, ip_address)
 HERE_GENUS_CASE(mac_address_t, mac_address)
 HERE_GENUS_CASE(ip_net_t &, ip_net)
@@ -237,15 +237,15 @@ HERE_GENUS_CASE(float, f32, f32)
 HERE_GENUS_CASE(double, f64, f64)
 HERE_GENUS_CASE(decimal64, decimal, d64)
 HERE_GENUS_CASE(datetime_t, datetime, t64)
-HERE_GENUS_CASE(binary96_t &, b96, b96)
-HERE_GENUS_CASE(binary128_t &, b128, b128)
-HERE_GENUS_CASE(binary160_t &, b160, b160)
-HERE_GENUS_CASE(binary192_t &, b192, b192)
-HERE_GENUS_CASE(binary224_t &, b224, b224)
-HERE_GENUS_CASE(binary256_t &, b256, b256)
-HERE_GENUS_CASE(binary320_t &, b320, b320)
-HERE_GENUS_CASE(binary384_t &, b384, b384)
-HERE_GENUS_CASE(binary512_t &, b512, b512)
+HERE_GENUS_CASE(binary96_t &, bin96, bin96)
+HERE_GENUS_CASE(binary128_t &, bin128, bin128)
+HERE_GENUS_CASE(binary160_t &, bin160, bin160)
+HERE_GENUS_CASE(binary192_t &, bin192, bin192)
+HERE_GENUS_CASE(binary224_t &, bin224, bin224)
+HERE_GENUS_CASE(binary256_t &, bin256, bin256)
+HERE_GENUS_CASE(binary320_t &, bin320, bin320)
+HERE_GENUS_CASE(binary384_t &, bin384, bin384)
+HERE_GENUS_CASE(binary512_t &, bin512, bin512)
 HERE_GENUS_CASE(ip_address_t &, ip_address, ip)
 HERE_GENUS_CASE(mac_address_t, mac_address, mac)
 HERE_GENUS_CASE(ip_net_t &, ip_net, ipnet)
@@ -253,7 +253,7 @@ HERE_GENUS_CASE(ip_net_t &, ip_net, ipnet)
 
 FPTU_API dynamic_iterator_rw tuple_rw::insert_uuid(const token &ident,
                                                    const uuid_t &value) {
-  field_loose *field = append_field<token, genus::b128>(value.bin128, ident);
+  field_loose *field = append_field<token, genus::bin128>(value.bin128, ident);
   return dynamic_iterator_rw(this, field, ident);
 }
 
@@ -330,16 +330,16 @@ FPTU_API dynamic_iterator_rw tuple_rw::insert_unsigned(const token &ident,
 
 FPTU_API dynamic_iterator_rw tuple_rw::insert_int128(const token &ident,
                                                      const int128_t &value) {
-  if (ident.type() == b128)
-    return insert_b128(
+  if (ident.type() == bin128)
+    return insert_bin128(
         ident, *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
   return insert_integer(ident, int64_t(value));
 }
 
 FPTU_API dynamic_iterator_rw tuple_rw::insert_uint128(const token &ident,
                                                       const uint128_t &value) {
-  if (ident.type() == b128)
-    return insert_b128(
+  if (ident.type() == bin128)
+    return insert_bin128(
         ident, *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
   return insert_unsigned(ident, uint64_t(value));
 }

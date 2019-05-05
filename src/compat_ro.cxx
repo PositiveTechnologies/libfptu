@@ -121,9 +121,9 @@ FPTU_GET_IMPL(nested, nested, nested, fptu_ro, fptu::details::iovec_thunk,
                                  int *error) noexcept {                        \
     error_guard raii(error);                                                   \
     try {                                                                      \
-      const fptu::token id(fptu::genus::b##BITS, column, false);               \
+      const fptu::token id(fptu::genus::bin##BITS, column, false);             \
       return erthink::constexpr_pointer_cast<const uint8_t *>(                 \
-          &impl(ro)->get_b##BITS(id));                                         \
+          &impl(ro)->get_bin##BITS(id));                                       \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return nullptr;                                                          \

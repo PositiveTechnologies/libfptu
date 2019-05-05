@@ -213,35 +213,43 @@ public:
   constexpr decimal64 get_decimal() const { return get<d64>(); }
   constexpr datetime_t get_datetime() const { return get<t64>(); }
   constexpr const uuid_t &get_uuid() const {
-    return *erthink::constexpr_pointer_cast<const uuid_t *>(&get<b128>());
+    return *erthink::constexpr_pointer_cast<const uuid_t *>(&get<bin128>());
   }
 
-  constexpr const binary96_t &get_b96() const {
-    return *erthink::constexpr_pointer_cast<const binary96_t *>(&get<b96>());
+  constexpr const binary96_t &get_bin96() const {
+    return *erthink::constexpr_pointer_cast<const binary96_t *>(&get<bin96>());
   }
-  constexpr const binary128_t &get_b128() const {
-    return *erthink::constexpr_pointer_cast<const binary128_t *>(&get<b128>());
+  constexpr const binary128_t &get_bin128() const {
+    return *erthink::constexpr_pointer_cast<const binary128_t *>(
+        &get<bin128>());
   }
-  constexpr const binary160_t &get_b160() const {
-    return *erthink::constexpr_pointer_cast<const binary160_t *>(&get<b160>());
+  constexpr const binary160_t &get_bin160() const {
+    return *erthink::constexpr_pointer_cast<const binary160_t *>(
+        &get<bin160>());
   }
-  constexpr const binary192_t &get_b192() const {
-    return *erthink::constexpr_pointer_cast<const binary192_t *>(&get<b192>());
+  constexpr const binary192_t &get_bin192() const {
+    return *erthink::constexpr_pointer_cast<const binary192_t *>(
+        &get<bin192>());
   }
-  constexpr const binary224_t &get_b224() const {
-    return *erthink::constexpr_pointer_cast<const binary224_t *>(&get<b224>());
+  constexpr const binary224_t &get_bin224() const {
+    return *erthink::constexpr_pointer_cast<const binary224_t *>(
+        &get<bin224>());
   }
-  constexpr const binary256_t &get_b256() const {
-    return *erthink::constexpr_pointer_cast<const binary256_t *>(&get<b256>());
+  constexpr const binary256_t &get_bin256() const {
+    return *erthink::constexpr_pointer_cast<const binary256_t *>(
+        &get<bin256>());
   }
-  constexpr const binary320_t &get_b320() const {
-    return *erthink::constexpr_pointer_cast<const binary320_t *>(&get<b320>());
+  constexpr const binary320_t &get_bin320() const {
+    return *erthink::constexpr_pointer_cast<const binary320_t *>(
+        &get<bin320>());
   }
-  constexpr const binary384_t &get_b384() const {
-    return *erthink::constexpr_pointer_cast<const binary384_t *>(&get<b384>());
+  constexpr const binary384_t &get_bin384() const {
+    return *erthink::constexpr_pointer_cast<const binary384_t *>(
+        &get<bin384>());
   }
-  constexpr const binary512_t &get_b512() const {
-    return *erthink::constexpr_pointer_cast<const binary512_t *>(&get<b512>());
+  constexpr const binary512_t &get_bin512() const {
+    return *erthink::constexpr_pointer_cast<const binary512_t *>(
+        &get<bin512>());
   }
 
   constexpr const ip_address_t &get_ip_address() const {
@@ -287,14 +295,15 @@ public:
   }
 
   cxx14_constexpr int128_t get_int128() const {
-    if (type() == b128)
-      return *erthink::constexpr_pointer_cast<const int128_t *>(&get<b128>());
+    if (type() == bin128)
+      return *erthink::constexpr_pointer_cast<const int128_t *>(&get<bin128>());
     else
       return int128_t(get_integer());
   }
   cxx14_constexpr uint128_t get_uint128() const {
-    if (type() == b128)
-      return *erthink::constexpr_pointer_cast<const uint128_t *>(&get<b128>());
+    if (type() == bin128)
+      return *erthink::constexpr_pointer_cast<const uint128_t *>(
+          &get<bin128>());
     else
       return uint128_t(get_unsigned());
   }
@@ -481,15 +490,15 @@ public:
   HERE_CRTP_MAKE(const uuid_t &, get_uuid)
   HERE_CRTP_MAKE(int128_t, get_int128)
   HERE_CRTP_MAKE(uint128_t, get_uint128)
-  HERE_CRTP_MAKE(const binary96_t &, get_b96)
-  HERE_CRTP_MAKE(const binary128_t &, get_b128)
-  HERE_CRTP_MAKE(const binary160_t &, get_b160)
-  HERE_CRTP_MAKE(const binary192_t &, get_b192)
-  HERE_CRTP_MAKE(const binary224_t &, get_b224)
-  HERE_CRTP_MAKE(const binary256_t &, get_b256)
-  HERE_CRTP_MAKE(const binary320_t &, get_b320)
-  HERE_CRTP_MAKE(const binary384_t &, get_b384)
-  HERE_CRTP_MAKE(const binary512_t &, get_b512)
+  HERE_CRTP_MAKE(const binary96_t &, get_bin96)
+  HERE_CRTP_MAKE(const binary128_t &, get_bin128)
+  HERE_CRTP_MAKE(const binary160_t &, get_bin160)
+  HERE_CRTP_MAKE(const binary192_t &, get_bin192)
+  HERE_CRTP_MAKE(const binary224_t &, get_bin224)
+  HERE_CRTP_MAKE(const binary256_t &, get_bin256)
+  HERE_CRTP_MAKE(const binary320_t &, get_bin320)
+  HERE_CRTP_MAKE(const binary384_t &, get_bin384)
+  HERE_CRTP_MAKE(const binary512_t &, get_bin512)
   HERE_CRTP_MAKE(const ip_address_t &, get_ip_address)
   HERE_CRTP_MAKE(mac_address_t, get_mac_address)
   HERE_CRTP_MAKE(const ip_net_t &, get_ip_net)

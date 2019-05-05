@@ -119,36 +119,40 @@ enum genus : unsigned /* тип данных, 5 бит */ {
   i8 = 4,
   boolean = i8,
   u8 = 5,
-  b8 = u8,
+  bin8 = u8,
 
   i16 = 6,
   enumeration = i16,
   u16 = 7,
-  b16 = u16,
+  bin16 = u16,
 
   i32 = 8,
   u32 = 9,
-  b32 = u32,
+  bin32 = u32,
   f32 = 10 /* Single precision IEEE-754 */,
   t32 = 11 /* 32-bit UTC time_t */,
+  datetime_utc = t32,
 
   i64 = 12,
   u64 = 13,
-  b64 = u64,
+  bin64 = u64,
   f64 = 14 /* Double precision IEEE-754 */,
   d64 = 15 /* https://en.wikipedia.org/wiki/Decimal_floating_point */,
+  decimal = d64,
   t64 = 16 /* 64-bit fixed-point UTC datetime & timestamp */,
+  datetime_h100 = t64,
+  timestamp = t64,
 
-  // fixbin
-  b96 = 17,
-  b128 = 18,
-  b160 = 19,
-  b192 = 20,
-  b224 = 21,
-  b256 = 22,
-  b320 = 23,
-  b384 = 24,
-  b512 = 25,
+  // fixed binary
+  bin96 = 17,
+  bin128 = 18,
+  bin160 = 19,
+  bin192 = 20,
+  bin224 = 21,
+  bin256 = 22,
+  bin320 = 23,
+  bin384 = 24,
+  bin512 = 25,
 
   // application-specific with predefined size and DENIL=0
   app_reserved_64 = 26,
@@ -157,7 +161,7 @@ enum genus : unsigned /* тип данных, 5 бит */ {
   ip = 29,
   ipnet = 30,
 
-  // auxiliary internal
+  // auxiliary internal (don't use it!)
   hole = 31
 };
 

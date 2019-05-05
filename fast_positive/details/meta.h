@@ -357,49 +357,49 @@ template <> struct genus_traits<t64> : public unit_2<datetime_t, 0> {
 
 // physique unit×N, 96/128/160/192/224/256/384/512 bits ------------------------
 
-template <> struct genus_traits<b96> : public unit_n<3, binary96_t> {
+template <> struct genus_traits<bin96> : public unit_n<3, binary96_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b96>::value;
+      utils::bitset_mask<bin96>::value;
 };
 
-template <> struct genus_traits<b128> : public unit_n<4, binary128_t> {
+template <> struct genus_traits<bin128> : public unit_n<4, binary128_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b128>::value;
+      utils::bitset_mask<bin128>::value;
 };
 
-template <> struct genus_traits<b160> : public unit_n<5, binary160_t> {
+template <> struct genus_traits<bin160> : public unit_n<5, binary160_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b160>::value;
+      utils::bitset_mask<bin160>::value;
 };
 
-template <> struct genus_traits<b192> : public unit_n<6, binary192_t> {
+template <> struct genus_traits<bin192> : public unit_n<6, binary192_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b192>::value;
+      utils::bitset_mask<bin192>::value;
 };
 
-template <> struct genus_traits<b224> : public unit_n<7, binary224_t> {
+template <> struct genus_traits<bin224> : public unit_n<7, binary224_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b224>::value;
+      utils::bitset_mask<bin224>::value;
 };
 
-template <> struct genus_traits<b256> : public unit_n<8, binary256_t> {
+template <> struct genus_traits<bin256> : public unit_n<8, binary256_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b256>::value;
+      utils::bitset_mask<bin256>::value;
 };
 
-template <> struct genus_traits<b320> : public unit_n<10, binary320_t> {
+template <> struct genus_traits<bin320> : public unit_n<10, binary320_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b320>::value;
+      utils::bitset_mask<bin320>::value;
 };
 
-template <> struct genus_traits<b384> : public unit_n<12, binary384_t> {
+template <> struct genus_traits<bin384> : public unit_n<12, binary384_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b384>::value;
+      utils::bitset_mask<bin384>::value;
 };
 
-template <> struct genus_traits<b512> : public unit_n<16, binary512_t> {
+template <> struct genus_traits<bin512> : public unit_n<16, binary512_t> {
   static constexpr details::genus_mask_t trivially_convertible_from =
-      utils::bitset_mask<b512>::value;
+      utils::bitset_mask<bin512>::value;
 };
 
 //------------------------------------------------------------------------------

@@ -347,17 +347,17 @@ public:
     void set_f64(const double value) { return assign<f64>(value); }
     void set_decimal(const decimal64 value) { return assign<d64>(value); }
     void set_datetime(const datetime_t value) { return assign<t64>(value); }
-    void set_uuid(const uuid_t &value) { return assign<b128>(value.bin128); }
+    void set_uuid(const uuid_t &value) { return assign<bin128>(value.bin128); }
 
-    void set_b96(const binary96_t &value) { return assign<b96>(value); }
-    void set_b128(const binary128_t &value) { return assign<b128>(value); }
-    void set_b160(const binary160_t &value) { return assign<b160>(value); }
-    void set_b192(const binary192_t &value) { return assign<b192>(value); }
-    void set_b224(const binary224_t &value) { return assign<b224>(value); }
-    void set_b256(const binary256_t &value) { return assign<b256>(value); }
-    void set_b320(const binary320_t &value) { return assign<b320>(value); }
-    void set_b384(const binary384_t &value) { return assign<b384>(value); }
-    void set_b512(const binary512_t &value) { return assign<b512>(value); }
+    void set_bin96(const binary96_t &value) { return assign<bin96>(value); }
+    void set_bin128(const binary128_t &value) { return assign<bin128>(value); }
+    void set_bin160(const binary160_t &value) { return assign<bin160>(value); }
+    void set_bin192(const binary192_t &value) { return assign<bin192>(value); }
+    void set_bin224(const binary224_t &value) { return assign<bin224>(value); }
+    void set_bin256(const binary256_t &value) { return assign<bin256>(value); }
+    void set_bin320(const binary320_t &value) { return assign<bin320>(value); }
+    void set_bin384(const binary384_t &value) { return assign<bin384>(value); }
+    void set_bin512(const binary512_t &value) { return assign<bin512>(value); }
 
     void set_ip_address(const ip_address_t &value) { return assign<ip>(value); }
     void set_mac_address(const mac_address_t value) {
@@ -432,15 +432,15 @@ public:
     }
 
     void set_int128(const int128_t &value) {
-      if (base::type() == b128)
-        return assign<b128>(
+      if (base::type() == bin128)
+        return assign<bin128>(
             *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
       set_integer(int64_t(value));
     }
 
     void set_uint128(const uint128_t &value) {
-      if (base::type() == b128)
-        return assign<b128>(
+      if (base::type() == bin128)
+        return assign<bin128>(
             *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
       set_unsigned(uint64_t(value));
     }
@@ -785,15 +785,15 @@ public: //----------------------------------------------------------------------
   HERE_GENUS_CASE(uuid_t &, uuid)
   HERE_GENUS_CASE(int128_t &, int128)
   HERE_GENUS_CASE(uint128_t &, uint128)
-  HERE_GENUS_CASE(binary96_t &, b96)
-  HERE_GENUS_CASE(binary128_t &, b128)
-  HERE_GENUS_CASE(binary160_t &, b160)
-  HERE_GENUS_CASE(binary192_t &, b192)
-  HERE_GENUS_CASE(binary224_t &, b224)
-  HERE_GENUS_CASE(binary256_t &, b256)
-  HERE_GENUS_CASE(binary320_t &, b320)
-  HERE_GENUS_CASE(binary384_t &, b384)
-  HERE_GENUS_CASE(binary512_t &, b512)
+  HERE_GENUS_CASE(binary96_t &, bin96)
+  HERE_GENUS_CASE(binary128_t &, bin128)
+  HERE_GENUS_CASE(binary160_t &, bin160)
+  HERE_GENUS_CASE(binary192_t &, bin192)
+  HERE_GENUS_CASE(binary224_t &, bin224)
+  HERE_GENUS_CASE(binary256_t &, bin256)
+  HERE_GENUS_CASE(binary320_t &, bin320)
+  HERE_GENUS_CASE(binary384_t &, bin384)
+  HERE_GENUS_CASE(binary512_t &, bin512)
   HERE_GENUS_CASE(ip_address_t &, ip_address)
   HERE_GENUS_CASE(mac_address_t, mac_address)
   HERE_GENUS_CASE(ip_net_t &, ip_net)
