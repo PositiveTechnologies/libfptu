@@ -212,22 +212,23 @@ class FPTU_API_TYPE token
   using base = details::token_operations<details::token_nonstatic_tag>;
   explicit constexpr token(const details::tag_t tag) noexcept : base(tag) {}
 
-  static genus validate_loose_type(const genus type) {
+  static cxx14_constexpr genus validate_loose_type(const genus type) {
     if (unlikely(type >= genus::hole))
       throw_invalid_argument("type >= fptu::genus::hole");
     return type;
   }
-  static unsigned validate_loose_id(const unsigned id) {
+  static cxx14_constexpr unsigned validate_loose_id(const unsigned id) {
     if (unlikely(id > details::tag_bits::max_ident))
       throw_invalid_argument("id > fptu::details::max_ident");
     return id;
   }
-  static genus validate_preplaced_type(const genus type) {
+  static cxx14_constexpr genus validate_preplaced_type(const genus type) {
     if (unlikely(type > genus::hole))
       throw_invalid_argument("type > fptu::genus::hole");
     return type;
   }
-  static std::size_t validate_preplaced_offset(const ptrdiff_t offset) {
+  static cxx14_constexpr std::size_t
+  validate_preplaced_offset(const ptrdiff_t offset) {
     if (unlikely(std::size_t(offset) > details::max_preplaced_offset))
       throw_invalid_argument(
           "offset < 0 || offset > details::max_preplaced_offset");
@@ -237,13 +238,15 @@ class FPTU_API_TYPE token
 public:
   constexpr token() noexcept : base() {}
 
+  cxx14_constexpr
   token(const genus type, const unsigned id, const bool collection = false,
         const bool quietabsence = false, const bool saturated = false)
       : base(details::make_tag(validate_loose_type(type), validate_loose_id(id),
                                collection, quietabsence, saturated)) {}
 
-  token(const ptrdiff_t offset, const genus type, const bool deniled = false,
-        const bool saturated = false)
+  cxx14_constexpr token(const ptrdiff_t offset, const genus type,
+                        const bool deniled = false,
+                        const bool saturated = false)
       : base(details::tag_from_offset(
             validate_preplaced_offset(offset), validate_preplaced_type(type),
             details::preplaced_bytes(type), deniled, saturated)) {}

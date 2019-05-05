@@ -570,8 +570,8 @@ static inline cxx14_constexpr size_t
 loose_units_constexpr(const genus type) noexcept {
   switch (type) {
   default:
+    constexpr_assert(false);
     __unreachable();
-    assert(false);
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \
     return meta::genus_traits<genus(N)>::loose_units
@@ -616,8 +616,8 @@ static inline cxx14_constexpr size_t
 preplaced_bytes_constexpr(const genus type) noexcept {
   switch (type) {
   default:
+    constexpr_assert(false);
     __unreachable();
-    assert(false);
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \
     return meta::genus_traits<genus(N)>::preplaced_bytes
@@ -662,8 +662,8 @@ static inline cxx14_constexpr bool
 is_trivially_convertible_constexpr(const genus from, const genus to) noexcept {
   switch (to) {
   default:
+    constexpr_assert(false);
     __unreachable();
-    assert(false);
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \
     return utils::test_bit(                                                    \
@@ -723,8 +723,8 @@ static inline void preplaced_erase(const genus type,
                                    const bool distinct_null) noexcept {
   switch (type) {
   default:
-    __unreachable();
     assert(false);
+    __unreachable();
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \
     meta::genus_traits<genus(N)>::erase(preplaced, distinct_null);             \
