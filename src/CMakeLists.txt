@@ -159,20 +159,6 @@ set(LIBFPTU_SOURCES
   tablets.cxx
   time.cxx
 
-  obsolete/internal.h
-  obsolete/bitset4tags.h
-  obsolete/check.cxx
-  obsolete/common.cxx
-  obsolete/compare.cxx
-  obsolete/create.cxx
-  obsolete/data.cxx
-  obsolete/get.cxx
-  obsolete/iterator.cxx
-  obsolete/remove.cxx
-  obsolete/shrink.cxx
-  obsolete/sort.cxx
-  obsolete/upsert.cxx
-
   ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)
 
 if(X86_32 OR X86_64)
