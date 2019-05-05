@@ -27,80 +27,6 @@
 
 //------------------------------------------------------------------------------
 
-#pragma pack(push, 1)
-struct Foo {
-  char x;
-  int Bar;
-};
-#pragma pack(pop)
-
-struct MyToken_FooBar_int : public FPTU_TOKEN(Foo, Bar) {
-  MyToken_FooBar_int() noexcept {
-    static_assert(static_offset == 1, "WTF?");
-    static_assert(std::is_base_of<::fptu::details::token_static_tag,
-                                  MyToken_FooBar_int>::value,
-                  "WTF?");
-    static_assert(MyToken_FooBar_int::is_static_token::value, "WTF?");
-  }
-};
-
-FPTU_TEMPLATE_FOR_STATIC_TOKEN
-bool probe2static(const TOKEN &token) {
-  (void)token;
-  return true;
-}
-
-bool probe2static(const fptu::token &token) {
-  (void)token;
-  return false;
-}
-
-TEST(Token, StaticPreplaced) {
-  MyToken_FooBar_int token;
-
-  EXPECT_TRUE(token.is_preplaced());
-  EXPECT_FALSE(token.is_loose());
-  EXPECT_FALSE(token.is_inlay());
-  EXPECT_FALSE(token.is_collection());
-  EXPECT_EQ(fptu::genus::i32, token.type());
-  EXPECT_TRUE(probe2static(token));
-  EXPECT_TRUE(MyToken_FooBar_int::is_static_preplaced());
-  EXPECT_TRUE(MyToken_FooBar_int::is_static_token::value);
-
-#ifndef __clang__
-  const fptu::tuple_ro_weak tuple_ro;
-  /* FIXME: CLANG ?-6-7-8 WTF? */
-  EXPECT_THROW(tuple_ro.collection(token).empty(), ::fptu::collection_required);
-#endif
-}
-
-#ifdef __clang__
-TEST(clang_WTF, DISABLED_ExceptionHandling) {
-#else
-TEST(clang_WTF, ExceptionHandling) {
-#endif
-  try {
-    bool got_collection_required_exception = false;
-    try {
-      // fptu::throw_collection_required();
-      const fptu::tuple_ro_weak tuple_ro;
-      MyToken_FooBar_int token;
-      tuple_ro.collection(token).empty();
-    } catch (const ::fptu::collection_required &) {
-      got_collection_required_exception = true;
-    }
-    EXPECT_TRUE(got_collection_required_exception);
-  } catch (const ::std::exception &e) {
-    std::string msg = fptu::format("Unexpected exception type '%s': %s",
-                                   typeid(e).name(), e.what());
-    GTEST_FATAL_FAILURE_(msg.c_str());
-  } catch (...) {
-    GTEST_FATAL_FAILURE_("Unknown NOT std::exception");
-  }
-}
-
-//------------------------------------------------------------------------------
-
 static void test_ScanIndex(fptu::details::scan_func_t scan) {
   static_assert(sizeof(fptu::details::unit_t) ==
                     sizeof(fptu::details::field_loose),
@@ -171,27 +97,6 @@ TEST(ScanIndex, SSE2) {
 
 //------------------------------------------------------------------------------
 
-TEST(Smoke, trivia_set) {
-  fptu::tuple_rw_managed rw;
-  fptu::token token(fptu::u16, 0);
-  rw.set_u16(token, 42);
-  auto value = rw.get_u16(token);
-  EXPECT_EQ(42, value);
-}
-
-TEST(Smoke, trivia_autogrowth) {
-  fptu::tuple_rw_managed rw;
-  fptu::token token(fptu::text, 0, true);
-  EXPECT_GT(fptu::max_tuple_bytes_netto, rw.capacity());
-  for (int i = 1; i < 555; ++i)
-    rw.insert_string(token,
-                     fptu::format("This is the string #%*d.", i - 555, i));
-
-  EXPECT_EQ(fptu::max_tuple_bytes_netto, rw.capacity());
-}
-
-//------------------------------------------------------------------------------
-
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
@@ -207,6 +112,23 @@ int main(int argc, char **argv) {
 }
 
 //------------------------------------------------------------------------------
+
+#pragma pack(push, 1)
+struct Foo {
+  char x;
+  int Bar;
+};
+#pragma pack(pop)
+
+struct MyToken_FooBar_int : public FPTU_TOKEN(Foo, Bar) {
+  MyToken_FooBar_int() noexcept {
+    static_assert(static_offset == 1, "WTF?");
+    static_assert(std::is_base_of<::fptu::details::token_static_tag,
+                                  MyToken_FooBar_int>::value,
+                  "WTF?");
+    static_assert(MyToken_FooBar_int::is_static_token::value, "WTF?");
+  }
+};
 
 template class fptu::tuple_crtp_reader<fptu::tuple_ro_weak>;
 template class fptu::tuple_crtp_reader<fptu::tuple_ro_managed>;
