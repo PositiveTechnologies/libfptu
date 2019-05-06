@@ -314,7 +314,7 @@ __cold string to_string(const fptu_datetime_t &time) {
   char fractional[16];
   /* с точностью до наносекунд,
    * поэтому внутри snprintf() может произойти округление до 1.000 */
-  snprintf(fractional, sizeof(fractional), "%.9f", time.fractional2seconds());
+  snprintf(fractional, sizeof(fractional), "%.9f", time.fractional_seconds());
   assert(fractional[0] == '0' || fractional[0] == '1');
 
   /* с учетом переноса при округлении fractional */

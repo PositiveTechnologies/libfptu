@@ -59,17 +59,15 @@ union fptu_datetime_C {
   };
 };
 
-/* Возвращает текущее время в правильной форме.
+/* Возвращает текущее время в правильной, унифицированной с Hiper100re форме.
  *
  * Аргумент grain_ns задает желаемую точность в наносекундах, в зависимости от
  * которой будет использован CLOCK_REALTIME, либо CLOCK_REALTIME_COARSE.
- *
- * Положительные значения grain_ns, включая нуль, трактуются как наносекунды.
- *
- * Отрицательные же означают количество младших бит, которые НЕ требуются в
- * результате и будут обнулены. Таким образом, отрицательные значения grain_ns
- * позволяют запросить текущее время, одновременно с "резервированием" младших
- * бит результата под специфические нужды.
+ *  - Положительные значения grain_ns, включая нуль, трактуются как наносекунды.
+ *  - Отрицательные же означают количество младших бит, которые НЕ требуются в
+ *    результате и будут обнулены. Таким образом, отрицательные значения
+ *    grain_ns позволяют запросить текущее время, одновременно с
+ *    "резервированием" младших бит результата под специфические нужды.
  *
  * В конечном счете это позволяет существенно экономить на системных вызовах
  * и/или обращении к аппаратуре. В том числе не выполнять системный вызов,
@@ -155,13 +153,13 @@ public:
     return fractional2units(fraction, ms_per_second);
   }
 
-  double fractional2seconds() const {
+  double fractional_seconds() const {
     return std::ldexp(value_.fractional, -32);
   }
-  double seconds() const { return fractional2seconds() + value_.utc; }
-  uint32_t utc_seconds() const { return value_.utc; }
-  uint32_t fractional() const { return value_.fractional; }
-  uint64_t fixedpoint_32dot32() const { return value_.fixedpoint; }
+  double seconds() const { return fractional_seconds() + value_.utc; }
+  constexpr uint32_t utc_seconds() const { return value_.utc; }
+  constexpr uint32_t fractional() const { return value_.fractional; }
+  constexpr uint64_t fixedpoint_32dot32() const { return value_.fixedpoint; }
 
   datetime_t() = default;
   constexpr datetime_t(const datetime_t &) = default;
