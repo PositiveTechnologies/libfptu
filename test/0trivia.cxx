@@ -99,9 +99,9 @@ TEST(Trivia, Apriory) {
 
 #define HERE_TEST_ITEM(GENUS)                                                  \
   ASSERT_FALSE(fptu::details::is_fixed_size(                                   \
-      fptu::details::make_tag(fptu::genus::GENUS, 0, false)));                 \
+      fptu::details::make_tag(fptu::genus::GENUS, 0, false, true, false)));    \
   ASSERT_FALSE(fptu::details::is_fixed_size(                                   \
-      fptu::details::make_tag(fptu::genus::GENUS, 0, true)))
+      fptu::details::make_tag(fptu::genus::GENUS, 0, true, true, false)))
   HERE_TEST_ITEM(text);
   HERE_TEST_ITEM(varbin);
   HERE_TEST_ITEM(nested);
@@ -110,9 +110,9 @@ TEST(Trivia, Apriory) {
 
 #define HERE_TEST_ITEM(N)                                                      \
   ASSERT_TRUE(fptu::details::is_fixed_size(                                    \
-      fptu::details::make_tag(fptu::genus(N), 0, false)));                     \
+      fptu::details::make_tag(fptu::genus(N), 0, false, true, false)));        \
   ASSERT_TRUE(fptu::details::is_fixed_size(                                    \
-      fptu::details::make_tag(fptu::genus(N), 0, true)))
+      fptu::details::make_tag(fptu::genus(N), 0, true, true, false)))
   HERE_TEST_ITEM(4);
   HERE_TEST_ITEM(5);
   HERE_TEST_ITEM(6);
@@ -183,7 +183,7 @@ TEST(Trivia, Apriory) {
 TEST(Trivia, ColType) {
   fptu_tag_t tag;
   tag = fptu::make_tag(0, fptu_bool);
-  ASSERT_EQ(2147745796u, tag);
+  ASSERT_EQ(4294778880u, tag);
   EXPECT_EQ(0u, fptu::get_colnum(tag));
   EXPECT_EQ(fptu_bool, fptu::get_type(tag));
 

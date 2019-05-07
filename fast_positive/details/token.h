@@ -46,7 +46,7 @@ template <typename TOKEN> struct token_operations : public TOKEN {
 
   constexpr tag_t tag() const noexcept { return TOKEN::tag(); }
   constexpr genus type() const noexcept { return details::tag2genus(tag()); }
-  constexpr bool is_valid() const noexcept { return type() != genus::hole; }
+  constexpr bool is_valid() const noexcept { return tag() != 0; }
   constexpr unsigned id() const noexcept { return details::tag2id(tag()); }
 
   constexpr bool operator==(const TOKEN &ditto) const noexcept {
@@ -63,15 +63,67 @@ template <typename TOKEN> struct token_operations : public TOKEN {
   constexpr bool is_saturated() const noexcept {
     return details::is_saturated(tag());
   }
-  constexpr bool is_rangechecking() const noexcept {
-    return details::is_rangechecking(tag());
-  }
+  constexpr bool is_rangechecking() const noexcept { return !is_saturated(); }
 
   constexpr bool is_preplaced() const noexcept {
     return details::is_preplaced(tag());
   }
-  constexpr bool distinct_null() const noexcept {
-    return is_preplaced() && details::distinct_null(tag());
+
+  constexpr bool is_discernible_null() const noexcept {
+    /* Ради упрощения и максимальной ясности решено оставить один
+     * флажок/параметр определяющий поведение для работы с NULL-значениями.
+     *
+     * Когда discernible_null == TRUE:
+     *   - для preplaced-полей фиксированного размера поддерживаются
+     *     фиксированные предопределенные DENIL-значения;
+     *   - для loose-полей фиксированного размера какая-либо дополнительная
+     *     обработка не производится;
+     *   - для любых полей переменной длины пустые значения (строки нулевой
+     *     длины) сохраняются в неизменном виде, тем самым обеспечивается
+     *     отличие пустых значений от NULL (отсутствие полей или значений).
+     *   - при попытке чтения логически или физически отсутствующих полей
+     *     вбрасывается исключение fptu::field_absent.
+     *
+     * Когда discernible_null == FALSE:
+     *   - для preplaced-полей фиксированного размера какая-либо дополнительная
+     *     обработка не производится, т.е. читается "как есть";
+     *   - для loose-полей фиксированного размера запись значения
+     *     соответствующего естественному нулю приводит к удалению поля.
+     *   - для любых полей переменной длины запись пустого значения (строки
+     *     нулевой длины приводит к удалению поля или значения), т.е. пустые
+     *     значения преобразуются в NULL;
+     *   - при попытке чтении отсутствующего поля или отсутствующего значения
+     *     подставляется пустое значение (пустая строка или естественный ноль).
+     *
+     * Таким образом, при discernible_null == TRUE приложение может видеть
+     * разницу между NULL и нулевым значением, а при discernible_null == FALSE
+     * внешне различия не видны (но нули и пустые значения не хранятся).
+     *
+     * -------------------+-------------------------+-------------------------
+     *                    | Отличать NULL,          | НЕ отличать NULL,
+     *                    | throw field_absent()    | подставлять 0/пусто
+     * -------------------+-------------------------+-------------------------
+     *  Fixed Preplaced   | Write(DENIL) => Remove, | Write/Read "AS IS",
+     *                    | Read(DENIL) => Throw    | No NULLs
+     * -------------------+-------------------------+-------------------------
+     *  Fixed Loose       | Write("AS IS"),         | Write(0) => Remove,
+     *                    | Read(NULL) => Throw     | Read(NULL) => 0
+     * -------------------+-------------------------+-------------------------
+     *  Stretchy          | Write("AS IS"),         | Write(EMPTY) => Remove,
+     *  Preplaced & Loose | Read(NULL) => Throw     | Read(NULL) => EMPTY
+     * -------------------+-------------------------+-------------------------
+     *
+     * Значения для designated_null зафиксированы в коде libfptu,
+     * а не задаются схемой. Причин для такого решения две:
+     *  - При разборе ситуаций не нашлось случаев когда designated_null
+     *    действительно требовался, а выбранное зарезервированное значение
+     *    не подходило.
+     *  - При кастомизации denil-значений их невозможно "приклеить" к
+     *    легковесным токенам, а придёться определять в схеме. Это не только
+     *    усложняет схему, но и требует взаимодействия с ней при каждом чтении
+     *    значений полей, т.е. токенов будет уже недостаточно для взаимодействия
+     *    с кортежами. */
+    return details::is_discernible_null(tag());
   }
 
   constexpr bool is_loose() const noexcept { return details::is_loose(tag()); }
@@ -80,9 +132,6 @@ template <typename TOKEN> struct token_operations : public TOKEN {
   }
   constexpr bool is_collection() const noexcept {
     return details::is_loose_collection(tag());
-  }
-  constexpr bool is_quietabsence() const noexcept {
-    return /*is_loose() &&*/ details::is_quietabsence(tag());
   }
 
   //----------------------------------------------------------------------------
@@ -183,11 +232,11 @@ struct baseof_member_pointer<FIELD_TYPE STRUCT_TYPE::*> {
 
 template <typename STRUCT_TYPE, typename FIELD_TYPE,
           FIELD_TYPE STRUCT_TYPE::*FIELD, std::size_t OFFSET,
-          bool DENILED = false, bool SATURATED = false>
+          bool DISCERNIBLE_NULL = false, bool SATURATED = false>
 class token_native
     : public token_operations<token_static<details::tag_from_offset(
           OFFSET, meta::type2genus<FIELD_TYPE>::value, sizeof(FIELD_TYPE),
-          DENILED, SATURATED)>> {
+          DISCERNIBLE_NULL, SATURATED)>> {
 public:
   constexpr token_native() noexcept {
     static_assert(std::is_standard_layout<STRUCT_TYPE>::value,
@@ -240,16 +289,16 @@ public:
 
   cxx14_constexpr
   token(const genus type, const unsigned id, const bool collection = false,
-        const bool quietabsence = false, const bool saturated = false)
+        const bool discernible_null = false, const bool saturated = false)
       : base(details::make_tag(validate_loose_type(type), validate_loose_id(id),
-                               collection, quietabsence, saturated)) {}
+                               collection, discernible_null, saturated)) {}
 
   cxx14_constexpr token(const ptrdiff_t offset, const genus type,
-                        const bool deniled = false,
+                        const bool discernible_null = false,
                         const bool saturated = false)
       : base(details::tag_from_offset(
             validate_preplaced_offset(offset), validate_preplaced_type(type),
-            details::preplaced_bytes(type), deniled, saturated)) {}
+            details::preplaced_bytes(type), discernible_null, saturated)) {}
   constexpr token(const token &) noexcept = default;
   constexpr token(const details::token_nonstatic_tag &other) noexcept
       : token(other.tag()) {}

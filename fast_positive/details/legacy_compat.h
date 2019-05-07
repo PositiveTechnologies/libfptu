@@ -36,15 +36,17 @@
 #include "fast_positive/tuples_internal.h"
 #include "fast_positive/tuples_legacy.h"
 
+inline constexpr fptu_type genus2legacy(fptu::genus type, unsigned colnum = 0) {
+  return fptu_type(fptu::details::make_tag(type, colnum, true, true, false));
+}
+
 struct FPTU_API_TYPE fptu_field : public fptu::details::field_loose {
   using base = fptu::details::field_loose;
   fptu_field() = delete;
   ~fptu_field() = delete;
 
   unsigned constexpr colnum() const { return base::id(); }
-  fptu_type constexpr legacy_type() const {
-    return fptu_type(base::type() | fptu::details::tag_bits::loose_flag);
-  }
+  fptu_type constexpr legacy_type() const { return genus2legacy(base::type()); }
 };
 
 struct FPTU_API_TYPE fptu_rw : public fptu::details::tuple_rw {
@@ -117,10 +119,6 @@ static __inline double fptu_fp64_denil(void) {
 
 //------------------------------------------------------------------------------
 
-inline constexpr fptu_type genus2legacy(fptu::genus type) {
-  return fptu_type(fptu::details::make_tag(type, 0, true));
-}
-
 namespace fptu {
 
 inline unsigned get_colnum(fptu_tag_t tag) {
@@ -141,7 +139,7 @@ inline bool tag_is_dead(fptu_tag_t tag) {
 }
 
 inline fptu_tag_t make_tag(unsigned column, fptu_type type) {
-  return fptu::details::make_tag(fptu::details::tag2genus(type), column, true);
+  return genus2legacy(fptu::details::tag2genus(type), column);
 }
 
 template <typename type>

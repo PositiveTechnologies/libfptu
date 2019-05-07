@@ -5,7 +5,6 @@
 - [ ] uprobes/SystemTap и perfomance-penalty.
 - [ ] Схема с напонением и примерами для Димы.
 - [ ] Зачистить combo_ptr.
-- [ ] Передвинуть биты в tag/token.
 - [ ] more SIMD (sort, pattern-search, binary-search);
 - [ ] AVX512;
 - [ ] inlay iteration;

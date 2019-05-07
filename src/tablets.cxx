@@ -47,8 +47,7 @@ alignas(64) const char zeroed_cacheline[64] = {0};
 namespace {
 struct tag_static_ensure {
   tag_static_ensure() {
-    static_assert(loose_end ==
-                      (tag_bits::inlay_flag >> fundamentals::genus_bitness),
+    static_assert(loose_end == (tag_bits::inlay_flag >> tag_bits::id_shift),
                   "WTF?");
     static_assert(loose_end == (1u << fundamentals::ident_bitness) / 2, "WTF?");
     static_assert(inlay_end == (1u << fundamentals::ident_bitness), "WTF?");
@@ -172,8 +171,8 @@ constexpr
         meta::genus_traits<genus(30)>::trivially_convertible_from,
         thunk_31_hole<genus_mask_t>(utils::bitset_mask<hole>::value)};
 
-bool field_preplaced::is_denil(tag_t tag) const noexcept {
-  assert(is_preplaced(tag) && distinct_null(tag));
+bool field_preplaced::is_null(tag_t tag) const noexcept {
+  assert(is_preplaced(tag));
   switch (tag2genus(tag)) {
   default:
     __unreachable();
@@ -182,7 +181,8 @@ bool field_preplaced::is_denil(tag_t tag) const noexcept {
   case genus(N):                                                               \
     assert(tag2indysize(tag) ==                                                \
            meta::genus_traits<genus(N)>::preplaced_bytes);                     \
-    return meta::genus_traits<genus(N)>::is_denil(this)
+    return (!is_fixed_size(genus(N)) || is_discernible_null(tag)) &&           \
+           meta::genus_traits<genus(N)>::is_denil(this)
     HERE_CASE_ITEM(0);
     HERE_CASE_ITEM(1);
     HERE_CASE_ITEM(2);

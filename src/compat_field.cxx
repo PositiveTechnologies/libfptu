@@ -74,7 +74,7 @@ struct iovec fptu_field_as_iovec(const fptu_field *pf) noexcept {
   RETURN_TYPE fptu_field_##LEGACY(const fptu_field *pf) noexcept {             \
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
-      return THUNK_TYPE(fptu::details::get<fptu::genus::GENUS>(pf, false));    \
+      return THUNK_TYPE(fptu::details::get<fptu::genus::GENUS>(pf, true));     \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return DENIL;                                                            \
@@ -103,7 +103,7 @@ FPTU_GET_IMPL(nested, nested, nested, fptu_ro, fptu::details::iovec_thunk,
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
       return erthink::constexpr_pointer_cast<const uint8_t *>(                 \
-          &fptu::details::get<fptu::genus::bin##BITS>(pf, false));             \
+          &fptu::details::get<fptu::genus::bin##BITS>(pf, true));              \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return nullptr;                                                          \
@@ -144,7 +144,7 @@ const char *fptu_field_cstr(const fptu_field *pf) noexcept {
           erthink::constexpr_pointer_cast<const char *>(
               payload->flat + payload->stretchy.string.brutto_units());
       return string_view_to_CAPI(
-          fptu::details::get<fptu::genus::text>(pf, false), field_end);
+          fptu::details::get<fptu::genus::text>(pf, true), field_end);
     } catch (const std::exception &e) {
       raii.feed(e);
     }

@@ -84,8 +84,9 @@ static constexpr fptu::details::tag_t colid2tag(fptu_type_or_filter legacy_type,
 static constexpr bool match(const fptu_field *pf, unsigned column,
                             fptu_type_or_filter type_or_filter) {
   constexpr_assert(is_filter(type_or_filter));
-  return pf->colnum() == column && (fptu_filter(type_or_filter) &
-                                    fptu_filter_mask(pf->legacy_type())) != 0;
+  return !pf->is_hole() && pf->colnum() == column &&
+         (fptu_filter(type_or_filter) & fptu_filter_mask(pf->legacy_type())) !=
+             0;
 }
 
 __hot const fptu_field *

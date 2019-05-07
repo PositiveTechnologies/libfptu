@@ -394,7 +394,7 @@ union field_preplaced {
   char bytes[1];
   relative_offset relative;
 
-  FPTU_API bool is_denil(tag_t tag) const noexcept;
+  FPTU_API bool is_null(tag_t tag) const noexcept;
   field_preplaced() = delete;
   ~field_preplaced() = delete;
 };
@@ -412,12 +412,15 @@ struct field_loose {
     uint32_t loose_header;
   };
 
-  constexpr genus type() const { return tag2genus(genius_and_id); }
-  constexpr unsigned id() const { return tag2id(genius_and_id); }
+  constexpr genus type() const { return descriptor2genus(genius_and_id); }
   constexpr bool is_hole() const { return type() == hole; }
+  constexpr unsigned id() const {
+    constexpr_assert(!is_hole());
+    return descriptor2id(genius_and_id);
+  }
   constexpr unsigned hole_get_units() const {
     constexpr_assert(is_hole());
-    return tag2id(genius_and_id);
+    return descriptor2id(genius_and_id);
   }
   void hole_set_units(size_t units) {
     genius_and_id = uint16_t(details::make_hole(units));

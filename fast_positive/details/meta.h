@@ -75,6 +75,9 @@ template <typename TYPE, TYPE DENIL = 0> struct inplaced {
   }
   static constexpr return_type empty() noexcept { return return_type(0); }
 
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
   static cxx14_constexpr bool is_prohibited_nil(return_type value) noexcept {
     (void)value;
     return false;
@@ -121,6 +124,9 @@ template <typename TYPE, int32_t DENIL = 0> struct unit_1 {
   }
   static constexpr return_type empty() noexcept { return return_type(0); }
 
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
   static cxx14_constexpr bool is_prohibited_nil(return_type value) noexcept {
     (void)value;
     return false;
@@ -166,6 +172,9 @@ template <typename TYPE, int64_t DENIL = 0> struct unit_2 {
   }
   static constexpr return_type empty() noexcept { return return_type(0); }
 
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
   static cxx14_constexpr bool is_prohibited_nil(return_type value) noexcept {
     (void)value;
     return false;
@@ -214,6 +223,9 @@ template <unsigned N, typename TYPE = uint32_t[N]> struct unit_n {
         &details::zeroed_cacheline);
   }
 
+  static cxx14_constexpr bool is_empty(return_type value) noexcept {
+    return utils::is_zero<sizeof(return_type)>(&value);
+  }
   static cxx14_constexpr bool is_prohibited_nil(return_type value) noexcept {
     (void)value;
     return false;
@@ -319,6 +331,9 @@ struct genus_traits<i64>
       utils::bitset_mask<i64>::value |
       genus_traits<i32>::trivially_convertible_from |
       genus_traits<u32>::trivially_convertible_from;
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
 };
 
 template <> struct genus_traits<u64> : public unit_2<uint64_t, 0> {
@@ -327,6 +342,9 @@ template <> struct genus_traits<u64> : public unit_2<uint64_t, 0> {
   static constexpr details::genus_mask_t trivially_convertible_from =
       utils::bitset_mask<u64>::value |
       genus_traits<u32>::trivially_convertible_from;
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
 };
 
 template <>
@@ -336,6 +354,9 @@ struct genus_traits<f64> : public unit_2<double, -1 /* quied negative nan */> {
   static constexpr details::genus_mask_t trivially_convertible_from =
       utils::bitset_mask<i32, u32, f64>::value |
       genus_traits<f32>::trivially_convertible_from;
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
 };
 
 template <>
@@ -345,6 +366,9 @@ struct genus_traits<d64>
   //  static constexpr value_type max = ;
   static constexpr details::genus_mask_t trivially_convertible_from =
       utils::bitset_mask<d64>::value;
+  static bool is_empty(const return_type &value) noexcept {
+    return value == return_type(0);
+  }
 };
 
 template <> struct genus_traits<t64> : public unit_2<datetime_t, 0> {
@@ -352,6 +376,9 @@ template <> struct genus_traits<t64> : public unit_2<datetime_t, 0> {
       utils::bitset_mask<t32, t64>::value;
   static constexpr return_type empty() noexcept {
     return datetime_t::from_fixedpoint_32dot32(0);
+  }
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value.fixedpoint_32dot32() == 0;
   }
 };
 
@@ -535,11 +562,17 @@ template <> struct genus_traits<ipnet> : public unit_n<5, ip_net_t> {
 template <> struct genus_traits<mac> : public unit_2<mac_address_t, 0> {
   static constexpr details::genus_mask_t trivially_convertible_from =
       utils::bitset_mask<mac>::value;
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value.raw64 == 0;
+  }
 };
 
 template <> struct genus_traits<app_reserved_64> : public unit_2<int64_t, 0> {
   static constexpr details::genus_mask_t trivially_convertible_from =
       utils::bitset_mask<app_reserved_64>::value;
+  static cxx14_constexpr bool is_empty(const return_type value) noexcept {
+    return value == return_type(0);
+  }
 };
 
 template <> struct genus_traits<app_reserved_128> : public unit_n<4> {

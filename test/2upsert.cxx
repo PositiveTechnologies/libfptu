@@ -157,14 +157,14 @@ TEST(Upsert, ZeroSpace) {
 
   // upsert_xyz() expect no-space
   EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_null(pt, fptu_max_cols));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_uint16(pt, 0, false));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_bool(pt, 0, false));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_uint32(pt, 1, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_int32(pt, 42, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_uint64(pt, 111, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_int64(pt, fptu_max_cols / 3, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_fp64(pt, fptu_max_cols - 3, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_fp32(pt, fptu_max_cols - 4, 0));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_uint16(pt, 1, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_bool(pt, 1, true));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_uint32(pt, 1, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_int32(pt, 42, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_uint64(pt, 111, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_int64(pt, fptu_max_cols / 3, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_fp64(pt, fptu_max_cols - 3, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_fp32(pt, fptu_max_cols - 4, 1));
   EXPECT_EQ(FPTU_ENOSPACE,
             fptu_upsert_96(pt, fptu_max_cols / 2, "96__________"));
   EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_128(pt, 257, "128_____________"));
@@ -174,21 +174,39 @@ TEST(Upsert, ZeroSpace) {
                                            "256_____________________________"));
   EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_cstr(pt, fptu_max_cols - 1, "cstr"));
   EXPECT_EQ(FPTU_ENOSPACE, fptu_upsert_opaque(pt, fptu_max_cols, "data", 4));
+  EXPECT_STREQ(nullptr, fptu::check(pt));
+  EXPECT_EQ(0u, fptu_space4items(pt));
+  EXPECT_EQ(0u, fptu_space4data(pt));
+  EXPECT_EQ(0u, fptu_junkspace(pt));
 
+  // discernible_null == FALSE leads to remove empty-zeros
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_bool(pt, 1, false));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 1, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 1, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_insert_int32(pt, 42, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_insert_uint64(pt, 111, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_uint32(pt, 1, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_int32(pt, 42, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_uint64(pt, 111, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_int64(pt, fptu_max_cols / 3, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_fp64(pt, fptu_max_cols - 3, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_upsert_fp32(pt, fptu_max_cols - 4, 0));
+  //  EXPECT_EQ(FPTU_OK, fptu_insert_cstr(pt, fptu_max_cols - 1, ""));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu_space4items(pt));
   EXPECT_EQ(0u, fptu_space4data(pt));
   EXPECT_EQ(0u, fptu_junkspace(pt));
 
   // insert_xyz() expect no-space
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_uint16(pt, 0, 0));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_uint16(pt, 0, 1));
   EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_bool(pt, 0, true));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_uint32(pt, 1, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_int32(pt, 42, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_uint64(pt, 111, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_int64(pt, fptu_max_cols / 3, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_fp64(pt, fptu_max_cols - 3, 0));
-  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_fp32(pt, fptu_max_cols - 4, 0));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_uint32(pt, 1, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_int32(pt, 42, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_uint64(pt, 111, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_int64(pt, fptu_max_cols / 3, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_fp64(pt, fptu_max_cols - 3, 1));
+  EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_fp32(pt, fptu_max_cols - 4, 1));
   EXPECT_EQ(FPTU_ENOSPACE,
             fptu_insert_96(pt, fptu_max_cols / 2, "96__________"));
   EXPECT_EQ(FPTU_ENOSPACE, fptu_insert_128(pt, 257, "128_____________"));

@@ -112,12 +112,12 @@ TEST(Smoke, trivia_set) {
 TEST(Smoke, trivia_autogrowth) {
   fptu::tuple_rw_managed rw;
   fptu::token token(fptu::text, 0, true);
-  EXPECT_GT(fptu::max_tuple_bytes_netto, rw.capacity());
+  EXPECT_GT(size_t(fptu::max_tuple_bytes_netto), rw.capacity());
   for (int i = 1; i < 555; ++i)
     rw.insert_string(token,
                      fptu::format("This is the string #%*d.", i - 555, i));
 
-  EXPECT_EQ(fptu::max_tuple_bytes_netto, rw.capacity());
+  EXPECT_EQ(size_t(fptu::max_tuple_bytes_netto), rw.capacity());
 }
 
 TEST(Smoke, trivia_managing) {

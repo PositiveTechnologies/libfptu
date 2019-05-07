@@ -104,7 +104,7 @@ TEST(Init, Base) {
 
       fptu_ro io = fptu_take_noshrink(pt);
       EXPECT_NE(nullptr, io.units);
-      EXPECT_EQ(fptu::unit_size, io.total_bytes);
+      EXPECT_EQ(size_t(fptu::unit_size), io.total_bytes);
 
       EXPECT_EQ(items, fptu_space4items(pt));
       size_t avail = std::min(size_t(fptu::max_tuple_bytes_netto),

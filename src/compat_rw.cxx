@@ -263,7 +263,7 @@ fptu_field *fptu_lookup_rw(fptu_rw *pt, unsigned column,
   fptu_error fptu_upsert_##LEGACY(fptu_rw *pt, unsigned column,                \
                                   VALUE_TYPE value) noexcept {                 \
     try {                                                                      \
-      const fptu::token id(fptu::genus::GENUS, column, false);                 \
+      const fptu::token id(fptu::genus::GENUS, column, false, true, false);    \
       pt->set_##NAME(id, value);                                               \
       return FPTU_OK;                                                          \
     } catch (const std::exception &e) {                                        \
@@ -284,7 +284,7 @@ FPTU_UPSERT_IMPL(datetime, datetime, t64, fptu_datetime_t)
 
 fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) noexcept {
   try {
-    const fptu::token id(fptu::genus::enumeration, column, false);
+    const fptu::token id(fptu::genus::enumeration, column, false, false, false);
     pt->set_enum(
         id, fptu::meta::genus_traits<fptu::genus::enumeration>::optional_denil);
     return FPTU_OK;
@@ -297,7 +297,8 @@ fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) noexcept {
   fptu_error fptu_upsert_##BITS(fptu_rw *pt, unsigned column,                  \
                                 const void *data) noexcept {                   \
     try {                                                                      \
-      const fptu::token id(fptu::genus::bin##BITS, column, false);             \
+      const fptu::token id(fptu::genus::bin##BITS, column, false, true,        \
+                           false);                                             \
       pt->set_bin##BITS(                                                       \
           id,                                                                  \
           *erthink::constexpr_pointer_cast<const fptu::binary##BITS##_t *>(    \
@@ -317,7 +318,7 @@ FPTU_GET_IMPL(256)
 fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column, const char *text,
                               std::size_t length) noexcept {
   try {
-    const fptu::token id(fptu::genus::text, column, false);
+    const fptu::token id(fptu::genus::text, column, false, true, false);
     pt->set_string(id, fptu::string_view(text, length));
     return FPTU_OK;
   } catch (const std::exception &e) {
@@ -328,7 +329,7 @@ fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column, const char *text,
 fptu_error fptu_upsert_opaque(fptu_rw *pt, unsigned column, const void *data,
                               std::size_t length) noexcept {
   try {
-    const fptu::token id(fptu::genus::varbin, column, false);
+    const fptu::token id(fptu::genus::varbin, column, false, true, false);
     pt->set_varbinary(
         id, fptu::string_view(static_cast<const char *>(data), length));
     return FPTU_OK;
@@ -345,7 +346,7 @@ fptu_error fptu_upsert_opaque_iov(fptu_rw *pt, unsigned column,
 fptu_error fptu_upsert_nested(fptu_rw *pt, unsigned column,
                               fptu_ro ro) noexcept {
   try {
-    const fptu::token id(fptu::genus::varbin, column, false);
+    const fptu::token id(fptu::genus::varbin, column, false, true, false);
     pt->set_nested(id, fptu::details::tuple_ro::make_from_buffer(
                            ro.sys.iov_base, ro.sys.iov_len, nullptr, false));
     return FPTU_OK;
@@ -360,7 +361,7 @@ fptu_error fptu_upsert_nested(fptu_rw *pt, unsigned column,
   fptu_error fptu_insert_##LEGACY(fptu_rw *pt, unsigned column,                \
                                   VALUE_TYPE value) noexcept {                 \
     try {                                                                      \
-      const fptu::token id(fptu::genus::GENUS, column, true);                  \
+      const fptu::token id(fptu::genus::GENUS, column, true, true, false);     \
       pt->insert_##NAME(id, value);                                            \
       return FPTU_OK;                                                          \
     } catch (const std::exception &e) {                                        \
@@ -403,7 +404,7 @@ FPTU_GET_IMPL(256)
 fptu_error fptu_insert_string(fptu_rw *pt, unsigned column, const char *text,
                               std::size_t length) noexcept {
   try {
-    const fptu::token id(fptu::genus::text, column, true);
+    const fptu::token id(fptu::genus::text, column, true, true, false);
     pt->insert_string(id, fptu::string_view(text, length));
     return FPTU_OK;
   } catch (const std::exception &e) {
@@ -414,7 +415,7 @@ fptu_error fptu_insert_string(fptu_rw *pt, unsigned column, const char *text,
 fptu_error fptu_insert_opaque(fptu_rw *pt, unsigned column, const void *data,
                               std::size_t length) noexcept {
   try {
-    const fptu::token id(fptu::genus::varbin, column, true);
+    const fptu::token id(fptu::genus::varbin, column, true, true, false);
     pt->insert_varbinary(
         id, fptu::string_view(static_cast<const char *>(data), length));
     return FPTU_OK;
@@ -431,7 +432,7 @@ fptu_error fptu_insert_opaque_iov(fptu_rw *pt, unsigned column,
 fptu_error fptu_insert_nested(fptu_rw *pt, unsigned column,
                               fptu_ro ro) noexcept {
   try {
-    const fptu::token id(fptu::genus::nested, column, true);
+    const fptu::token id(fptu::genus::nested, column, true, true, false);
     pt->insert_nested(id, fptu::details::tuple_ro::make_from_buffer(
                               ro.sys.iov_base, ro.sys.iov_len, nullptr, false));
     return FPTU_OK;
@@ -446,7 +447,7 @@ fptu_error fptu_insert_nested(fptu_rw *pt, unsigned column,
   fptu_error fptu_update_##LEGACY(fptu_rw *pt, unsigned column,                \
                                   VALUE_TYPE value) noexcept {                 \
     try {                                                                      \
-      const fptu::token id(fptu::genus::GENUS, column, true);                  \
+      const fptu::token id(fptu::genus::GENUS, column, true, true, false);     \
       pt->legacy_update_##NAME(id, value);                                     \
       return FPTU_OK;                                                          \
     } catch (const std::exception &e) {                                        \
@@ -469,7 +470,7 @@ FPTU_UPDATE_IMPL(datetime, datetime, t64, fptu_datetime_t)
   fptu_error fptu_update_##BITS(fptu_rw *pt, unsigned column,                  \
                                 const void *data) noexcept {                   \
     try {                                                                      \
-      const fptu::token id(fptu::genus::bin##BITS, column, true);              \
+      const fptu::token id(fptu::genus::bin##BITS, column, true, true, false); \
       pt->legacy_update_bin##BITS(                                             \
           id,                                                                  \
           *erthink::constexpr_pointer_cast<const fptu::binary##BITS##_t *>(    \
@@ -489,7 +490,7 @@ FPTU_GET_IMPL(256)
 fptu_error fptu_update_string(fptu_rw *pt, unsigned column, const char *text,
                               std::size_t length) noexcept {
   try {
-    const fptu::token id(fptu::genus::text, column, true);
+    const fptu::token id(fptu::genus::text, column, true, true, false);
     pt->legacy_update_string(id, fptu::string_view(text, length));
     return FPTU_OK;
   } catch (const std::exception &e) {
@@ -500,7 +501,7 @@ fptu_error fptu_update_string(fptu_rw *pt, unsigned column, const char *text,
 fptu_error fptu_update_opaque(fptu_rw *pt, unsigned column, const void *data,
                               std::size_t length) noexcept {
   try {
-    const fptu::token id(fptu::genus::varbin, column, true);
+    const fptu::token id(fptu::genus::varbin, column, true, true, false);
     pt->legacy_update_varbinary(
         id, fptu::string_view(static_cast<const char *>(data), length));
     return FPTU_OK;
@@ -517,7 +518,7 @@ fptu_error fptu_update_opaque_iov(fptu_rw *pt, unsigned column,
 fptu_error fptu_update_nested(fptu_rw *pt, unsigned column,
                               fptu_ro ro) noexcept {
   try {
-    const fptu::token id(fptu::genus::nested, column, true);
+    const fptu::token id(fptu::genus::nested, column, true, true, false);
     pt->legacy_update_nested(
         id, fptu::details::tuple_ro::make_from_buffer(
                 ro.sys.iov_base, ro.sys.iov_len, nullptr, false));

@@ -70,31 +70,31 @@ template <genus GENUS, typename erthink::enable_if_t<
                            meta::genus_traits<GENUS>::physique !=
                            meta::physique_kind::stretchy> * = nullptr>
 inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
-get(const field_loose *loose, const bool quietabsence) {
+get(const field_loose *loose, const bool is_discernible_null) {
   if (likely(loose)) {
     if (unlikely(loose->type() != GENUS))
       throw_type_mismatch();
     return meta::genus_traits<GENUS>::read(loose);
   }
-  if (likely(quietabsence))
-    return meta::genus_traits<GENUS>::empty();
-  throw_field_absent();
+  if (unlikely(is_discernible_null))
+    throw_field_absent();
+  return meta::genus_traits<GENUS>::empty();
 }
 
 template <genus GENUS, typename erthink::enable_if_t<
                            meta::genus_traits<GENUS>::physique ==
                            meta::physique_kind::stretchy> * = nullptr>
 inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
-get(const field_loose *loose, const bool quietabsence) {
+get(const field_loose *loose, const bool is_discernible_null) {
   if (likely(loose)) {
     if (unlikely(loose->type() != GENUS))
       throw_type_mismatch();
     if (likely(loose->relative.have_payload()))
       return meta::genus_traits<GENUS>::read(loose->relative.payload());
   }
-  if (likely(quietabsence))
-    return meta::genus_traits<GENUS>::empty();
-  throw_field_absent();
+  if (unlikely(is_discernible_null))
+    throw_field_absent();
+  return meta::genus_traits<GENUS>::empty();
 }
 
 template <typename TOKEN> class accessor_ro {
@@ -115,19 +115,21 @@ protected:
 
     if (likely(token_.is_preplaced())) {
       // preplaced
-      if (likely(!token_.distinct_null() ||
-                 !meta::genus_traits<GENUS>::is_denil(field_.preplaced)))
-        return meta::genus_traits<GENUS>::read(field_.preplaced);
-    } else if (likely(field_.loose)) {
+      if (token_.is_discernible_null() &&
+          unlikely(meta::genus_traits<GENUS>::is_denil(field_.preplaced)))
+        throw_field_absent();
+      return meta::genus_traits<GENUS>::read(field_.preplaced);
+    }
+
+    if (likely(field_.loose)) {
       // loose exist
       assert(tag2genus(field_.loose->genius_and_id) == GENUS);
       return meta::genus_traits<GENUS>::read(field_.loose);
     }
-
-    // preplaced denil or loose absence
-    if (likely(token_.is_quietabsence()))
-      return meta::genus_traits<GENUS>::empty();
-    throw_field_absent();
+    //  loose absence
+    if (unlikely(token_.is_discernible_null()))
+      throw_field_absent();
+    return meta::genus_traits<GENUS>::empty();
   }
 
   template <genus GENUS, typename erthink::enable_if_t<
@@ -150,9 +152,9 @@ protected:
     }
 
     // loose field or value is absent
-    if (likely(token_.is_quietabsence() || !token_.distinct_null()))
-      return meta::genus_traits<GENUS>::empty();
-    throw_field_absent();
+    if (unlikely(token_.is_discernible_null()))
+      throw_field_absent();
+    return meta::genus_traits<GENUS>::empty();
   }
 
   constexpr accessor_ro() : field_((void *)(nullptr)), token_() {
@@ -182,8 +184,7 @@ public:
   cxx14_constexpr accessor_ro &operator=(accessor_ro &&) noexcept = default;
 
   constexpr bool exist() const noexcept {
-    return token_.is_preplaced() ? !token_.distinct_null() ||
-                                       field_.preplaced->is_denil(token_.tag())
+    return token_.is_preplaced() ? field_.preplaced->is_null(token_.tag())
                                  : field_.loose != nullptr;
   }
   constexpr operator bool() const noexcept { return exist(); }

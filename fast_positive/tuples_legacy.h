@@ -203,44 +203,47 @@ enum fptu_bits {
 enum fptu_type : unsigned {
   fptu_null = ~0u,
   // fixed length, without ex-data (descriptor only)
-  fptu_uint16 = fptu::details::make_tag(fptu::genus::u16, 0, true),
-  fptu_bool = fptu::details::make_tag(fptu::genus::boolean, 0, true),
+  fptu_uint16 = fptu::details::make_tag(fptu::genus::u16, 0, true, true, false),
+  fptu_bool =
+      fptu::details::make_tag(fptu::genus::boolean, 0, true, true, false),
 
   // fixed length with ex-data (at least 4 byte after the pivot)
-  fptu_int32 = fptu::details::make_tag(fptu::genus::i32, 0, true),
-  fptu_uint32 = fptu::details::make_tag(fptu::genus::u32, 0, true),
-  fptu_fp32 = fptu::details::make_tag(fptu::genus::f32, 0,
-                                      true), // 32-bit float-point, e.g. float
+  fptu_int32 = fptu::details::make_tag(fptu::genus::i32, 0, true, true, false),
+  fptu_uint32 = fptu::details::make_tag(fptu::genus::u32, 0, true, true, false),
+  fptu_fp32 = fptu::details::make_tag(fptu::genus::f32, 0, true, true,
+                                      false), // 32-bit float-point, e.g. float
 
-  fptu_int64 = fptu::details::make_tag(fptu::genus::i64, 0, true),
-  fptu_uint64 = fptu::details::make_tag(fptu::genus::u64, 0, true),
-  fptu_fp64 = fptu::details::make_tag(fptu::genus::f64, 0,
-                                      true), // 64-bit float-point, e.g. double
+  fptu_int64 = fptu::details::make_tag(fptu::genus::i64, 0, true, true, false),
+  fptu_uint64 = fptu::details::make_tag(fptu::genus::u64, 0, true, true, false),
+  fptu_fp64 = fptu::details::make_tag(fptu::genus::f64, 0, true, true,
+                                      false), // 64-bit float-point, e.g. double
   fptu_datetime = fptu::details::make_tag(
-      fptu::genus::t64, 0,
-      true), // date-time as fixed-point, compatible with UTC
+      fptu::genus::t64, 0, true, true,
+      false), // date-time as fixed-point, compatible with UTC
 
-  fptu_96 =
-      fptu::details::make_tag(fptu::genus::bin96, 0, true), // opaque 12-bytes.
-  fptu_128 = fptu::details::make_tag(
-      fptu::genus::bin128, 0, true), // opaque 16-bytes (uuid, ipv6, etc).
-  fptu_160 = fptu::details::make_tag(fptu::genus::bin160, 0,
-                                     true), // opaque 20-bytes (sha1).
-  fptu_256 = fptu::details::make_tag(fptu::genus::bin256, 0,
-                                     true), // opaque 32-bytes (sha256).
-  fptu_ip = fptu::details::make_tag(fptu::genus::ip, 0, true),
-  fptu_mac = fptu::details::make_tag(fptu::genus::mac, 0, true),
-  fptu_ipnet = fptu::details::make_tag(fptu::genus::ipnet, 0, true),
+  fptu_96 = fptu::details::make_tag(fptu::genus::bin96, 0, true, true,
+                                    false), // opaque 12-bytes.
+  fptu_128 =
+      fptu::details::make_tag(fptu::genus::bin128, 0, true, true,
+                              false), // opaque 16-bytes (uuid, ipv6, etc).
+  fptu_160 = fptu::details::make_tag(fptu::genus::bin160, 0, true, true,
+                                     false), // opaque 20-bytes (sha1).
+  fptu_256 = fptu::details::make_tag(fptu::genus::bin256, 0, true, true,
+                                     false), // opaque 32-bytes (sha256).
+  fptu_ip = fptu::details::make_tag(fptu::genus::ip, 0, true, true, false),
+  fptu_mac = fptu::details::make_tag(fptu::genus::mac, 0, true, true, false),
+  fptu_ipnet =
+      fptu::details::make_tag(fptu::genus::ipnet, 0, true, true, false),
 
   // variable length, e.g. length and payload inside ex-data
-  fptu_cstr =
-      fptu::details::make_tag(fptu::genus::text, 0, true), // utf-8 string
+  fptu_cstr = fptu::details::make_tag(fptu::genus::text, 0, true, true,
+                                      false), // utf-8 string
 
   // with additional length
-  fptu_opaque = fptu::details::make_tag(fptu::genus::varbin, 0,
-                                        true), // opaque octet string
-  fptu_nested =
-      fptu::details::make_tag(fptu::genus::nested, 0, true), // nested tuple
+  fptu_opaque = fptu::details::make_tag(fptu::genus::varbin, 0, true, true,
+                                        false), // opaque octet string
+  fptu_nested = fptu::details::make_tag(fptu::genus::nested, 0, true, true,
+                                        false), // nested tuple
 
   // aliases
   fptu_16 = fptu_uint16,
@@ -253,8 +256,7 @@ enum fptu_type : unsigned {
 };
 
 enum fptu_filter {
-  fptu_flag_not_filter =
-      fptu::details::tag_bits::loose_flag /* UINT32_C(1) << 31 */,
+  fptu_flag_not_filter = UINT32_C(1) << 31,
   fptu_any = fptu::details::mask_all_types,
   fptu_any_int = fptu::details::mask_integer,
   fptu_any_uint = fptu::details::mask_unsigned,
@@ -263,30 +265,12 @@ enum fptu_filter {
 };
 DEFINE_ENUM_FLAG_OPERATORS(fptu_filter)
 
-#ifdef __cplusplus
 static inline constexpr fptu_filter fptu_filter_mask(fptu_type type) {
-  constexpr_assert((type & fptu::details::tag_bits::loose_flag) != 0);
-  static_assert(UINT32_C(0x80000000) ==
-                    uint32_t(fptu::details::tag_bits::loose_flag),
-                "WTF?");
-  constexpr_assert(uint32_t(fptu::details::tag2genus(type)) ==
-                   (uint32_t(type) & 31));
   return fptu_filter(UINT32_C(1) << fptu::details::tag2genus(type));
 }
-#else
-static __inline fptu_filter fptu_filter_mask(fptu_type type) {
-  assert((type & UINT32_C(0x80000000)) != 0);
-  return (fptu_filter)(UINT32_C(1) << (type & 31));
-}
-#endif
 
-#ifdef __cplusplus
 enum class fptu_type_or_filter : uint32_t {};
 using fptu_tag_t = uint_fast16_t;
-#else
-typedef int32_t fptu_type_or_filter;
-typedef uint_fast16_t fptu_tag_t;
-#endif /* __cplusplus */
 
 FPTU_API unsigned fptu_get_colnum(fptu_tag_t tag) noexcept;
 FPTU_API fptu_type fptu_get_type(fptu_tag_t tag) noexcept;

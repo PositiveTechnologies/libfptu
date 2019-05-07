@@ -27,31 +27,7 @@
 
 namespace fptu {
 
-/* FIELD's TOKEN & TAG ---------------------------------------------------------
-
-        1              1 0              0
-   MSB> FEDCBA9876543210 FEDCBA9876543210 <LSB
-        0oooooooooooooSD sssssssssssGGGGG <<== preplaced
-        1~~~~~~~~~~~~CSQ IiiiiiiiiiiGGGGG <<== loose/inlay
-                         sssssssssss11111 <<== hole
-
-        o - offset of preplaced fields
-        i - id for loose fields
-        I - inlay flag
-        G - genus
-        s - the size in bytes ONLY for holes and preplaced fields
-
-        D - designated NIL (for preplaced)
-        Q - quiet absence (for loose)
-        S - saturation instead of range checking
-        C - collection/repeated (for loose)
-
-   LY: Передвинуть type/genus к верхней границе младщих 16 бит. Это позволит
-       сортировать дыры в rw-кортежах, а также искать с использованием SIMD.
-
-------------------------------------------------------------------------------*/
-
-enum fundamentals {
+enum fundamentals : std::ptrdiff_t {
   ident_bitness = 11,
   genus_bitness = 5,
   unit_size = 4,
@@ -59,7 +35,7 @@ enum fundamentals {
   tuple_flags_bits = 3,
   max_tuple_units_brutto = 65535
   /* С размером кортежа связаны такие ограничения и компромиссы:
-   *  1) Хотим хранить все смещения внутри кортежа как 16-битные числа,
+   *  1) Желательно хранить все смещения внутри кортежа как 16-битные числа,
    *     т.е. между заголовком поля и его данными может быть до 65535
    *     4-х байтовых юнитов. Это позволяет создать кортеж размером почти
    *     до 64K + 256К * 2, например если последнее поле в индексе будет
@@ -102,6 +78,7 @@ enum fundamentals {
   buffer_enough =
       sizeof(size_t) * 16 + max_tuple_bytes_netto + max_fields * unit_size,
   buffer_limit = max_tuple_bytes_netto * 2,
+  max_preplaced_size = (1u << ident_bitness) - 1,
 };
 
 enum configure {
@@ -178,32 +155,51 @@ constexpr std::size_t units2bytes(const std::size_t units) noexcept {
   return units << unit_shift;
 }
 
-static constexpr bool is_fixed_size(const genus type) noexcept {
-  constexpr_assert(type != hole);
-  return type > property;
-}
+/* FIELD's TOKEN & TAG ---------------------------------------------------------
 
-static constexpr bool is_fixed_size(const tag_t tag) noexcept {
-  return (tag & 0b11100) != 0;
-}
+        1              1 0              0
+   MSB> FEDCBA9876543210 FEDCBA9876543210 <LSB
+        ooooooooooooooSD GGGGGsssssssssss <<== preplaced
+        1111111111111CSD GGGGGIiiiiiiiiii <<== loose/inlay
+                         11111sssssssssss <<== hole
 
-static constexpr bool is_inplaced(const genus type) noexcept {
-  return utils::test_bit(
-      utils::bitset_mask<i16, u16, i8, u8, boolean, enumeration>::value, type);
-}
+                         Такое распределение бит позволяет:
+                          - сортировкой прижать дескрипторы "дырок" к одному
+                            краю, а поля переменной длины к другому.
+                          - сортировка тэгов по возрастанию разместит
+                            preplaced в начале и в порядке физического
+                            расположения в кортеже.
+
+        o - Offset of preplaced fields
+        i - id for loose fields
+        I - inlay flag
+        G - Genus
+        s - the size in bytes ONLY for holes and preplaced fields
+
+        C - Collection/repeated (for loose)
+        D - Discernible NIL/NULL
+        S - Saturation instead of range checking
+*/
 
 enum tag_bits : uint32_t {
-  genus_mask = (1 << genus_bitness) - 1,
-  inlay_flag = 1u << 15,
-  denil_flag = 1u << 16,
-  quietabsence_flag = 1u << 16,
+  id_shift = 0,
+  id_mask = (1u << ident_bitness) - 1u,
+  inlay_flag = 1u << (ident_bitness - 1u),
+
+  genus_shift = ident_bitness,
+  genus_mask = (1u << genus_bitness) - 1u,
+
+  discernible_null_flag = 1u << 16,
   saturation_flag = 1u << 17,
-  collection_flag = 1u << 18,
-  loose_flag = 1u << 31,
+  loose_collection_flag = 1u << 18,
+
   offset_shift = 18,
-  id_shift = genus_bitness,
-  max_preplaced_offset = (1u << (32 - offset_shift - 1)) - 1,
-  max_ident = (1u << ident_bitness) - 1,
+  offset_bits = 14,
+  max_preplaced_offset = (1u << offset_bits) - 3u,
+  max_ident = (1u << ident_bitness) - 1u,
+  loose_threshold = (max_preplaced_offset + 1u) << offset_shift,
+  inlay_pattern = loose_threshold + inlay_flag,
+  collection_threshold = loose_threshold + loose_collection_flag,
 
   loose_begin = 0,
   loose_end = 1024 /* (1u << fundamentals::ident_bitness) / 2 */,
@@ -216,8 +212,24 @@ enum tag_bits : uint32_t {
   inlay_last = inlay_end - 1
 };
 
+//------------------------------------------------------------------------------
+
+static constexpr bool is_fixed_size(const genus type) noexcept {
+  constexpr_assert(type != hole);
+  return type > property;
+}
+
+static constexpr bool is_fixed_size(const tag_t tag) noexcept {
+  return (tag & 0xE000) != 0;
+}
+
+static constexpr bool is_inplaced(const genus type) noexcept {
+  return utils::test_bit(
+      utils::bitset_mask<i16, u16, i8, u8, boolean, enumeration>::value, type);
+}
+
 static inline constexpr genus tag2genus(const tag_t tag) noexcept {
-  return genus(tag & genus_mask);
+  return genus(uint16_t(tag) >> tag_bits::genus_shift);
 }
 
 static inline constexpr bool is_inplaced(const tag_t tag) noexcept {
@@ -225,19 +237,15 @@ static inline constexpr bool is_inplaced(const tag_t tag) noexcept {
 }
 
 static inline constexpr bool is_loose(const tag_t tag) noexcept {
-  return static_cast<int32_t>(tag) < 0;
+  return tag >= tag_bits::loose_threshold;
 }
 
 static constexpr bool is_preplaced(const tag_t tag) noexcept {
-  return static_cast<int32_t>(tag) >= 0;
+  return tag < tag_bits::loose_threshold;
 }
 
 static constexpr bool is_saturated(const tag_t tag) noexcept {
   return (tag & tag_bits::saturation_flag) != 0;
-}
-
-static constexpr bool is_rangechecking(const tag_t tag) noexcept {
-  return (tag & tag_bits::saturation_flag) == 0;
 }
 
 static constexpr bool is_inlay(const tag_t tag) noexcept {
@@ -246,76 +254,72 @@ static constexpr bool is_inlay(const tag_t tag) noexcept {
 }
 
 static constexpr bool is_loose_inlay(const tag_t tag) noexcept {
-  return (tag & (tag_bits::inlay_flag | tag_bits::loose_flag)) ==
-         (tag_bits::inlay_flag | tag_bits::loose_flag);
-}
-
-static constexpr bool is_collection(const tag_t tag) noexcept {
-  constexpr_assert(is_loose(tag));
-  return (tag & tag_bits::collection_flag) != 0;
+  return (tag & tag_bits::inlay_pattern) == tag_bits::inlay_pattern;
 }
 
 static constexpr bool is_loose_collection(const tag_t tag) noexcept {
-  return (tag & (tag_bits::collection_flag | tag_bits::loose_flag)) ==
-         (tag_bits::collection_flag | tag_bits::loose_flag);
+  return tag >= tag_bits::collection_threshold;
 }
 
-static constexpr bool distinct_null(const tag_t tag) noexcept {
-  constexpr_assert(is_preplaced(tag));
-  return (tag & tag_bits::denil_flag) != 0;
-}
-
-static constexpr bool is_quietabsence(const tag_t tag) noexcept {
-  constexpr_assert(is_loose(tag));
-  return (tag & tag_bits::quietabsence_flag) != 0;
+static constexpr bool is_discernible_null(const tag_t tag) noexcept {
+  return (tag & tag_bits::discernible_null_flag) != 0;
 }
 
 static constexpr std::size_t tag2offset(const tag_t tag) noexcept {
   constexpr_assert(is_preplaced(tag));
-  return tag >> offset_shift;
+  return tag >> tag_bits::offset_shift;
 }
 
 static constexpr std::size_t tag2indysize(const tag_t tag) noexcept {
   constexpr_assert(is_preplaced(tag));
-  return static_cast<uint16_t>(tag) >> id_shift;
+  return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
 static constexpr unsigned tag2id(const tag_t tag) noexcept {
   constexpr_assert(is_loose(tag));
-  return static_cast<uint16_t>(tag) >> id_shift;
+  return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
-static constexpr unsigned tag2id(const uint16_t genius_and_id) noexcept {
-  return genius_and_id >> id_shift;
+static constexpr unsigned
+descriptor2id(const uint16_t loose_descriptor) noexcept {
+  return (loose_descriptor >> tag_bits::id_shift) & tag_bits::id_mask;
+}
+
+static inline constexpr genus
+descriptor2genus(const uint16_t loose_descriptor) noexcept {
+  return genus(loose_descriptor >> tag_bits::genus_shift);
 }
 
 static constexpr tag_t make_tag(const genus type, const unsigned id,
                                 const bool collection,
-                                const bool quietabsence = false,
-                                const bool saturated = false) noexcept {
+                                const bool discernible_null,
+                                const bool saturated) noexcept {
   constexpr_assert(type < hole && id <= tag_bits::max_ident);
-  return type + (id << id_shift) +
-         (collection ? tag_bits::collection_flag | tag_bits::loose_flag
-                     : tag_bits::loose_flag) +
-         (quietabsence ? tag_bits::quietabsence_flag : 0u) +
-         (saturated ? tag_bits::saturation_flag : 0u);
+  return tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
+               (id << tag_bits::id_shift) +
+               (collection ? tag_bits::loose_collection_flag : 0u) +
+               (discernible_null ? tag_bits::discernible_null_flag : 0u) +
+               (saturated ? tag_bits::saturation_flag : 0u));
 }
 
 static constexpr tag_t make_hole(const std::size_t units) noexcept {
   constexpr_assert(units <= tag_bits::max_ident);
-  return tag_t(genus::hole | tag_bits::collection_flag | tag_bits::loose_flag) +
-         tag_t(units << genus_bitness);
+  return tag_t(tag_bits::collection_threshold +
+               (genus::hole << tag_bits::genus_shift) +
+               (units << tag_bits::id_shift));
 }
 
 static constexpr tag_t tag_from_offset(const std::size_t offset,
                                        const genus type,
                                        const std::size_t indysize,
-                                       const bool deniled,
+                                       const bool discernible_null,
                                        const bool saturated) noexcept {
-  constexpr_assert(type <= hole && offset <= max_preplaced_offset);
-  constexpr_assert(indysize > 0 && indysize < tag_bits::max_ident);
-  return tag_t(type + (offset << offset_shift) + (indysize << id_shift) +
-               (deniled ? tag_bits::denil_flag : 0u) +
+  constexpr_assert(type <= hole && offset <= tag_bits::max_preplaced_offset);
+  constexpr_assert(indysize > 0 && indysize <= tag_bits::max_ident);
+  return tag_t((type << tag_bits::genus_shift) +
+               (offset << tag_bits::offset_shift) +
+               (indysize << tag_bits::id_shift) +
+               (discernible_null ? tag_bits::discernible_null_flag : 0u) +
                (saturated ? tag_bits::saturation_flag : 0u));
 }
 

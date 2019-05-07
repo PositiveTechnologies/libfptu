@@ -252,10 +252,10 @@ protected:
                const TOKEN token);
 
   void erase(field_preplaced *preplaced, const genus type,
-             const bool distinct_null) {
+             const bool is_discernible_null) {
     debug_check();
     if (is_fixed_size(type)) {
-      preplaced_erase(type, preplaced, distinct_null);
+      preplaced_erase(type, preplaced, is_discernible_null);
     } else if (preplaced->relative.have_payload()) {
       relative_payload *const payload = preplaced->relative.payload();
       release_data(payload, payload->stretchy.brutto_units(type));
@@ -840,7 +840,7 @@ inline combo_ptr tuple_rw::assign_field_value(
   debug_check();
   if (likely(token.is_preplaced())) {
     // preplaced fixed-size field
-    if (token.distinct_null() &&
+    if (token.is_discernible_null() &&
         unlikely(meta::genus_traits<GENUS>::is_prohibited_nil(value)))
       throw_value_denil();
     // write value, no exceptions allowed
@@ -848,12 +848,23 @@ inline combo_ptr tuple_rw::assign_field_value(
   } else {
     // loose
     if (field.loose == nullptr) {
+      if (!token.is_discernible_null() &&
+          meta::genus_traits<GENUS>::is_empty(value))
+        return field;
       // absent, append new one (exception may be thrown)
       field.loose =
           alloc_loose(token.tag(), meta::genus_traits<GENUS>::loose_units);
+    } else {
+      if (unlikely(field.loose >= end_index() || field.loose->type() != GENUS))
+        throw_index_corrupted();
+      if (!token.is_discernible_null() &&
+          meta::genus_traits<GENUS>::is_empty(value)) {
+        release_loose(field.loose, meta::genus_traits<GENUS>::loose_units);
+        debug_check();
+        field.loose = nullptr;
+        return field;
+      }
     }
-    if (unlikely(field.loose >= end_index() || field.loose->type() != GENUS))
-      throw_index_corrupted();
     // write value, no exceptions allowed
     meta::genus_traits<GENUS>::write(field.loose, value);
   }
@@ -873,20 +884,21 @@ inline combo_ptr tuple_rw::assign_field_value(
 
   debug_check();
   const std::size_t needed =
-      (token.distinct_null() || !meta::genus_traits<GENUS>::is_empty(value))
+      (token.is_discernible_null() ||
+       !meta::genus_traits<GENUS>::is_empty(value))
           ? meta::genus_traits<GENUS>::estimate_space(value)
           : 0;
   if (token.is_loose()) {
     if (field.loose == nullptr) {
-      // absent loose, append new one (exception may be thrown)
-      field.loose = alloc_loose(token.tag(), needed);
       if (needed) {
+        // absent loose, append new one (exception may be thrown)
+        field.loose = alloc_loose(token.tag(), needed);
         assert(tag2genus(field.loose->genius_and_id) == GENUS);
         // write value, no exceptions allowed
         meta::genus_traits<GENUS>::write(field.loose->relative.payload(),
                                          value);
+        debug_check();
       }
-      debug_check();
       return field;
     }
     if (unlikely(field.loose >= end_index() || field.loose->type() != GENUS))
@@ -900,10 +912,16 @@ inline combo_ptr tuple_rw::assign_field_value(
     const std::size_t have = payload->stretchy.brutto_units(GENUS);
     if (unlikely(needed != have)) {
       if (needed == 0) {
-        // exception may be thrown in case no index-space
-        release_data(payload, have);
-        relative.reset_payload();
-        debug_check();
+        if (token.is_loose()) {
+          release_loose(field.loose, have);
+          debug_check();
+          field.loose = nullptr;
+        } else {
+          // exception may be thrown in case no index-space
+          release_data(payload, have);
+          relative.reset_payload();
+          debug_check();
+        }
         return field;
       }
 
@@ -943,6 +961,10 @@ inline field_loose *tuple_rw::append_field(
     throw_collection_required();
 
   debug_check();
+  if (!token.is_discernible_null() &&
+      meta::genus_traits<GENUS>::is_empty(value))
+    return nullptr;
+
   // append new one (exception may be thrown)
   field_loose *field =
       alloc_loose(token.tag(), meta::genus_traits<GENUS>::loose_units);
@@ -966,10 +988,11 @@ inline field_loose *tuple_rw::append_field(
     throw_collection_required();
 
   debug_check();
-  const std::size_t needed =
-      (token.distinct_null() || !meta::genus_traits<GENUS>::is_empty(value))
-          ? meta::genus_traits<GENUS>::estimate_space(value)
-          : 0;
+  if (!token.is_discernible_null() &&
+      meta::genus_traits<GENUS>::is_empty(value))
+    return nullptr;
+
+  const std::size_t needed = meta::genus_traits<GENUS>::estimate_space(value);
   // append new one (exception may be thrown)
   field_loose *field = alloc_loose(token.tag(), needed);
   if (needed) {
@@ -996,7 +1019,7 @@ inline void tuple_rw::accessor_rw<TOKEN>::assign(
 template <typename TOKEN> inline void tuple_rw::accessor_rw<TOKEN>::remove() {
   if (likely(base::token_.is_preplaced())) {
     tuple_->erase(base::field_.preplaced, base::token_.type(),
-                  base::token_.distinct_null());
+                  base::token_.is_discernible_null());
   } else {
     assert(base::field_.loose != nullptr);
     if (unlikely(base::field_.loose >= tuple_->end_index() ||
