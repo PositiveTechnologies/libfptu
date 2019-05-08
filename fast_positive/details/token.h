@@ -49,15 +49,12 @@ template <typename TOKEN> struct token_operations : public TOKEN {
   constexpr bool is_valid() const noexcept { return tag() != 0; }
   constexpr unsigned id() const noexcept { return details::tag2id(tag()); }
 
-  constexpr bool operator==(const TOKEN &ditto) const noexcept {
-    return tag() == ditto.tag();
-  }
-  constexpr bool operator!=(const TOKEN &ditto) const noexcept {
-    return tag() != ditto.tag();
-  }
-
   constexpr ptrdiff_t preplaced_offset() const noexcept {
     return details::tag2offset(tag());
+  }
+
+  constexpr size_t preplaced_size() const noexcept {
+    return details::tag2indysize(tag());
   }
 
   constexpr bool is_saturated() const noexcept {
@@ -136,8 +133,9 @@ template <typename TOKEN> struct token_operations : public TOKEN {
 
   //----------------------------------------------------------------------------
 
-  // constexpr bool is_varlen() const { return ; }
-  // constexpr bool is_nested() const { return ; }
+  constexpr bool is_stretchy() const noexcept {
+    return !details::is_fixed_size(tag());
+  }
 
   constexpr bool is_bool() const noexcept { return type() == boolean; }
   constexpr bool is_enum() const noexcept { return type() == enumeration; }
@@ -179,12 +177,48 @@ public:
   }
   constexpr token_nonstatic_tag(const token_nonstatic_tag &) noexcept = default;
 
-  constexpr bool operator==(const token_nonstatic_tag &ditto) const noexcept {
-    return tag() == ditto.tag();
+  void enforce_discernible_null(bool value) {
+    tag_ = value ? tag_ | tag_bits::discernible_null_flag
+                 : tag_ & ~tag_t(tag_bits::discernible_null_flag);
   }
-  constexpr bool operator!=(const token_nonstatic_tag &ditto) const noexcept {
-    return tag() != ditto.tag();
+
+  void enforce_saturation(bool value) {
+    tag_ = value ? tag_ | tag_bits::saturation_flag
+                 : tag_ & ~tag_t(tag_bits::saturation_flag);
   }
+
+  friend constexpr bool operator==(const token_nonstatic_tag &a,
+                                   const token_nonstatic_tag &b) noexcept {
+    return a.tag() == b.tag();
+  }
+  friend constexpr bool operator!=(const token_nonstatic_tag &a,
+                                   const token_nonstatic_tag &b) noexcept {
+    return !(a == b);
+  }
+  friend constexpr bool operator<(const token_nonstatic_tag &a,
+                                  const token_nonstatic_tag &b) noexcept {
+    return a.tag() < b.tag();
+  }
+  friend constexpr bool operator>=(const token_nonstatic_tag &a,
+                                   const token_nonstatic_tag &b) noexcept {
+    return !(a < b);
+  }
+  friend constexpr bool operator>(const token_nonstatic_tag &a,
+                                  const token_nonstatic_tag &b) noexcept {
+    return b < a;
+  }
+  friend constexpr bool operator<=(const token_nonstatic_tag &a,
+                                   const token_nonstatic_tag &b) noexcept {
+    return !(a > b);
+  }
+
+  struct hash {
+    constexpr std::size_t
+    operator()(const fptu::details::token_nonstatic_tag &ident) const noexcept {
+      const auto m = ident.tag() * size_t(2709533891);
+      return m ^ (m >> 19);
+    }
+  };
 };
 
 template <tag_t TAG> struct token_static : public token_static_tag {
@@ -348,6 +382,14 @@ using token_preplaced = cast_preplaced<token>;
 using token_loose = cast_loose<token>;
 
 } // namespace fptu
+
+//  namespace std {
+//  template <>
+//  struct hash<fptu::details::token_nonstatic_tag>
+//     : public fptu::details::token_nonstatic_tag::hash {};
+//  template <>
+//  struct hash<fptu::token> : public fptu::details::token_nonstatic_tag::hash
+//  {}; } // namespace std
 
 #ifdef _MSC_VER
 #pragma warning(pop)
