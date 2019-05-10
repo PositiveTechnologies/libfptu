@@ -132,7 +132,7 @@ FPTU_DEFINE_EXCEPTION(invalid_allot,
                       "fptu: 1Hipeus: invalid or unsupported allocator tag")
 FPTU_DEFINE_EXCEPTION(invalid_schema, "fptu: invalid schema")
 FPTU_DEFINE_EXCEPTION(tuple_hollow, "fptu: hollow tuple")
-FPTU_DEFINE_EXCEPTION(field_absent, "fptu: no such field")
+FPTU_DEFINE_EXCEPTION(field_absent, "fptu: no such field in the tuple")
 FPTU_DEFINE_EXCEPTION(logic_error, "fptu: logic error")
 FPTU_DEFINE_EXCEPTION(type_mismatch, "fptu: field type mismatch")
 FPTU_DEFINE_EXCEPTION(schema_mismatch, "fptu: tuple schema mismatch")
@@ -148,7 +148,15 @@ FPTU_DEFINE_EXCEPTION(managed_buffer_required,
                       "fptu: managed 1Hippeus's buffer required")
 FPTU_DEFINE_EXCEPTION(tuple_overflow, "fptu: tuple size limit reached")
 
+FPTU_DEFINE_EXCEPTION(schema_definition_error,
+                      "fptu: unspecified field definition error")
+FPTU_DEFINE_EXCEPTION(schema_no_such_field, "fptu: no such field in the schema")
+
 #undef FPTU_DEFINE_EXCEPTION
+
+__cold __noreturn void throw_schema_definition_error(const char *details) {
+  throw schema_definition_error(details);
+}
 
 __cold __noreturn void throw_invalid_argument() { throw invalid_argument(); }
 __cold __noreturn void throw_invalid_argument(const char *details) {

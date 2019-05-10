@@ -156,6 +156,7 @@ set(LIBFPTU_SOURCES
   rw.cxx
   scan_ifunc.cxx
   scan_portable.cxx
+  schema.cxx
   tablets.cxx
   time.cxx
 

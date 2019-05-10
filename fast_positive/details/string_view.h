@@ -161,6 +161,7 @@ public:
   constexpr size_type max_size() const { return 32767; }
 
   cxx14_constexpr std::size_t hash_value() const {
+    /* TODO: replace by t1ha */
     std::size_t h = (size_t)len * 3977471;
     for (intptr_t i = 0; i < len; ++i)
       h = (h ^ str[i]) * 1664525 + 1013904223;

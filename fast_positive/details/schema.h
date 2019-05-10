@@ -23,49 +23,188 @@
 #include "fast_positive/details/string_view.h"
 #include "fast_positive/details/token.h"
 
+#include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "fast_positive/details/warnings_push_pt.h"
 
 namespace fptu {
-namespace details {
-
-#pragma pack(push, 1)
-#pragma pack(pop)
-
-} // namespace details
-
 class FPTU_API_TYPE schema {
 public:
+  static std::unique_ptr<schema>
+  create() /* фабричный метод для сокрытия подробностей реализации схемы (и
+              устранения зависимостей по h-файлам) */
+      ;
+  virtual ~schema();
+
+  /* 0. Loose и Preplaced поля:
+   *     - TODO: TBD.
+   *
+   * 1. Ограничение на имена полей на уровне справочника схемы:
+   *     - Имена полей являются бинарными строками (последовательностями байт),
+   *       отсутствуют понятия "регистр символов" и "кодировка", допускаются
+   *       любые символы (в том числе непечатные, включая \0);
+   *     - Имена всех полей в схеме должны быть уникальными;
+   *     - Длина имени должна быть от 0 до 42 байт включительно,
+   *       т.е. пустое имя (нулевой длины) является допустимым.
+   *
+   */
+
+  // Наполнение/определение схемы ----------------------------------------------
+
+  /* Добавляет preplaced-поле встроенного типа.
+   * Определяемые pleplaced-поля будут распологаться последовательно в порядке
+   * добавления с учетом выравнивания в начале кортежей.
+   *
+   * Аргумент discernible_null задаёт различимость NULL/NIL от нулевых и пустых
+   * значений (строк нулевой длины).
+   * Если distinguishable_null задан TRUE, то при попытке чтения отсутствующих
+   * значений будет вбрасываться исключение fptu::field_absent, а для
+   * preplaced-полей фиксированного размера для обозначения "пусто" будут
+   * использоваться предопределенные зарезервированные значения (designated
+   * null/empty). Если же distinguishable_null задан FALSE, то при чтении
+   * отсутствующих значений полей переменного размера, вместо генерации
+   * исключений будет, подставляться естественное нулевое значение
+   * соответствующее типу данных, например 0 или пустая строка. Кроме этого,
+   * такие пустые значения не будут храниться за ненадобностью. Подробности в
+   * описании fptu::token_operations<>::discernible_null().
+   *
+   * Аргумент saturation определяет поведение при арифметический операциях и
+   * присвоении значений. Если saturation равен false, то при переполнении
+   * и/или передаче значения вне домена поля будет вброшено одно из исключений
+   * fptu::value_denil, fptu::value_range, fptu::value_too_long. Если же
+   * saturation равен true, то значение будет автоматически заменено
+   * ближайшим допустимым.
+   *
+   * Аргумент initial_value может задавать опциональное инициализирующее
+   * значение, которое будет помещать в новый кортеж при создании и/или сбросе.
+   * Если же initial_value равен nullptr, то будут использованы нули.
+   * В любом случае, соответствующие данные будут помещены/скопированы внутрь
+   * preplaced_image_ и будут там храниться до разрушения экземпляра схемы. */
+  virtual token define_preplaced(std::string &&field_name, fptu::genus type,
+                                 const bool discernible_null = false,
+                                 const bool saturation = false,
+                                 const void *initial_value = nullptr) = 0;
+
+  /* Добавляет preplaced-поле с типом "непрозрачная структура".
+   * Фактически производится логическое резервирование места для структурного
+   * типа, поведение которого полностью контролируется пользователем.
+   * Читать/писать такие данные можно будет только как бинарные строки.
+   *
+   * Аргумент initial_value может задавать опциональное инициализирующее
+   * значение, которое будет помещать в новый кортеж при создании и/или сбросе.
+   * Если же initial_value равен nullptr, то будут использованы нули.
+   * В любом случае, соответствующие данные будут помещены/скопированы внутрь
+   * preplaced_image_ и будут там храниться до разрушения экземпляра схемы.
+   *
+   * Следует обратить внимание, что для добавленных таким образом определений
+   * и определений добавляемых через ранее созданные токены намерено допускается
+   * перекрытие. Таким образом, становится возможным определять как непрозрачные
+   * C-структуры целиком, так и отдельные типизированные поля внутри них. */
+  virtual token
+  define_preplaced_fixed_opacity(std::string &&name, std::size_t size,
+                                 std::size_t align,
+                                 const void *initial_value = nullptr) = 0;
+  /* Добавляет loose-поле встроенного типа.
+   *
+   * Аргумент discernible_null задаёт различимость NULL/NIL от нулевых и пустых
+   * значений (строк нулевой длины).
+   * Если distinguishable_null задан TRUE, то при попытке чтения отсутствующих
+   * полей будет вбрасываться исключение fptu::field_absent.
+   * Если же distinguishable_null задан FALSE, то при чтении отсутствующих полей
+   * вместо генерации исключений будет подставляться естественное нулевое
+   * значение соответствующее типу данных, например 0 или пустая строка. Кроме
+   * этого, поля с такими пустыми значениями не будут храниться за
+   * ненадобностью. Подробности вописании
+   * fptu::token_operations<>::discernible_null().
+   *
+   * Аргумент saturation определяет поведение при арифметический операциях и
+   * присвоении значений. Если saturation равен false, то при переполнении
+   * и/или передаче значения вне домена поля будет вброшено одно из исключений
+   * fptu::value_denil, fptu::value_range, fptu::value_too_long. Если же
+   * saturation равен true, то значение будет автоматически заменено
+   * ближайшим допустимым. */
+  virtual token define_loose(std::string &&name, fptu::genus type,
+                             const bool collection = false,
+                             const bool discernible_null = false,
+                             const bool saturation = false) = 0;
+
+  /* Добавляет поле по уже созданному токену. Может использоваться для
+   * добавления токенов сгенерированных для полей C-структур, для переноса полей
+   * между схемами или для слияния определений схем.
+   *
+   * Если аргумент renominate задан как true, то будут переопределены
+   * идентификатор для loose-поля или расположение для preplaced-поля. Иначе
+   * говоря, определение поля будет добавлено без образования зазоров в данных
+   * или внутренних идентификаторах, а соответствующий ему новый токен, скорее
+   * всего, будет отличаться от переданного в функцию.
+   *
+   * Следует обратить внимание, что для добавленных таким образом определений
+   * и определений непрозрачных preplaced C-структур намерено допускается
+   * перекрытие. Таким образом, становится возможным определять как непрозрачные
+   * C-структуры целиком, так и отдельные типизированные поля внутри них. */
+  virtual token import_definition(std::string &&name, const token &,
+                                  const void *initial_value = nullptr,
+                                  const bool renominate = false) = 0;
+
+  // Получеие токенов по именам полей ------------------------------------------
+  enum class boolean_option {
+    option_default,
+    option_enforce_false,
+    option_enforce_true
+  };
+  virtual token get_token_nothrow(
+      const string_view &field_name,
+      const boolean_option discernible_null = boolean_option::option_default,
+      const boolean_option saturated = boolean_option::option_default) const
+      noexcept = 0;
+
+  token get_token(
+      const string_view &field_name,
+      const boolean_option discernible_null = boolean_option::option_default,
+      const boolean_option saturated = boolean_option::option_default) const;
+
+  token operator[](const string_view &field_name) const {
+    return get_token(field_name);
+  }
+
+  token operator[](const std::string &field_name) const {
+    return get_token(string_view(field_name));
+  }
+
+  virtual token get_token_nothrow(
+      const token &inlay_token, const string_view &inner_name,
+      const boolean_option discernible_null = boolean_option::option_default,
+      const boolean_option saturated = boolean_option::option_default) const
+      noexcept = 0;
+  token get_token(
+      const token &inlay_token, const string_view &inner_name,
+      const boolean_option discernible_null = boolean_option::option_default,
+      const boolean_option saturated = boolean_option::option_default) const;
+
+  // Получение имён полей по токенам -------------------------------------------
+  virtual string_view get_name_nothrow(const token &) const noexcept = 0;
+  string_view get_name(const token &ident) const;
+  string_view operator[](const token &token) const { return get_name(token); }
+
+  // Собственные потребности libfptu -------------------------------------------
   using token_vector = std::vector<token>;
-
-private:
-  unsigned preplaced_bytes_;
-  const char *preplaced_init_image_;
-
-  token_vector stored_tokens_;
-  std::string stored_dict_;
-  std::unordered_map<string_view, token> map_;
-
-public:
-  const token_vector &tokens() const { return stored_tokens_; }
-  token bind(const string_view &field_name, const bool quietabsence = false,
-             const bool saturated = false);
-  token bind(const token &inlay_token, const string_view &field_name,
-             const bool quietabsence = false, const bool saturated = false);
-  std::size_t preplaced_bytes() const noexcept { return preplaced_bytes_; }
+  const token_vector &tokens() const { return sorted_tokens_; }
+  std::size_t preplaced_bytes() const noexcept {
+    return preplaced_image_.size();
+  }
   std::size_t preplaced_units() const noexcept {
     return details::bytes2units(preplaced_bytes());
   }
-  const void *preplaced_init_image() const { return preplaced_init_image_; }
-  std::size_t stretchy_preplaced() const {
-    return 42 /* TODO: заранее посчитать и выдавать количество таких полей */;
-  }
+  const void *preplaced_init_image() const { return preplaced_image_.data(); }
+  std::size_t stretchy_preplaced() const { return stretchy_preplaced_; }
 
-  schema() : preplaced_bytes_(0), preplaced_init_image_(nullptr) {}
-  virtual ~schema() { delete[] preplaced_init_image_; }
+protected:
+  inline schema();
+  std::size_t stretchy_preplaced_;
+  std::string preplaced_image_;
+  token_vector sorted_tokens_;
 };
 
 } // namespace fptu
