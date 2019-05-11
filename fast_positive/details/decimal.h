@@ -44,6 +44,14 @@ typedef union FPTU_API_TYPE fptu_decimal32 {
   explicit constexpr fptu_decimal32(short i) : i32(i) {
     constexpr_assert(i == 0);
   }
+  friend bool operator==(const fptu_decimal32 a,
+                         const fptu_decimal32 b) noexcept {
+    return a.u32 == b.u32;
+  }
+  friend bool operator!=(const fptu_decimal32 a,
+                         const fptu_decimal32 b) noexcept {
+    return a.u32 != b.u32;
+  }
 #endif /* __cplusplus */
 } fptu_decimal32_t;
 
@@ -54,6 +62,14 @@ typedef union FPTU_API_TYPE fptu_decimal64 {
   fptu_decimal64() = default;
   explicit constexpr fptu_decimal64(short i) : i64(i) {
     constexpr_assert(i == 0);
+  }
+  friend bool operator==(const fptu_decimal64 a,
+                         const fptu_decimal64 b) noexcept {
+    return a.u64 == b.u64;
+  }
+  friend bool operator!=(const fptu_decimal64 a,
+                         const fptu_decimal64 b) noexcept {
+    return a.u64 != b.u64;
   }
 #endif /* __cplusplus */
 } fptu_decimal64_t;
