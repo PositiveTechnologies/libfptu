@@ -117,6 +117,16 @@ FPTU_DECLARE_TYPE2GENUS(preplaced_varbin, genus::varbin);
 FPTU_DECLARE_TYPE2GENUS(preplaced_nested, genus::nested);
 FPTU_DECLARE_TYPE2GENUS(preplaced_property, genus::property);
 
+FPTU_DECLARE_TYPE2GENUS(binary96_t, genus::bin96);
+FPTU_DECLARE_TYPE2GENUS(binary128_t, genus::bin128);
+FPTU_DECLARE_TYPE2GENUS(binary160_t, genus::bin160);
+FPTU_DECLARE_TYPE2GENUS(binary192_t, genus::bin192);
+FPTU_DECLARE_TYPE2GENUS(binary224_t, genus::bin224);
+FPTU_DECLARE_TYPE2GENUS(binary256_t, genus::bin256);
+FPTU_DECLARE_TYPE2GENUS(binary320_t, genus::bin320);
+FPTU_DECLARE_TYPE2GENUS(binary384_t, genus::bin384);
+FPTU_DECLARE_TYPE2GENUS(binary512_t, genus::bin512);
+
 #undef FPTU_DECLARE_TYPE2GENUS
 
 //------------------------------------------------------------------------------
