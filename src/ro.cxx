@@ -152,4 +152,40 @@ __cold __noreturn void tuple_ro_managed::throw_buffer_mismatch() const {
             : "tuple_ro_managed: tuple is nullptr, but buffer is provided");
 }
 
+//------------------------------------------------------------------------------
+
+string_view /* preplaced_string::value_type */
+preplaced_string::value() const {
+  if (unlikely(nil()))
+    throw_field_absent();
+
+  return traits::read(payload());
+}
+
+string_view /* preplaced_varbin::value_type */
+preplaced_varbin::value() const {
+  if (unlikely(nil()))
+    throw_field_absent();
+
+  return traits::read(payload());
+}
+
+tuple_ro_weak /* preplaced_nested::value_type */
+preplaced_nested::value() const {
+  if (unlikely(nil()))
+    throw_field_absent();
+
+  return tuple_ro_weak(
+      erthink::constexpr_pointer_cast<const details::tuple_ro *>(
+          traits::read(payload())));
+}
+
+property_pair /* preplaced_property::value_type */
+preplaced_property::value() const {
+  if (unlikely(nil()))
+    throw_field_absent();
+
+  return traits::read(payload());
+}
+
 } // namespace fptu

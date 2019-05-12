@@ -397,15 +397,33 @@ using token_loose = cast_loose<token>;
 
 //------------------------------------------------------------------------------
 
-//
-//  struct Foo {
-//    bool Bar;
-//  };
-//
-//  typedef FPTU_TOKEN(Foo, Bar) MyToken_FooBar;
-//
 #define FPTU_TOKEN(STRUCT, FIELD)                                              \
   ::fptu::details::token_native<                                               \
       ::fptu::details::baseof_member_pointer<decltype(&STRUCT::FIELD)>::type,  \
       ::fptu::details::remove_member_pointer<decltype(&STRUCT::FIELD)>::type,  \
       &STRUCT::FIELD, offsetof(STRUCT, FIELD)>
+
+// Пример использования макроса FPTU_TOKEN:
+//
+//  struct Foo {
+//    bool Bar;
+//    fptu::preplaced_string String;
+//    fptu::preplaced_varbin Varbin;
+//    fptu::preplaced_nested NestedTuple;
+//    fptu::preplaced_property Property;
+//  };
+//
+//  typedef FPTU_TOKEN(Foo, Bar) MyToken_FooBar;
+//  typedef FPTU_TOKEN(Foo, String) MyToken_FooString;
+//  typedef FPTU_TOKEN(Foo, Varbin) MyToken_FooVarbin;
+//  typedef FPTU_TOKEN(Foo, NestedTuple) MyToken_FooNestedTuple;
+//  typedef FPTU_TOKEN(Foo, Property) MyToken_FooProperty;
+//
+//  ...
+//    bool bar_value = tuple.get_bool(MyToken_FooBar());
+//    string_view string_value = tuple.get_bool(MyToken_FooString());
+//
+//  ...
+//    Foo *foo = ... ;
+//    string_view string_value = foo->String.value();
+//

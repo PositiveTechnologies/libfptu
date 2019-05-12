@@ -117,8 +117,17 @@ int main(int argc, char **argv) {
 struct Foo {
   char x;
   int Bar;
+  fptu::preplaced_string String;
+  fptu::preplaced_varbin Varbin;
+  fptu::preplaced_nested NestedTuple;
+  fptu::preplaced_property Property;
 };
 #pragma pack(pop)
+
+typedef FPTU_TOKEN(Foo, String) MyToken_FooString;
+typedef FPTU_TOKEN(Foo, Varbin) MyToken_FooVarbin;
+typedef FPTU_TOKEN(Foo, NestedTuple) MyToken_FooNestedTuple;
+typedef FPTU_TOKEN(Foo, Property) MyToken_FooProperty;
 
 struct MyToken_FooBar_int : public FPTU_TOKEN(Foo, Bar) {
   MyToken_FooBar_int() noexcept {
@@ -139,7 +148,19 @@ template class fptu::tuple_crtp_reader<fptu::tuple_ro_managed>;
 #define INJECT_ASM(TEXT) (void)TEXT
 #endif
 
-__extern_C __dll_export int fptu2_get_Yint(const fptu::tuple_ro_weak tuple) {
+void fptu_get_preplaced(const fptu::tuple_ro_managed tuple) {
+  const Foo *foo = static_cast<const Foo *>(tuple.data());
+  fptu::string_view string = foo->String.value();
+  fptu::details::iovec_thunk varbin = foo->Varbin.value();
+  fptu::tuple_ro_weak nested = foo->NestedTuple.value();
+  fptu::property_pair property = foo->Property.value();
+  (void)string;
+  (void)varbin;
+  (void)nested;
+  (void)property;
+}
+
+__extern_C __dll_export int fptu_get_Yint(const fptu::tuple_ro_weak tuple) {
   INJECT_ASM("#-stoken-preplaced--- get");
   int a = tuple.get_i32(MyToken_FooBar_int());
   INJECT_ASM("#-stoken-preplaced--- begin-loop");
@@ -153,8 +174,8 @@ __extern_C __dll_export int fptu2_get_Yint(const fptu::tuple_ro_weak tuple) {
   INJECT_ASM("#-stoken-preplaced--- end");
 }
 
-__extern_C __dll_export int fptu2_get_Xint(const fptu::tuple_ro_managed tuple,
-                                           fptu::token token) {
+__extern_C __dll_export int fptu_get_Xint(const fptu::tuple_ro_managed tuple,
+                                          fptu::token token) {
   INJECT_ASM("#-dtoken-preplaced--- get");
   int a = tuple.get_i32(token);
   INJECT_ASM("#-dtoken-preplaced--- begin-loop");

@@ -34,6 +34,7 @@
 #pragma once
 #include "fast_positive/details/api.h"
 #include "fast_positive/details/essentials.h"
+#include "fast_positive/details/field.h"
 
 #include <type_traits>
 
@@ -111,8 +112,10 @@ FPTU_DECLARE_TYPE2GENUS(mac_address_t, genus::mac);
 FPTU_DECLARE_TYPE2GENUS(ip_address_t, genus::ip);
 FPTU_DECLARE_TYPE2GENUS(uuid_t, genus::bin128);
 
-FPTU_DECLARE_TYPE2GENUS(std::string, genus::text);
-FPTU_DECLARE_TYPE2GENUS(string_view, genus::text);
+FPTU_DECLARE_TYPE2GENUS(preplaced_string, genus::text);
+FPTU_DECLARE_TYPE2GENUS(preplaced_varbin, genus::varbin);
+FPTU_DECLARE_TYPE2GENUS(preplaced_nested, genus::nested);
+FPTU_DECLARE_TYPE2GENUS(preplaced_property, genus::property);
 
 #undef FPTU_DECLARE_TYPE2GENUS
 

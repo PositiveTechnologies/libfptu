@@ -798,6 +798,59 @@ static inline void preplaced_erase(const genus type,
 }
 
 } // namespace details
+
+//------------------------------------------------------------------------------
+
+#ifdef _MSC_VER
+#pragma warning(disable : 4275) /* non dll-interface class 'FOO' used as base  \
+                                   \ for dll-interface class */
+#endif
+
+class FPTU_API_TYPE preplaced_string
+    : public details::preplaced_stretchy_value {
+public:
+  using traits = meta::genus_traits<genus::text>;
+  using value_type = typename traits::value_type;
+  value_type value_nothrow() const noexcept {
+    return unlikely(nil()) ? traits::empty() : traits::read(payload());
+  }
+  value_type value() const;
+};
+
+class FPTU_API_TYPE preplaced_varbin
+    : public details::preplaced_stretchy_value {
+public:
+  using traits = meta::genus_traits<genus::varbin>;
+  using value_type = typename traits::value_type;
+  value_type value_nothrow() const noexcept {
+    return unlikely(nil()) ? traits::empty() : traits::read(payload());
+  }
+  value_type value() const;
+};
+
+class tuple_ro_weak;
+class FPTU_API_TYPE preplaced_nested
+    : public details::preplaced_stretchy_value {
+public:
+  using traits = meta::genus_traits<genus::nested>;
+  using value_type = tuple_ro_weak;
+  inline value_type value_nothrow() const noexcept;
+  value_type value() const;
+};
+
+class FPTU_API_TYPE preplaced_property
+    : public details::preplaced_stretchy_value {
+public:
+  using traits = meta::genus_traits<genus::property>;
+  using value_type = typename traits::value_type;
+  value_type value_nothrow() const noexcept {
+    return unlikely(nil()) ? traits::empty() : traits::read(payload());
+  }
+  value_type value() const;
+};
+
+//------------------------------------------------------------------------------
+
 } // namespace fptu
 
 #include "fast_positive/details/warnings_pop.h"

@@ -336,6 +336,7 @@ class FPTU_API_TYPE tuple_ro_weak : public tuple_crtp_reader<tuple_ro_weak>
 {
   friend class tuple_crtp_reader<tuple_ro_weak>;
   friend class tuple_ro_managed;
+  friend class preplaced_nested;
   template <typename> friend class tuple_crtp_writer;
 
 protected:
@@ -1277,6 +1278,17 @@ public:
     }
   }
 };
+
+//------------------------------------------------------------------------------
+
+inline tuple_ro_weak /* preplaced_nested::value_type */
+preplaced_nested::value_nothrow() const noexcept {
+  return unlikely(nil())
+             ? tuple_ro_weak()
+             : tuple_ro_weak(
+                   erthink::constexpr_pointer_cast<const details::tuple_ro *>(
+                       traits::read(payload())));
+}
 
 //------------------------------------------------------------------------------
 

@@ -453,6 +453,13 @@ inline constexpr const void *stretchy_value_tuple::pivot() const noexcept {
   return begin_index() + index_size();
 }
 
+class preplaced_stretchy_value : protected relative_offset {
+public:
+  constexpr bool nil() const noexcept {
+    return !relative_offset::have_payload();
+  }
+};
+
 #pragma pack(pop)
 
 union combo_ptr /* TODO: drop this class */ {
@@ -486,6 +493,12 @@ union combo_ptr /* TODO: drop this class */ {
 };
 
 } // namespace details
+
+class preplaced_string;
+class preplaced_varbin;
+class preplaced_nested;
+class preplaced_property;
+
 } // namespace fptu
 
 #include "fast_positive/details/warnings_pop.h"
