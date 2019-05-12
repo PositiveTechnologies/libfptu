@@ -824,9 +824,9 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
     }
     if (schema_) {
       for (const token &ident : schema_->tokens()) {
-        /* TODO: обеспечить сортировку токенов в схеме, чтобы preplaced были в
-         * начале, а здесь ранний выход из цикла */
-        if (ident.is_preplaced() && !is_fixed_size(ident.type())) {
+        if (!ident.is_preplaced())
+          break;
+        if (!is_fixed_size(ident.type())) {
           const field_preplaced *const preplaced =
               erthink::constexpr_pointer_cast<const field_preplaced *>(
                   begin_data_bytes() + ident.preplaced_offset());
