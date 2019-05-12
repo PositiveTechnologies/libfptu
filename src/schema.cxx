@@ -349,4 +349,27 @@ string_view schema::get_name(const token &ident) const {
   return name;
 }
 
+std::size_t
+schema::estimate_tuple_size(const token_vector &tokens,
+                            std::size_t expected_average_stretchy_length) {
+  std::size_t fixed_bytes =
+      sizeof(details::stretchy_value_tuple /* tuple header */);
+  std::size_t dynamic_units = 0;
+
+  for (const token &ident : tokens) {
+    if (ident.is_preplaced()) {
+      fixed_bytes = std::max(fixed_bytes,
+                             ident.preplaced_offset() + ident.preplaced_size());
+      if (ident.type() == genus::hole)
+        continue;
+    } else {
+      dynamic_units += 1 + details::loose_units_dynamic(ident.type());
+    }
+    if (ident.is_stretchy())
+      dynamic_units += details::bytes2units(expected_average_stretchy_length);
+  }
+
+  return fixed_bytes + details::units2bytes(dynamic_units);
+}
+
 } // namespace fptu

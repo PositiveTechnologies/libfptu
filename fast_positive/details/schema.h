@@ -51,6 +51,14 @@ public:
    *
    */
 
+  using token_vector = std::vector<token>;
+
+  /* Оценивает размер кортежа для переданного набора токенов и ожидаемого
+   * среднего размера поле переменной длины. */
+  static std::size_t
+  estimate_tuple_size(const token_vector &,
+                      std::size_t expected_average_stretchy_length = 42);
+
   // Наполнение/определение схемы ----------------------------------------------
 
   /* Добавляет preplaced-поле встроенного типа.
@@ -107,6 +115,11 @@ public:
                                  std::size_t align,
                                  const void *initial_value = nullptr) = 0;
   /* Добавляет loose-поле встроенного типа.
+   *
+   * Аргумент collection определяет может ли поле повторяться и таким образом
+   * образовывать итерируемые неупорядоченные коллекции. Если collection = TRUE,
+   * то поле может быть добавлено несколько раз посредством метода
+   * tuple::insert(), а затем проитерированно посредством tuple::collection().
    *
    * Аргумент discernible_null задаёт различимость NULL/NIL от нулевых и пустых
    * значений (строк нулевой длины).
@@ -189,7 +202,6 @@ public:
   string_view operator[](const token &token) const { return get_name(token); }
 
   // Собственные потребности libfptu -------------------------------------------
-  using token_vector = std::vector<token>;
   const token_vector &tokens() const { return sorted_tokens_; }
   std::size_t preplaced_bytes() const noexcept {
     return preplaced_image_.size();
