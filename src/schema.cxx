@@ -59,7 +59,8 @@ struct schema_impl : public schema {
   //----------------------------------------------------------------------------
 
   using map_name2token = std::unordered_map<std::string, token>;
-  using map_token2name = std::unordered_map<token, string_view, token::hash>;
+  using map_token2name =
+      std::unordered_map<token, string_view, token::hash, token::same>;
   map_name2token name2token_;
   map_token2name token2name_;
 
@@ -74,8 +75,7 @@ struct schema_impl : public schema {
   void add_definition(std::string &&name, const token &ident,
                       const void *initial_value);
 
-  //  const item* lookup() {
-  //  }
+  unsigned get_next_loose_id(fptu::genus type) const;
 
   token define_preplaced(std::string &&name, fptu::genus type,
                          const bool discernible_null, const bool saturation,
@@ -121,6 +121,18 @@ static bool is_overlapped(const token &a, const token &b) {
       b.preplaced_offset() + ptrdiff_t(b.preplaced_size()))
     return false;
   return true;
+}
+
+unsigned schema_impl::get_next_loose_id(fptu::genus type) const {
+  const token ident(fptu::genus(type + 1), 0, false, false, false);
+  const auto greater_than =
+      std::upper_bound(sorted_tokens_.begin(), sorted_tokens_.end(), ident);
+  if (greater_than != sorted_tokens_.begin()) {
+    const auto less_or_equal = std::prev(greater_than);
+    if (!less_or_equal->is_preplaced() && less_or_equal->type() == type)
+      return less_or_equal->id() + 1;
+  }
+  return 0;
 }
 
 void schema_impl::add_definition(std::string &&name, const token &ident,
@@ -244,11 +256,8 @@ token schema_impl::define_loose(std::string &&name, fptu::genus type,
   if (unlikely(type >= genus::hole))
     throw_invalid_argument("invalid field type");
 
-  const unsigned id =
-      (sorted_tokens_.empty() || sorted_tokens_.back().is_preplaced())
-          ? 0
-          : sorted_tokens_.back().id() + 1;
-  if (unlikely(id > details::max_ident))
+  const unsigned id = get_next_loose_id(type);
+  if (unlikely(id >= details::loose_end))
     throw_schema_definition_error("fptu: too many loose fields");
 
   const token ident(type, id, collection, discernible_null, saturated);

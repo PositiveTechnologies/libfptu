@@ -294,7 +294,7 @@ static constexpr tag_t make_tag(const genus type, const unsigned id,
                                 const bool collection,
                                 const bool discernible_null,
                                 const bool saturated) noexcept {
-  constexpr_assert(type < hole && id <= tag_bits::max_ident);
+  constexpr_assert(type <= hole && id <= tag_bits::max_ident);
   return tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
                (id << tag_bits::id_shift) +
                (collection ? tag_bits::loose_collection_flag : 0u) +
@@ -321,6 +321,36 @@ static constexpr tag_t tag_from_offset(const std::size_t offset,
                (indysize << tag_bits::id_shift) +
                (discernible_null ? tag_bits::discernible_null_flag : 0u) +
                (saturated ? tag_bits::saturation_flag : 0u));
+}
+
+static constexpr bool tag_less(const tag_t a, const tag_t b) noexcept {
+  const auto xa =
+      a | (is_preplaced(a)
+               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
+               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
+                     tag_bits::loose_collection_flag);
+  const auto xb =
+      b | (is_preplaced(b)
+               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
+               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
+                     tag_bits::loose_collection_flag);
+
+  return xa < xb;
+}
+
+static constexpr bool tag_same(const tag_t a, const tag_t b) noexcept {
+  const auto xa =
+      a | (is_preplaced(a)
+               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
+               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
+                     tag_bits::loose_collection_flag);
+  const auto xb =
+      b | (is_preplaced(b)
+               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
+               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
+                     tag_bits::loose_collection_flag);
+
+  return xa == xb;
 }
 
 //------------------------------------------------------------------------------

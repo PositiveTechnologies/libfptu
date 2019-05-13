@@ -197,7 +197,7 @@ public:
   }
   friend constexpr bool operator<(const token_nonstatic_tag &a,
                                   const token_nonstatic_tag &b) noexcept {
-    return a.tag() < b.tag();
+    return details::tag_less(a.tag(), b.tag());
   }
   friend constexpr bool operator>=(const token_nonstatic_tag &a,
                                    const token_nonstatic_tag &b) noexcept {
@@ -213,10 +213,22 @@ public:
   }
 
   struct hash {
-    constexpr std::size_t
-    operator()(const fptu::details::token_nonstatic_tag &ident) const noexcept {
+    constexpr std::size_t operator()(const token_nonstatic_tag &ident) const
+        noexcept {
       const auto m = ident.tag() * size_t(2709533891);
       return m ^ (m >> 19);
+    }
+  };
+
+  constexpr static bool is_same(const token_nonstatic_tag &a,
+                                const token_nonstatic_tag &b) noexcept {
+    return details::tag_same(a.tag(), b.tag());
+  }
+
+  struct same {
+    constexpr bool operator()(const token_nonstatic_tag &a,
+                              const token_nonstatic_tag &b) const noexcept {
+      return is_same(a, b);
     }
   };
 };
