@@ -149,6 +149,9 @@ void schema_impl::add_definition(std::string &&name, const token &ident,
     /* проверяем перекрытие полей, которые могут быть при слиянии
      * схем с renominate == FALSE */
     for (const auto &scan : sorted_tokens_) {
+      if (!scan.is_preplaced())
+        break;
+
       /* одно поле никогда не должно пересекать границы другого */
       if (unlikely(is_crossing(ident, scan)))
         throw_schema_definition_error(
