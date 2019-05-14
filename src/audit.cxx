@@ -282,13 +282,13 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
 
   if (preplaced_bytes) {
     if (!validator.map_empty() &&
-        unlikely(preplaced_bytes > validator.map_begin()))
+        unlikely(bytes2units(preplaced_bytes) > validator.map_begin()))
       return AUDIT_FAILURE("schema.preplaced > tuple.loose_payload");
     if (unlikely(ptrdiff_t(preplaced_bytes) > payload_bytes))
       return AUDIT_FAILURE("schema.preplaced > tuple.whole_payload");
     for (const auto field_token : schema->tokens()) {
       if (!field_token.is_preplaced())
-        continue;
+        break;
       const std::size_t preplaced_offset = field_token.preplaced_offset();
       assert(preplaced_offset + preplaced_bytes_dynamic(field_token.type()) <=
              preplaced_bytes);
@@ -310,46 +310,48 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
     }
   }
 
-  const auto map_begin = validator.map_begin();
-  if (unlikely(tuple_have_preplaced != (map_begin > 0)))
-    return AUDIT_FAILURE(
-        tuple_have_preplaced
-            ? "preplaced-flag is ON but corresponding fields absent"
-            : "preplaced-flag is OFF but tuple have hole for ones");
+  if (!validator.map_empty()) {
+    const auto map_begin = validator.map_begin();
+    if (unlikely(tuple_have_preplaced != (map_begin > 0)))
+      return AUDIT_FAILURE(
+          tuple_have_preplaced
+              ? "preplaced-flag is ON but corresponding fields absent"
+              : "preplaced-flag is OFF but tuple have hole for ones");
 
-  if (unlikely(map_begin != preplaced_bytes))
-    return AUDIT_FAILURE(
-        tuple_have_preplaced
-            ? "preplaced-flag is ON but corresponding fields absent"
-            : "preplaced-flag is OFF but tuple have hole for ones");
+    if (unlikely(map_begin != bytes2units(preplaced_bytes)))
+      return AUDIT_FAILURE(
+          tuple_have_preplaced
+              ? "preplaced-flag is ON but corresponding fields absent"
+              : "preplaced-flag is OFF but tuple have hole for ones");
 
-  const unit_t *const allocated_end = payload_begin + validator.map_end();
-  if (unlikely(allocated_end != payload_end))
-    return AUDIT_FAILURE((allocated_end > payload_end)
-                             ? "allocated beyond end of tuple"
-                             : "lose space at the end of tuple");
+    const unit_t *const allocated_end = payload_begin + validator.map_end();
+    if (unlikely(allocated_end != payload_end))
+      return AUDIT_FAILURE((allocated_end > payload_end)
+                               ? "allocated beyond end of tuple"
+                               : "lose space at the end of tuple");
 
-  if (unlikely(validator.map_have_holes()))
-    return AUDIT_FAILURE("tuple have unaccounted holes");
+    if (unlikely(validator.map_have_holes()))
+      return AUDIT_FAILURE("tuple have unaccounted holes");
 
-  if ((flags & audit_flags::audit_adjacent_holes) != 0 &&
-      holes_info.count > 1) {
-    validator.map_reset(holes_info.count);
-    std::size_t count = 0;
-    for (const field_loose *loose = index_end; --loose >= index_begin;) {
-      if (!loose->is_hole() || loose->hole_get_units() == 0)
-        continue;
-      const bool inserted =
-          validator.map_insert(loose->hole_begin() - payload_begin,
-                               loose->hole_end() - payload_begin);
-      assert(loose->hole_begin() >= payload_begin &&
-             loose->hole_begin() - payload_begin < UINT16_MAX);
-      assert(loose->hole_end() >= payload_begin &&
-             loose->hole_end() - payload_begin < UINT16_MAX);
-      assert(inserted);
-      (void)inserted;
-      if (unlikely(++count != validator.map_items()))
-        return AUDIT_FAILURE("tuple have unmerged adjacent holes");
+    if ((flags & audit_flags::audit_adjacent_holes) != 0 &&
+        holes_info.count > 1) {
+      validator.map_reset(holes_info.count);
+      std::size_t count = 0;
+      for (const field_loose *loose = index_end; --loose >= index_begin;) {
+        if (!loose->is_hole() || loose->hole_get_units() == 0)
+          continue;
+        const bool inserted =
+            validator.map_insert(loose->hole_begin() - payload_begin,
+                                 loose->hole_end() - payload_begin);
+        assert(loose->hole_begin() >= payload_begin &&
+               loose->hole_begin() - payload_begin < UINT16_MAX);
+        assert(loose->hole_end() >= payload_begin &&
+               loose->hole_end() - payload_begin < UINT16_MAX);
+        assert(inserted);
+        (void)inserted;
+        if (unlikely(++count != validator.map_items()))
+          return AUDIT_FAILURE("tuple have unmerged adjacent holes");
+      }
     }
   }
 
