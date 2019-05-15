@@ -179,9 +179,9 @@ struct FPTU_API_TYPE defaults {
   static std::unique_ptr<fptu::schema> schema;
   static hippeus::buffer_tag allot_tag;
   static initiation_scale scale;
-  static void setup(const initiation_scale &scale,
-                    std::unique_ptr<fptu::schema> &&schema,
-                    const hippeus::buffer_tag &allot_tag);
+  static void
+  setup(const initiation_scale &scale, std::unique_ptr<fptu::schema> &&schema,
+        const hippeus::buffer_tag &allot_tag = fptu::defaults::allot_tag);
   static std::size_t
   estimate_space_for_tuple(const initiation_scale &_scale = scale) {
     return fptu::estimate_space_for_tuple(_scale, schema.get());
