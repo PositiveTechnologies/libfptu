@@ -124,7 +124,7 @@ static bool is_overlapped(const token &a, const token &b) {
 }
 
 unsigned schema_impl::get_next_loose_id(fptu::genus type) const {
-  const token ident(fptu::genus(type + 1), 0, false, false, false);
+  const token ident(fptu::genus(type), details::max_ident, false, false, false);
   const auto greater_than =
       std::upper_bound(sorted_tokens_.begin(), sorted_tokens_.end(), ident);
   if (greater_than != sorted_tokens_.begin()) {
@@ -260,6 +260,13 @@ token schema_impl::define_loose(std::string &&name, fptu::genus type,
     throw_invalid_argument("invalid field type");
 
   const unsigned id = get_next_loose_id(type);
+#ifndef NDEBUG
+  unsigned check = 0;
+  for (const auto &item : sorted_tokens_)
+    if (item.is_loose() && item.type() == type)
+      check = std::max(check, item.id() + 1);
+  assert(check == id);
+#endif
   if (unlikely(id >= details::loose_end))
     throw_schema_definition_error("fptu: too many loose fields");
 
