@@ -175,6 +175,57 @@ TEST(Smoke, trivia_managing) {
 
 //------------------------------------------------------------------------------
 
+TEST(Smoke, trivia_schema_definition) {
+  auto schema = fptu::schema::create();
+  for (unsigned n = 0; n < 42; ++n)
+    for (fptu::genus type = fptu::genus(0); type != fptu::genus::hole;
+         type = fptu::genus(type + 1))
+      schema->define_field(
+          false, fptu::format("#%u of %s", n, std::to_string(type).c_str()),
+          type);
+  std::set<std::string> names = {"datafield1",   "event_src.host",
+                                 "event_src.ip", "event_src.title",
+                                 "generator",    "id",
+                                 "mime",         "object.name",
+                                 "reason",       "subject.group",
+                                 "subject.id",   "tag",
+                                 "type"};
+  for (auto item : names)
+    schema->define_field(item == "generator", std::move(item),
+                         fptu::genus::text);
+  fptu::defaults::setup(fptu::initiation_scale::small, std::move(schema));
+
+  fptu::tuple_rw_managed rw;
+  rw.set_string(fptu::defaults::schema->get_token("datafield1"),
+                std::string("229099411"));
+  rw.set_string(fptu::defaults::schema->get_token("event_src.host"),
+                std::string("91.142.135.113"));
+  rw.set_string(fptu::defaults::schema->get_token("event_src.ip"),
+                std::string("91.142.135.113"));
+  rw.set_string(fptu::defaults::schema->get_token("event_src.title"),
+                std::string("unix_like"));
+  rw.set_string(fptu::defaults::schema->get_token("generator"),
+                std::string("N8.0.1309"));
+  rw.set_string(fptu::defaults::schema->get_token("id"),
+                std::string("PT_UNIX_like_auditd_syslog_path_msg"));
+  rw.set_string(fptu::defaults::schema->get_token("mime"),
+                std::string("text/plain"));
+  rw.set_string(fptu::defaults::schema->get_token("object.name"),
+                std::string("/proc/1/comm"));
+  rw.set_string(fptu::defaults::schema->get_token("reason"),
+                std::string("File was created or deleted"));
+  rw.set_string(fptu::defaults::schema->get_token("subject.group"),
+                std::string("0"));
+  rw.set_string(fptu::defaults::schema->get_token("subject.id"),
+                std::string("0"));
+  rw.set_string(fptu::defaults::schema->get_token("tag"),
+                std::string("syslog"));
+  rw.set_string(fptu::defaults::schema->get_token("type"), std::string("norm"));
+  rw.take_managed_clone_optimized();
+}
+
+//------------------------------------------------------------------------------
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
