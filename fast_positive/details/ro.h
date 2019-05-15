@@ -83,6 +83,12 @@ public:
     return stretchy_value_tuple::length();
   }
   constexpr const void *data() const noexcept { return this; }
+  cxx14_constexpr std::size_t payload_size() const noexcept {
+    return stretchy_value_tuple::payload_bytes();
+  }
+  constexpr const void *payload() const noexcept {
+    return stretchy_value_tuple::begin_data_bytes();
+  }
   constexpr std::size_t index_size() const noexcept {
     return stretchy_value_tuple::index_size();
   }

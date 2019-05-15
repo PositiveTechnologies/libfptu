@@ -314,6 +314,12 @@ public:
   __pure_function constexpr const void *data() const noexcept {
     return get_impl()->data();
   }
+  __pure_function cxx14_constexpr std::size_t payload_size() const noexcept {
+    return get_impl()->payload_size();
+  }
+  __pure_function constexpr const void *payload() const noexcept {
+    return get_impl()->payload();
+  }
   __pure_function constexpr std::size_t index_size() const noexcept {
     return get_impl()->index_size();
   }
