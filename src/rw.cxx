@@ -448,7 +448,9 @@ inline tuple_rw::tuple_rw(const audit_holes_info &holes_info,
   const std::size_t reserve_items =
       std::min(size_t(fptu::max_fields), have_items + more_items);
   const std::size_t space_needed = tuple_rw::estimate_required_space(
-      reserve_items, ro->payload_bytes(), schema);
+      reserve_items, ro->payload_bytes(), schema,
+      /* не учитываем размер preplaced-полей, ибо они уже должы быть в ro */
+      true);
 
   end_ = std::min(unsigned(max_tuple_units_netto),
                   unsigned(buffer_size - pure_tuple_size()) >>
