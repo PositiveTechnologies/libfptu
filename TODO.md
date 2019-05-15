@@ -1,11 +1,11 @@
 - [ ] fptu::value через tagged_pointer.
+- [ ] взаимодействие с boost::optional.
 - [ ] сериализация в JSON.
 - [ ] устойчивое сравнение кортежей.
 - [ ] std::hash.
 - [ ] uprobes/SystemTap и perfomance-penalty.
-- [ ] Схема с напонением и примерами для Димы.
 - [ ] Зачистить combo_ptr.
-- [ ] more SIMD (sort, pattern-search, binary-search);
+- [ ] more SIMD (sort, holes search, binary-search);
 - [ ] AVX512;
 - [ ] inlay iteration;
 
