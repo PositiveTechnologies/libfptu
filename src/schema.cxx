@@ -384,4 +384,19 @@ schema::estimate_tuple_size(const token_vector &tokens,
   return fixed_bytes + details::units2bytes(dynamic_units);
 }
 
+token schema::define_field(bool preplaced, std::string &&name, fptu::genus type,
+                           const bool discernible_null, const bool saturation) {
+  return preplaced ? define_preplaced(std::move(name), type, discernible_null,
+                                      saturation)
+                   : define_loose(std::move(name), type, false,
+                                  discernible_null, saturation);
+}
+
+token schema::define_collection(std::string &&name, fptu::genus type,
+                                const bool discernible_null,
+                                const bool saturation) {
+  return define_loose(std::move(name), type, true, discernible_null,
+                      saturation);
+}
+
 } // namespace fptu

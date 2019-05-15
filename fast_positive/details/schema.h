@@ -143,6 +143,19 @@ public:
                              const bool discernible_null = false,
                              const bool saturation = false) = 0;
 
+  /* Вспомогательный метод добавления поля (не коллекции).
+   * В зависимости от аргумента preplaced внутри себя вызывает либо
+   * define_preplaced(), либо define_loose(). */
+  token define_field(bool preplaced, std::string &&name, fptu::genus type,
+                     const bool discernible_null = false,
+                     const bool saturation = false);
+
+  /* Вспомогательный метод добавления поля-коллекции.
+   * Внутри себя вызывает define_loose() с соответствующми аргументами. */
+  token define_collection(std::string &&name, fptu::genus type,
+                          const bool discernible_null = false,
+                          const bool saturation = false);
+
   /* Добавляет поле по уже созданному токену. Может использоваться для
    * добавления токенов сгенерированных для полей C-структур, для переноса полей
    * между схемами или для слияния определений схем.
