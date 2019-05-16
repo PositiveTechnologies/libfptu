@@ -120,6 +120,35 @@ TEST(Smoke, trivia_autogrowth) {
   EXPECT_EQ(size_t(fptu::max_tuple_bytes_netto), rw.capacity());
 }
 
+TEST(Smoke, autogrowth_with_preplaced) {
+  auto schema = fptu::schema::create();
+
+  std::vector<std::pair<std::string, std::size_t>> values = {
+      {"event_src.host", 16},
+      {"event_src.hostname", 16},
+      {"event_src.subsys", 8},
+      {"event_src.title", 7},
+      {"event_src.vendor", 9}, /*{"generator", 9},*/
+      {"id", 53},
+      {"mime", 25},
+      {"msgid", 4},
+      {"object.id", 1037}};
+
+  for (auto p : values)
+    schema->define_loose(std::move(p.first), fptu::genus::text);
+
+  schema->define_preplaced("generator", fptu::genus::text);
+  fptu::defaults::setup(fptu::initiation_scale::small, std::move(schema));
+
+  fptu::tuple_rw_managed rw;
+  for (auto p : values) {
+    std::string stub{};
+    stub.resize(p.second, 'a');
+    rw.set_string(fptu::defaults::schema->get_token(p.first.data()), stub);
+  }
+  rw.take_managed_clone_optimized();
+}
+
 TEST(Smoke, trivia_managing) {
   cxx14_constexpr fptu::token token_utc32(fptu::genus::datetime_utc, 0);
   cxx14_constexpr fptu::token token_datetime64(fptu::genus::datetime_utc, 0);
