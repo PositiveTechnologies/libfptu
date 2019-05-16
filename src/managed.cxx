@@ -71,8 +71,11 @@ static const unsigned scale2more[unsigned(initiation_scale::extreme) + 1] = {
 
 std::size_t estimate_space_for_tuple(const initiation_scale &scale,
                                      const fptu::schema *schema) {
+  const size_t preplaced_bytes = schema ? schema->preplaced_bytes() : 0;
+  const size_t scale_bytes = scale2bytes[scale];
+  size_t data_bytes = scale_bytes - std::min(scale_bytes, preplaced_bytes);
   return details::tuple_rw::estimate_required_space(scale2items[scale],
-                                                    scale2bytes[scale], schema);
+                                                    data_bytes, schema);
 }
 
 //------------------------------------------------------------------------------
