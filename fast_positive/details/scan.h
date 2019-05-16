@@ -73,34 +73,22 @@ __extern_C FPTU_API const field_loose *fptu_scan_AVX2(const field_loose *begin,
 #endif /* __ia32__ */
 
 #if defined(__AVX2__)
-static __inline const field_loose *fptu_scan(const field_loose *begin,
-                                             const field_loose *end,
-                                             uint16_t genius_and_id) {
-  return fptu_scan_AVX2(begin, end, genius_and_id);
-}
+#define fptu_scan(begin, end, genius_and_id)                                   \
+  fptu_scan_AVX2(begin, end, genius_and_id)
 #elif defined(__e2k__)
-static __inline const field_loose *fptu_scan(const field_loose *begin,
-                                             const field_loose *end,
-                                             uint16_t genius_and_id) {
-  return fptu_scan_AVX(begin, end, genius_and_id);
-}
+#define fptu_scan(begin, end, genius_and_id)                                   \
+  fptu_scan_AVX(begin, end, genius_and_id)
 #elif defined(__ATOM__)
-static __inline const field_loose *fptu_scan(const field_loose *begin,
-                                             const field_loose *end,
-                                             uint16_t genius_and_id) {
-  return fptu_scan_SSE2(begin, end, genius_and_id);
-}
+#define fptu_scan(begin, end, genius_and_id)                                   \
+  fptu_scan_SSE2(begin, end, genius_and_id)
 #elif defined(__ia32__)
 ERTHINK_DECLARE_IFUNC(FPTU_API, const field_loose *, fptu_scan,
                       (const field_loose *begin, const field_loose *end,
                        uint16_t genius_and_id),
                       (begin, end, genius_and_id), fptu_scan_resolver)
 #else
-static __inline const field_loose *fptu_scan(const field_loose *begin,
-                                             const field_loose *end,
-                                             uint16_t genius_and_id) {
-  return fptu_scan_unroll(begin, end, genius_and_id);
-}
+#define fptu_scan(begin, end, genius_and_id)                                   \
+  fptu_scan_unroll(begin, end, genius_and_id)
 #endif
 
 //------------------------------------------------------------------------------
