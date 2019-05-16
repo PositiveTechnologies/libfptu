@@ -202,8 +202,8 @@ void tuple_rw_managed::manage_space_deficit(const insufficient_space &wanna) {
       details::tuple_rw(details::tuple_rw::get_buffer_offset(holder.get()),
                         holder->size(), growth_index, pimpl_->schema_);
 
-  new_tuple->head_ -= pimpl_->pivot_ - pimpl_->head_;
-  new_tuple->tail_ += pimpl_->tail_ - pimpl_->pivot_;
+  new_tuple->head_ = new_tuple->pivot_ - (pimpl_->pivot_ - pimpl_->head_);
+  new_tuple->tail_ = new_tuple->pivot_ + (pimpl_->tail_ - pimpl_->pivot_);
   std::memcpy(static_cast<void *>(new_tuple->begin_index()),
               pimpl_->begin_index(),
               details::units2bytes(pimpl_->tail_ - pimpl_->head_));
