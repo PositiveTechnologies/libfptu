@@ -215,6 +215,10 @@ if(CC_HAS_FASTMATH)
   target_compile_options(${fptu_target} PRIVATE "-ffast-math")
 endif()
 
+if(BUILD_FOR_NATIVE_CPU AND CC_HAS_ARCH_NATIVE)
+  target_compile_options(${fptu_target} PUBLIC "-march=native")
+endif()
+
 if(CC_HAS_VISIBILITY)
   target_compile_options(${fptu_target} PRIVATE "-fvisibility=hidden")
   if(LTO_ENABLED OR INTERPROCEDURAL_OPTIMIZATION)
