@@ -40,7 +40,7 @@
 
 namespace fptu {
 
-class harrow_tagged_pointer_base {
+class narrow_tagged_pointer_base {
 public:
   static constexpr unsigned bits = 4;
 
@@ -82,23 +82,23 @@ public:
     return u2p((body_.uint & ptr_mask) ^ ptr_xor);
   }
 
-  constexpr harrow_tagged_pointer_base() noexcept : body_(ptr_xor) {
+  constexpr narrow_tagged_pointer_base() noexcept : body_(ptr_xor) {
     constexpr_assert(ptr() == nullptr && tag() == 0);
   }
 
-  constexpr harrow_tagged_pointer_base(void *ptr, unsigned tag = 0) noexcept
+  constexpr narrow_tagged_pointer_base(void *ptr, unsigned tag = 0) noexcept
       : body_((p2u(ptr) ^ ptr_xor) | (uintptr_t(tag) << bits)) {
     constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
     constexpr_assert(tag < (1u << bits));
     constexpr_assert(this->ptr() == ptr && this->tag() == tag);
   }
 
-  constexpr harrow_tagged_pointer_base(
-      const harrow_tagged_pointer_base &v) noexcept = default;
-  cxx14_constexpr harrow_tagged_pointer_base &
-  operator=(const harrow_tagged_pointer_base &v) noexcept = default;
+  constexpr narrow_tagged_pointer_base(
+      const narrow_tagged_pointer_base &v) noexcept = default;
+  cxx14_constexpr narrow_tagged_pointer_base &
+  operator=(const narrow_tagged_pointer_base &v) noexcept = default;
 
-  cxx14_constexpr void swap(harrow_tagged_pointer_base &v) noexcept {
+  cxx14_constexpr void swap(narrow_tagged_pointer_base &v) noexcept {
     const auto temp = body_;
     body_ = v.body_;
     v.body_ = temp;
