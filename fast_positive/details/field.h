@@ -469,7 +469,11 @@ union combo_ptr /* TODO: drop this class */ {
   const field_preplaced *const_preplaced;
   field_loose *loose;
   const field_loose *const_loose;
+#if !defined(__COVERITY__)
   constexpr combo_ptr(const combo_ptr &) noexcept = default;
+#else
+  constexpr combo_ptr(const combo_ptr &ones) noexcept : ptr(ones.ptr) {}
+#endif
   constexpr combo_ptr(void *ptr) noexcept : ptr(ptr) {}
   constexpr combo_ptr(const field_preplaced *ptr) noexcept
       : const_preplaced(ptr) {}

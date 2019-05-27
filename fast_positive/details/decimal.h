@@ -23,7 +23,8 @@
 #include "fast_positive/details/integer128.h"
 #include <stdint.h>
 
-#if defined(_GLIBCXX_USE_DECIMAL_FLOAT) && defined(__DECIMAL_BID_FORMAT__)
+#if defined(_GLIBCXX_USE_DECIMAL_FLOAT) && defined(__DECIMAL_BID_FORMAT__) &&  \
+    !defined(__COVERITY__)
 
 #include <decimal/decimal>
 namespace fptu {

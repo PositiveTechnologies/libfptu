@@ -50,7 +50,16 @@ private:
     void *ptr;
     const void *const_ptr;
 
+#if !defined(__COVERITY__)
     constexpr casting(const casting &) noexcept = default;
+    constexpr casting &operator=(const casting &) noexcept = default;
+#else
+    constexpr casting(const casting &ones) noexcept : uint(ones.uint) {}
+    constexpr casting &operator=(const casting &ones) noexcept {
+      uint = ones.uint;
+      return *this;
+    }
+#endif
     constexpr casting(void *ptr) noexcept : ptr(ptr) {}
     constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
     constexpr casting(uintptr_t uint) noexcept : uint(uint) {}
@@ -137,7 +146,16 @@ private:
     void *ptr;
     const void *const_ptr;
 
+#if !defined(__COVERITY__)
     constexpr casting(const casting &) noexcept = default;
+    constexpr casting &operator=(const casting &) noexcept = default;
+#else
+    constexpr casting(const casting &ones) noexcept : u64(ones.u64) {}
+    constexpr casting &operator=(const casting &ones) noexcept {
+      u64 = ones.u64;
+      return *this;
+    }
+#endif
     constexpr casting(void *ptr) noexcept : ptr(ptr) {}
     constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
     constexpr casting(uint64_t u64) noexcept : u64(u64) {}
