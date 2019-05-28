@@ -346,7 +346,7 @@ FPTU_API dynamic_iterator_rw tuple_rw::insert_uint128(const token &ident,
 
 //------------------------------------------------------------------------------
 
-void tuple_rw::reset() noexcept {
+void tuple_rw::reset() {
   /* sanity check for corruption */
   if (unlikely(pivot_ < 1 || pivot_ > fptu::max_fields || pivot_ > end_ ||
                end_ > bytes2units(fptu::buffer_limit)))
@@ -366,9 +366,7 @@ void tuple_rw::reset() noexcept {
 }
 
 const tuple_ro *tuple_rw::take_asis() const {
-  if (unlikely(tail_ - head_ >= UINT16_MAX || pivot_ - head_ > max_fields))
-    throw_tuple_too_large();
-
+  assert(tail_ - head_ < UINT16_MAX && pivot_ - head_ <= max_fields);
   stretchy_value_tuple *header =
       erthink::constexpr_pointer_cast<stretchy_value_tuple *>(
           const_cast<tuple_rw *>(this)->begin_index()) -

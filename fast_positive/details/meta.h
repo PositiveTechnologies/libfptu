@@ -234,15 +234,17 @@ template <unsigned N, typename TYPE = uint32_t[N]> struct unit_n {
                     return_type value) noexcept {
     static_assert(sizeof(value_type) <= preplaced_bytes, "WTF?");
     std::memcpy(preplaced->bytes, &value, preplaced_bytes);
-    std::memset(preplaced->bytes + sizeof(value_type), 0,
-                preplaced_bytes - sizeof(value_type));
+    if (preplaced_bytes != sizeof(value_type))
+      std::memset(preplaced->bytes + sizeof(value_type), 0,
+                  preplaced_bytes - sizeof(value_type));
   }
   static void write(details::field_loose *loose, return_type value) noexcept {
     static_assert(sizeof(value_type) <= preplaced_bytes, "WTF?");
     const auto ptr = loose->relative.payload();
     std::memcpy(ptr, &value, preplaced_bytes);
-    std::memset(ptr->fixed.bytes + sizeof(value_type), 0,
-                preplaced_bytes - sizeof(value_type));
+    if (preplaced_bytes != sizeof(value_type))
+      std::memset(ptr->fixed.bytes + sizeof(value_type), 0,
+                  preplaced_bytes - sizeof(value_type));
   }
   static void erase(details::field_preplaced *preplaced,
                     const bool distinct_null) {

@@ -377,7 +377,9 @@ __pure_function const details::tuple_rw *tuple_ro_managed::peek_basis() const
   if (unlikely(!pimpl_))
     return nullptr;
 
+#if !defined(NDEBUG) && !defined(__COVERITY__)
   check_buffer(/* paranoia */);
+#endif
   const details::tuple_rw *maybe =
       erthink::constexpr_pointer_cast<const details::tuple_rw *>(hb_->data());
   if (&maybe->reserve_for_RO_header >

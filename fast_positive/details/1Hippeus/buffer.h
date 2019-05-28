@@ -367,7 +367,7 @@ class FPTU_API_TYPE buffer : public hippeus_buffer_C {
 
   static const buffer *
   add_reference(/* accepts nullptr */ const buffer *self) noexcept;
-  static void detach(/* accepts nullptr */ const buffer *self);
+  static void detach(/* accepts nullptr */ const buffer *self) noexcept;
 
 public:
   /* Основная функция для выделения буферов. Теоретически тут также стоит
@@ -389,7 +389,7 @@ public:
     return const_cast<buffer *>(add_reference(this));
   }
 
-  void detach() const {
+  void detach() const noexcept {
     /* follows naming convention from
      * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0468r0.html */
     detach(this);

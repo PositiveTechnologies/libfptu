@@ -74,7 +74,7 @@ fptu_error fptu_clear(fptu_rw *pt) noexcept {
 
   try {
     pt->reset();
-  } catch (const fptu::bad_tuple_rw &e) {
+  } catch (const std::exception &e) {
     return fptu_set_error(e).first;
   }
   return FPTU_OK;

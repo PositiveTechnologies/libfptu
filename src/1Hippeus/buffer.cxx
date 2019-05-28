@@ -112,7 +112,7 @@ __hot __flatten bool buffer::ensure(bool deep_checking) const {
   return true;
 }
 
-static inline void drown(buffer *buf) {
+static inline void drown(buffer *buf) noexcept {
   buf->ref_counter = -1;
   HIPAGUT_DROWN(buf->guard_head);
   HIPAGUT_DROWN(buf->guard_under);
@@ -166,7 +166,7 @@ buffer::add_reference(const buffer *self) noexcept {
   return self;
 }
 
-__hot __flatten void buffer::detach(const buffer *self) {
+__hot __flatten void buffer::detach(const buffer *self) noexcept {
   if (unlikely(self == nullptr))
     return;
 

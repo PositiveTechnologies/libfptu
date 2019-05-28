@@ -615,7 +615,7 @@ public: //----------------------------------------------------------------------
     ensure();
 #endif
   }
-  void reset() noexcept;
+  void reset();
   const fptu::schema *schema() const noexcept { return schema_; }
 
   enum class optimize_flags {
