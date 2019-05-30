@@ -1,3 +1,4 @@
+- [ ] ro/rw-итераторы для loose полей.
 - [ ] fptu::value через tagged_pointer.
 - [ ] взаимодействие с boost::optional.
 - [ ] сериализация в JSON.
