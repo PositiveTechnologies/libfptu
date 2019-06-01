@@ -1,47 +1,16 @@
 ﻿/*
- * Copyright 2016-2019 libfptu authors: please see AUTHORS file.
+ *  Fast Positive Tuples (libfptu)
+ *  Copyright 2016-2019 Leonid Yuriev, https://github.com/leo-yuriev/libfptu
  *
- * This file is part of libfptu, aka "Fast Positive Tuples".
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * libfptu is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * libfptu is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libfptu.  If not, see <http://www.gnu.org/licenses/>.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
-#pragma once
-
-#include "erthink/erthink_byteorder.h"
-#include <cstdint>
-
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-#error fixme..
-#endif
-
-namespace fptu {
-namespace details {
-
-constexpr inline uint16_t le16(const uint16_t *ptr) noexcept { return *ptr; }
-constexpr inline uint32_t le32(const uint32_t *ptr) noexcept { return *ptr; }
-constexpr inline uint64_t le64(const uint64_t *ptr) noexcept { return *ptr; }
-
-constexpr inline void store_le16(uint16_t *ptr, uint16_t value) noexcept {
-  *ptr = value;
-}
-constexpr inline void store_le32(uint32_t *ptr, uint32_t value) noexcept {
-  *ptr = value;
-}
-constexpr inline void store_le64(uint64_t *ptr, uint64_t value) noexcept {
-  *ptr = value;
-}
-
-} // namespace details
-} // namespace fptu
