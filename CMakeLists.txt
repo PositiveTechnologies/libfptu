@@ -1,6 +1,6 @@
 ﻿##
-##  Fast Positive Tuples (libfptu)
-##  Copyright 2016-2019 Leonid Yuriev, https://github.com/leo-yuriev/libfptu
+##  Fast Positive Tuples (libfptu), aka Позитивные Кортежи
+##  Copyright 2016-2019 Leonid Yuriev <leo@yuriev.ru>
 ##
 ##  Licensed under the Apache License, Version 2.0 (the "License");
 ##  you may not use this file except in compliance with the License.
@@ -17,16 +17,14 @@
 
 ##
 ##  libfptu = { Fast Positive Tuples, aka Позитивные Кортежи }
+##  Машинно-эффективный формат линейного представления небольших структур данных
+##  для (де)сериализации, обмена сообщениями и размещения в разделяемой памяти.
 ##
-##  The kind of lightweight linearized tuples, which are extremely handy
-##  to machining, including cases with shared memory.
-##  Please see README.md at https://github.com/leo-yuriev/libfptu
+##  Всё будет хорошо. The Future will (be) Positive.
+##  https://github.com/PositiveTechnologies/libfptu
 ##
-##  The Future will Positive. Всё будет хорошо.
-##
-##  "Позитивные Кортежи" дают легковесное линейное представление небольших
-##  JSON-подобных структур в экстремально удобной для машины форме,
-##  в том числе при размещении в разделяемой памяти.
+##  Machine-handy format for linear representation of small data structures
+##  for (de)serialization, messaging and placement in shared memory.
 ##
 
 cmake_minimum_required(VERSION 3.8.2)
