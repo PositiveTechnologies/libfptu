@@ -32,10 +32,12 @@
 #endif
 
 namespace fptu {
+
+template <details::tag_t> struct token_static;
+
 namespace details {
 
 template <typename> struct token_operations;
-template <tag_t> struct token_static;
 
 template <typename TOKEN> struct token_operations : public TOKEN {
   constexpr token_operations() noexcept = default;
@@ -231,33 +233,36 @@ public:
   };
 };
 
-template <tag_t TAG> struct token_static : public token_static_tag {
-  static constexpr tag_t static_tag = TAG;
-  static constexpr genus static_genus = tag2genus(TAG);
+} // namespace details
+
+template <details::tag_t TAG>
+struct token_static : public details::token_static_tag {
+  static constexpr details::tag_t static_tag = TAG;
+  static constexpr genus static_genus = details::tag2genus(TAG);
   static constexpr bool is_static_preplaced() noexcept {
-    return is_preplaced(TAG);
+    return details::is_preplaced(TAG);
   }
   static constexpr ptrdiff_t static_offset =
-      is_preplaced(TAG) ? tag2offset(TAG) : PTRDIFF_MAX;
+      details::is_preplaced(TAG) ? details::tag2offset(TAG) : PTRDIFF_MAX;
   using traits = meta::genus_traits<static_genus>;
-  constexpr tag_t tag() const noexcept { return TAG; }
+  constexpr details::tag_t tag() const noexcept { return TAG; }
 
 protected:
-  cxx14_constexpr token_static(const tag_t tag) noexcept {
+  cxx14_constexpr token_static(const details::tag_t tag) noexcept {
     constexpr_assert(tag == TAG);
     (void)tag;
   }
   constexpr token_static() noexcept = default;
 
-  constexpr bool operator==(const token_nonstatic_tag &ditto) const noexcept {
+  constexpr bool operator==(const details::token_nonstatic_tag &ditto) const
+      noexcept {
     return tag() == ditto.tag();
   }
-  constexpr bool operator!=(const token_nonstatic_tag &ditto) const noexcept {
+  constexpr bool operator!=(const details::token_nonstatic_tag &ditto) const
+      noexcept {
     return tag() != ditto.tag();
   }
 };
-
-} // namespace details
 
 namespace details {
 template <class T> struct remove_member_pointer;
