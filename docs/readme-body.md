@@ -11,12 +11,7 @@ Machine-handy format for linear representation of small data structures
 for (de)serialization, messaging and placement in shared memory.
 English translation [by Google](https://translate.googleusercontent.com/translate_c?act=url&ie=UTF8&sl=ru&tl=en&u=https://github.com/leo-yuriev/libfptu/tree/devel)
 and [by Yandex](https://translate.yandex.ru/translate?url=https%3A%2F%2Fgithub.com%2Fleo-yuriev%2Flibfptu%2Ftree%2Fdevel&lang=ru-en).
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://travis-ci.org/leo-yuriev/libfptu.svg?branch=devel)](https://travis-ci.org/leo-yuriev/libfptu)
-[![Build status](https://ci.appveyor.com/api/projects/status/8617mtix9paivmkx/branch/devel?svg=true)](https://ci.appveyor.com/project/leo-yuriev/libfptu/branch/devel)
-[![CircleCI](https://circleci.com/gh/leo-yuriev/libfptu/tree/devel.svg?style=svg)](https://circleci.com/gh/leo-yuriev/libfptu/tree/devel)
-[![Coverity Scan Status](https://scan.coverity.com/projects/12919/badge.svg)](https://scan.coverity.com/projects/leo-yuriev-libfptu)
+@BADGES@
 
 
 ## Кратко
@@ -43,28 +38,7 @@ _libfptu_ реализует поддержку формата "Позитивн
 
 ## Содержание
 
-- [Отличия от MessagePack, Protocol Buffers, BJSON](#Отличия-от-messagepack-protocol-buffers-bjson)
-- [Обзор](#Обзор)
-    - [Preplaced Fields](#preplaced-fields)
-    - [Loose Fields](#loose-fields)
-    - [Типы данных](#Типы-данных)
-    - [Токены доступа](#Токены-доступа)
-    - [Справочник схемы](#Справочник-схемы)
-    - [Коллекции и итераторы](#Коллекции-и-итераторы)
-- [Использование](#Использование)
-    - [Схема данных](#Схема-данных)
-        - [Preplaced или Loose](#preplaced-или-loose)
-        - [NIL или не-NIL](#nil-или-не-nil)
-        - [Операции с насыщением](#Операции-с-насыщением)
-        - [Заполнение справочника](#Заполнение-справочника)
-    - [Изменяемая и сериализованная формы](#Изменяемая-и-сериализованная-формы)
-    - [(Де)Сериализация](#ДеСериализация)
-    - [Создание и наполнение](#Создание-и-наполнение)
-    - [Чтение полей](#Чтение-полей)
-    - [Устойчивость к некорректным данным](#Устойчивость-к-некорректным-данным)
-- [Внутри](#Внутри)
-    - [Формат](#Формат)
-    - [Изменяемая и сериализованная формы](#Изменяемая-и-сериализованная-формы)
+@TOC@
 
 ## Отличия от MessagePack, Protocol Buffers, BJSON
 
