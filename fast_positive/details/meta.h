@@ -286,9 +286,7 @@ template <> struct genus_traits<u16> : public inplaced<uint16_t, 0> {
 
 // physique unit×1, 32 bits ----------------------------------------------------
 
-template <>
-struct genus_traits<i32>
-    : public unit_1<int32_t, std::numeric_limits<int32_t>::lowest()> {
+template <> struct genus_traits<i32> : public unit_1<int32_t, INT32_MIN> {
   static constexpr value_type max = std::numeric_limits<value_type>::max();
   static constexpr value_type min = -max;
   static constexpr details::genus_mask_t trivially_convertible_from =
@@ -322,9 +320,7 @@ template <> struct genus_traits<t32> : public unit_1<unsigned, 0> {
 
 // physique unit×2, 64 bits ----------------------------------------------------
 
-template <>
-struct genus_traits<i64>
-    : public unit_2<int64_t, std::numeric_limits<int64_t>::max()> {
+template <> struct genus_traits<i64> : public unit_2<int64_t, INT64_MIN> {
   static constexpr value_type max = std::numeric_limits<value_type>::max();
   static constexpr value_type min = -max;
   static constexpr details::genus_mask_t trivially_convertible_from =
