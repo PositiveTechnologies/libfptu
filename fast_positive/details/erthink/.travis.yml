@@ -1,0 +1,31 @@
+language: cpp
+sudo: false
+dist: xenial
+
+addons:
+  apt:
+#    sources:
+#      - ubuntu-toolchain-r-test
+    packages:
+      - cmake
+      - libgtest-dev
+
+compiler:
+  - gcc
+  - clang
+
+os:
+  - linux
+#  - osx
+
+script: >
+  cmake --version &&
+  cmake . &&
+  (if which clang-format-6.0 > /dev/null && make reformat && [[ -n $(git diff) ]];
+    then
+      echo "You must run 'make reformat' before submitting a pull request";
+      echo "";
+      git diff;
+      exit -1;
+    fi) &&
+  make --keep-going all && make --keep-going test;

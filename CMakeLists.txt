@@ -1,40 +1,44 @@
 ﻿##
-##  Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+##  Fast Positive Tuples (libfptu), aka Позитивные Кортежи
+##  Copyright 2016-2019 Leonid Yuriev <leo@yuriev.ru>
 ##
-##  This file is part of libfptu, aka "Fast Positive Tuples".
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
 ##
-##  libfptu is free software: you can redistribute it and/or modify
-##  it under the terms of the GNU General Public License as published by
-##  the Free Software Foundation, either version 3 of the License, or
-##  (at your option) any later version.
+##      http://www.apache.org/licenses/LICENSE-2.0
 ##
-##  libfptu is distributed in the hope that it will be useful,
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##  GNU General Public License for more details.
-##
-##  You should have received a copy of the GNU General Public License
-##  along with libfptu.  If not, see <http://www.gnu.org/licenses/>.
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
 ##
 
 ##
 ##  libfptu = { Fast Positive Tuples, aka Позитивные Кортежи }
+##  Машинно-эффективный формат линейного представления небольших структур данных
+##  для (де)сериализации, обмена сообщениями и размещения в разделяемой памяти.
 ##
-##  The kind of lightweight linearized tuples, which are extremely handy
-##  to machining, including cases with shared memory.
-##  Please see README.md at https://github.com/leo-yuriev/libfptu
+##  Всё будет хорошо. The Future will (be) Positive.
+##  https://github.com/PositiveTechnologies/libfptu
 ##
-##  The Future will Positive. Всё будет хорошо.
-##
-##  "Позитивные Кортежи" дают легковесное линейное представление небольших
-##  JSON-подобных структур в экстремально удобной для машины форме,
-##  в том числе при размещении в разделяемой памяти.
+##  Machine-handy format for linear representation of small data structures
+##  for (de)serialization, messaging and placement in shared memory.
 ##
 
 cmake_minimum_required(VERSION 3.8.2)
-cmake_policy(SET CMP0054 NEW)
+cmake_policy(PUSH)
+cmake_policy(VERSION 3.8.2)
 if(NOT CMAKE_VERSION VERSION_LESS 3.12)
   cmake_policy(SET CMP0075 NEW)
+endif()
+if(NOT CMAKE_VERSION VERSION_LESS 3.9)
+  cmake_policy(SET CMP0069 NEW)
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE)
+else()
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE FALSE)
 endif()
 
 if(DEFINED PROJECT_NAME)
@@ -43,6 +47,9 @@ else()
   set(SUBPROJECT OFF)
   project(libfptu C CXX)
 endif()
+
+# only for compatibility testing
+# set(CMAKE_CXX_STANDARD 14)
 
 if(NOT "$ENV{TEAMCITY_PROCESS_FLOW_ID}" STREQUAL "")
   set(CI TEAMCITY)
@@ -77,10 +84,13 @@ include(CheckFunctionExists)
 include(FindPackageMessage)
 include(CheckStructHasMember)
 include(CMakeDependentOption)
+include(GNUInstallDirs)
 
-option(PROVIDE_VERSIONINFO "Provide library's version information." ON)
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC" AND MSVC_VERSION LESS 1900)
+  message(SEND_ERROR "MSVC compiler ${MSVC_VERSION} is too old for building FPTU."
+    "At least 'Microsoft Visual Studio 2015' is required.")
+endif()
 
-#
 # Set default build type to Release. This is to ease a User's life.
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING
@@ -93,7 +103,7 @@ list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_17 HAS_CXX17)
 list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_14 HAS_CXX14)
 list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_relaxed_constexpr HAS_RELAXED_CONSTEXPR)
 if(NOT DEFINED FPTU_CXX_STANDARD)
-  if(SUBPROJECT AND DEFINED CMAKE_CXX_STANDARD)
+  if(DEFINED CMAKE_CXX_STANDARD)
     set(FPTU_CXX_STANDARD ${CMAKE_CXX_STANDARD})
   elseif(NOT HAS_CXX17 LESS 0)
     set(FPTU_CXX_STANDARD 17)
@@ -104,29 +114,14 @@ if(NOT DEFINED FPTU_CXX_STANDARD)
   endif()
 endif()
 message(STATUS "Use C++${FPTU_CXX_STANDARD} for libfptu")
-
-if(NOT CMAKE_VERSION VERSION_LESS 3.9)
-  cmake_policy(SET CMP0069 NEW)
-  include(CheckIPOSupported)
-  check_ipo_supported(RESULT CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE)
-else()
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_AVAILABLE FALSE)
+if(NOT SUBPROJECT OR NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD ${FPTU_CXX_STANDARD})
 endif()
 
-# Define GNU standard installation directories
-include(GNUInstallDirs)
-
-include(cmake.fptu/utils.cmake)
-# the order is significant: we need to know os and compiler to configure libs
-include(cmake.fptu/arch.cmake)
-include(cmake.fptu/os.cmake)
-include(cmake.fptu/profile.cmake)
-include(cmake.fptu/compiler.cmake)
-
-if(CMAKE_C_COMPILER_ID STREQUAL "MSVC" AND MSVC_VERSION LESS 1900)
-  message(SEND_ERROR "MSVC compiler ${MSVC_VERSION} is too old for building FPTU."
-    "At least 'Microsoft Visual Studio 2015' is required.")
-endif()
+include(fast_positive/details/erthink/cmake/utils.cmake)
+include(fast_positive/details/erthink/cmake/compiler.cmake)
+include(fast_positive/details/erthink/cmake/profile.cmake)
+option(PROVIDE_VERSIONINFO "Provide library's version information." ON)
 
 find_program(ECHO echo)
 find_program(CAT cat)
@@ -141,6 +136,8 @@ CHECK_INCLUDE_FILES(sys/uio.h HAVE_SYS_UIO_H)
 CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_STRUCT_HAS_MEMBER("struct timeval" tv_usec sys/select.h HAVE_TIMEVAL_TV_USEC)
 CHECK_STRUCT_HAS_MEMBER("struct timespec" tv_nsec time.h HAVE_TIMESPEC_TV_NSEC)
+
+find_package(Threads REQUIRED)
 
 CHECK_FUNCTION_EXISTS(pow NOT_NEED_LIBM)
 if(NOT_NEED_LIBM)
@@ -161,6 +158,9 @@ CHECK_INCLUDE_FILES(ieee754.h HAVE_IEEE754_H)
 if(NOT SUBPROJECT)
   option(CMAKE_POSITION_INDEPENDENT_CODE "Generate position independed (PIC)." ON)
   option(BUILD_SHARED_LIBS "Build shared libraries (DLLs)." ON)
+  if (CC_HAS_ARCH_NATIVE)
+    option(BUILD_FOR_NATIVE_CPU "Generate code for the compiling machine CPU." OFF)
+  endif()
 
   if(CMAKE_CONFIGURATION_TYPES OR NOT CMAKE_BUILD_TYPE_UPPERCASE STREQUAL "DEBUG")
     set(INTERPROCEDURAL_OPTIMIZATION_DEFAULT ON)
@@ -215,11 +215,6 @@ if(NOT SUBPROJECT)
     set(VALGRIND_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS}" CACHE STRING "Valgrind options" FORCE)
   endif()
 
-  if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD ${FPTU_CXX_STANDARD})
-  endif()
-  include(cmake.fptu/testing.cmake)
-
   #
   # Enable 'make tags' target.
   find_program(CTAGS ctags)
@@ -244,8 +239,6 @@ if(NOT SUBPROJECT)
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   endif()
 
-  include(cmake.fptu/multilib.cmake)
-
   if(NOT "${PROJECT_BINARY_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
     add_custom_target(distclean)
     add_custom_command(TARGET distclean
@@ -261,11 +254,12 @@ if(NOT SUBPROJECT)
   endif()
 
   setup_compile_flags()
+  include(fast_positive/details/erthink/cmake/testing.cmake)
 endif(NOT SUBPROJECT)
 
-#######################################################################
+option(FPTU_ENABLE_TESTS "Build FPTU tests." ${BUILD_TESTING})
 
-find_package(Threads REQUIRED)
+################################################################################
 
 if(PROVIDE_VERSIONINFO)
   set(HAVE_FPTU_VERSIONINFO TRUE)
@@ -277,8 +271,12 @@ set(FAST_POSITIVE_CONFIG_H "${CMAKE_CURRENT_BINARY_DIR}/fast_positive/config.h")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fast_positive/config.h.in ${FAST_POSITIVE_CONFIG_H})
 
 include_directories("${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
+set(LIBERTHINK_TYPE STATIC)
+add_subdirectory(fast_positive/details/erthink)
 add_subdirectory(src)
-add_subdirectory(test)
+if(FPTU_ENABLE_TESTS)
+  add_subdirectory(test)
+endif()
 
 if(HAVE_FPTU_VERSIONINFO)
   set(PACKAGE "libfptu")
@@ -289,3 +287,5 @@ if(HAVE_FPTU_VERSIONINFO)
   set(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.${CPACK_PACKAGE_VERSION_COMMIT}")
   message(STATUS "libfptu package version is ${PACKAGE_VERSION}")
 endif()
+
+cmake_policy(POP)

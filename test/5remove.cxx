@@ -1,35 +1,34 @@
-/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+﻿/*
+ *  Fast Positive Tuples (libfptu), aka Позитивные Кортежи
+ *  Copyright 2016-2019 Leonid Yuriev <leo@yuriev.ru>
  *
- * This file is part of libfptu, aka "Fast Positive Tuples".
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * libfptu is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * libfptu is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libfptu.  If not, see <http://www.gnu.org/licenses/>.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "fptu_test.h"
 
 #include "shuffle6.hpp"
 
-static bool field_filter_any(const fptu_field *, void *context, void *param) {
+static bool field_filter_any(const fptu_field *, void *context,
+                             void *param) noexcept {
   (void)context;
   (void)param;
   return true;
 }
 
 TEST(Remove, Base) {
-  char space[fptu_buffer_enough];
-  fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+  char space[fptu::buffer_enough];
+  fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
   ASSERT_NE(nullptr, pt);
 
   // try to remove non-present field
@@ -48,9 +47,9 @@ TEST(Remove, Base) {
   EXPECT_STREQ(nullptr, fptu::check(pt));
 
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
-  EXPECT_EQ(pt->pivot, pt->head);
-  EXPECT_EQ(pt->pivot, pt->tail);
+  EXPECT_EQ(0u, pt->junk_bytes());
+  EXPECT_EQ(pt->pivot_, pt->head_);
+  EXPECT_EQ(pt->pivot_, pt->tail_);
 
   // insert header-only a,b; then delete b,a
   ASSERT_STREQ(nullptr, fptu::check(pt));
@@ -62,14 +61,14 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
+  EXPECT_EQ(0u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
-  EXPECT_EQ(pt->pivot, pt->head);
-  EXPECT_EQ(pt->pivot, pt->tail);
+  EXPECT_EQ(0u, pt->junk_bytes());
+  EXPECT_EQ(pt->pivot_, pt->head_);
+  EXPECT_EQ(pt->pivot_, pt->tail_);
 
   // insert header-only a,b; then delete a,b
   ASSERT_STREQ(nullptr, fptu::check(pt));
@@ -81,14 +80,14 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(1u, pt->junk);
+  EXPECT_EQ(4u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint16));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
-  EXPECT_EQ(pt->pivot, pt->head);
-  EXPECT_EQ(pt->pivot, pt->tail);
+  EXPECT_EQ(0u, pt->junk_bytes());
+  EXPECT_EQ(pt->pivot_, pt->head_);
+  EXPECT_EQ(pt->pivot_, pt->tail_);
 
   // insert a,b; then delete b,a
   ASSERT_STREQ(nullptr, fptu::check(pt));
@@ -100,14 +99,14 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
+  EXPECT_EQ(0u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
-  EXPECT_EQ(pt->pivot, pt->head);
-  EXPECT_EQ(pt->pivot, pt->tail);
+  EXPECT_EQ(0u, pt->junk_bytes());
+  EXPECT_EQ(pt->pivot_, pt->head_);
+  EXPECT_EQ(pt->pivot_, pt->tail_);
 
   // insert a,b; then delete a,b
   ASSERT_STREQ(nullptr, fptu::check(pt));
@@ -119,39 +118,37 @@ TEST(Remove, Base) {
   EXPECT_EQ(1, fptu::erase(pt, 0xA, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(1u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(2u, pt->junk);
+  EXPECT_EQ(8u, pt->junk_bytes());
 
   EXPECT_EQ(1, fptu::erase(pt, 0xB, fptu_uint32));
   EXPECT_STREQ(nullptr, fptu::check(pt));
   EXPECT_EQ(0u, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
-  EXPECT_EQ(0u, pt->junk);
-  EXPECT_EQ(pt->pivot, pt->head);
-  EXPECT_EQ(pt->pivot, pt->tail);
+  EXPECT_EQ(0u, pt->junk_bytes());
+  EXPECT_EQ(pt->pivot_, pt->head_);
+  EXPECT_EQ(pt->pivot_, pt->tail_);
 }
 
 TEST(Remove, Serie) {
-  char space[fptu_buffer_enough];
-  fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+  char space[fptu::buffer_enough];
+  fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
   ASSERT_NE(nullptr, pt);
 
   for (unsigned n = 1; n < 11; ++n) {
     ASSERT_STREQ(nullptr, fptu::check(pt));
     for (unsigned i = 0; i < n; ++i) {
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0, i));
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 0, i));
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 1, i));
-      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 1, i));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 0, uint16_t(i)));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 0, uint16_t(i)));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, 1, uint16_t(i)));
+      EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, 1, uint16_t(i)));
     }
     ASSERT_STREQ(nullptr, fptu::check(pt));
     EXPECT_EQ(n * 4, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
 
-    EXPECT_EQ((int)n,
-              fptu::erase(pt, 1, fptu_ffilter | fptu_filter_mask(fptu_uint16)));
+    EXPECT_EQ((int)n, fptu::erase(pt, 1, fptu_filter_mask(fptu_uint16)));
     EXPECT_STREQ(nullptr, fptu::check(pt));
     EXPECT_EQ(n * 3, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
 
-    EXPECT_EQ((int)n,
-              fptu::erase(pt, 1, fptu_ffilter | fptu_filter_mask(fptu_uint32)));
+    EXPECT_EQ((int)n, fptu::erase(pt, 1, fptu_filter_mask(fptu_uint32)));
     EXPECT_STREQ(nullptr, fptu::check(pt));
     EXPECT_EQ(n * 2, fptu::field_count(pt, field_filter_any, nullptr, nullptr));
 
@@ -174,7 +171,7 @@ TEST(Remove, Serie) {
 }
 
 TEST(Remove, Shuffle) {
-  char space[fptu_buffer_enough];
+  char space[fptu::buffer_enough];
 
   ASSERT_TRUE(shuffle6::selftest());
 
@@ -182,7 +179,7 @@ TEST(Remove, Shuffle) {
     unsigned create_mask = gray_code(create_iter);
 
     for (unsigned n = 0; n < shuffle6::factorial; ++n) {
-      fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+      fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
       ASSERT_NE(nullptr, pt);
 
       SCOPED_TRACE("shuffle #" + std::to_string(n) + ", create-mask " +
@@ -195,13 +192,13 @@ TEST(Remove, Shuffle) {
           default:
             assert(false);
           case 0:
-            EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, i, i));
+            EXPECT_EQ(FPTU_OK, fptu_insert_uint16(pt, i, uint16_t(i)));
             break;
           case 1:
-            EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, i, i));
+            EXPECT_EQ(FPTU_OK, fptu_insert_uint32(pt, i, uint16_t(i)));
             break;
           case 2:
-            EXPECT_EQ(FPTU_OK, fptu_insert_uint64(pt, i, i));
+            EXPECT_EQ(FPTU_OK, fptu_insert_uint64(pt, i, uint16_t(i)));
             break;
           }
           created_count++;
@@ -246,6 +243,8 @@ TEST(Remove, Shuffle) {
     }
   }
 }
+
+//------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

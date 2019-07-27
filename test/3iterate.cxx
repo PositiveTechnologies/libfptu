@@ -1,40 +1,40 @@
-/*
- * Copyright 2016-2018 libfptu authors: please see AUTHORS file.
+﻿/*
+ *  Fast Positive Tuples (libfptu), aka Позитивные Кортежи
+ *  Copyright 2016-2019 Leonid Yuriev <leo@yuriev.ru>
  *
- * This file is part of libfptu, aka "Fast Positive Tuples".
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * libfptu is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * libfptu is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libfptu.  If not, see <http://www.gnu.org/licenses/>.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "fptu_test.h"
 
 #include <stdlib.h>
 
-static bool field_filter_any(const fptu_field *, void *context, void *param) {
+static bool field_filter_any(const fptu_field *, void *context,
+                             void *param) noexcept {
   (void)context;
   (void)param;
   return true;
 }
 
-static bool field_filter_none(const fptu_field *, void *context, void *param) {
+static bool field_filter_none(const fptu_field *, void *context,
+                              void *param) noexcept {
   (void)context;
   (void)param;
   return false;
 }
 
 TEST(Iterate, Empty) {
-  char space_exactly_noitems[sizeof(fptu_rw)];
+  char space_exactly_noitems[fptu_rw::pure_tuple_size()];
   fptu_rw *pt =
       fptu_init(space_exactly_noitems, sizeof(space_exactly_noitems), 0);
   ASSERT_NE(nullptr, pt);
@@ -68,8 +68,8 @@ TEST(Iterate, Empty) {
 }
 
 TEST(Iterate, Simple) {
-  char space[fptu_buffer_enough];
-  fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+  char space[fptu::buffer_enough];
+  fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
   ASSERT_NE(nullptr, pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
 
@@ -141,13 +141,11 @@ TEST(Iterate, Simple) {
     EXPECT_EQ(1u, fptu::field_count(pt, 1, fptu_any));
     EXPECT_EQ(n, fptu::field_count(pt, 2, fptu_any));
     EXPECT_EQ(n, fptu::field_count(pt, 2, fptu_uint32));
-    EXPECT_EQ(0u, fptu::field_count(pt, 2, fptu_null));
     EXPECT_EQ(2u + n,
               fptu::field_count(pt, field_filter_any, nullptr, nullptr));
     EXPECT_EQ(0u, fptu::field_count(pt, field_filter_none, nullptr, nullptr));
 
     EXPECT_EQ(1u, fptu::field_count(ro, 0, fptu_any));
-    EXPECT_EQ(1u, fptu::field_count(ro, 0, fptu_null));
     EXPECT_EQ(1u, fptu::field_count(ro, 1, fptu_any));
     EXPECT_EQ(n, fptu::field_count(ro, 2, fptu_any));
     EXPECT_EQ(0u, fptu::field_count(ro, 3, fptu_uint32));
@@ -160,12 +158,11 @@ TEST(Iterate, Simple) {
 }
 
 TEST(Iterate, Filter) {
-  char space[fptu_buffer_enough];
-  fptu_rw *pt = fptu_init(space, sizeof(space), fptu_max_fields);
+  char space[fptu::buffer_enough];
+  fptu_rw *pt = fptu_init(space, sizeof(space), fptu::max_fields);
   ASSERT_NE(nullptr, pt);
   ASSERT_STREQ(nullptr, fptu::check(pt));
 
-  EXPECT_EQ(FPTU_OK, fptu_upsert_null(pt, 9));
   EXPECT_EQ(FPTU_OK, fptu_upsert_uint16(pt, 9, 2));
   EXPECT_EQ(FPTU_OK, fptu_upsert_uint32(pt, 9, 3));
   EXPECT_EQ(FPTU_OK, fptu_upsert_int32(pt, 9, 4));
@@ -176,12 +173,10 @@ TEST(Iterate, Filter) {
   EXPECT_EQ(FPTU_OK, fptu_upsert_cstr(pt, 9, "cstr"));
 
   ASSERT_STREQ(nullptr, fptu::check(pt));
-  // TODO: check array-only filter
 
   for (unsigned n = 0; n < 11; n++) {
     SCOPED_TRACE("n = " + std::to_string(n));
 
-    EXPECT_EQ((n == 9u) ? 1u : 0u, fptu::field_count(pt, n, fptu_null));
     EXPECT_EQ((n == 9u) ? 1u : 0u, fptu::field_count(pt, n, fptu_uint16));
     EXPECT_EQ((n == 9u) ? 1u : 0u, fptu::field_count(pt, n, fptu_uint32));
     EXPECT_EQ((n == 9u) ? 1u : 0u, fptu::field_count(pt, n, fptu_uint64));
@@ -191,17 +186,17 @@ TEST(Iterate, Filter) {
     EXPECT_EQ((n == 9u) ? 1u : 0u, fptu::field_count(pt, n, fptu_fp64));
     EXPECT_EQ((n == 9u) ? 1u : 0u, fptu::field_count(pt, n, fptu_cstr));
 
-    EXPECT_EQ((n == 9u) ? 9u : 0u, fptu::field_count(pt, n, fptu_any));
-    EXPECT_EQ((n == 9u) ? 2u : 0u, fptu::field_count(pt, n, fptu_any_int));
+    EXPECT_EQ((n == 9u) ? 8u : 0u, fptu::field_count(pt, n, fptu_any));
+    EXPECT_EQ((n == 9u) ? 5u : 0u, fptu::field_count(pt, n, fptu_any_int));
     EXPECT_EQ((n == 9u) ? 3u : 0u, fptu::field_count(pt, n, fptu_any_uint));
     EXPECT_EQ((n == 9u) ? 2u : 0u, fptu::field_count(pt, n, fptu_any_fp));
 
     EXPECT_EQ(0u, fptu::field_count(pt, n, fptu_opaque));
     EXPECT_EQ(0u, fptu::field_count(pt, n, fptu_nested));
-    EXPECT_EQ(0u, fptu::field_count(pt, n, fptu_filter_mask(fptu_farray)));
-    EXPECT_EQ(0u, fptu::field_count(pt, n, fptu_ffilter));
   }
 }
+
+//------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

@@ -1,18 +1,15 @@
-﻿- [x] intergation with GoogleTest (pull, build);
-- [x] CI by AppVeyor;
-- [x] use fast-int types and double_t;
-- [x] Link-Time Optimization;
-- [x] verification by Coverity.
-- [x] full c-matrix for Windows (2013/2015/2017).
-- [x] interface for external scheme;
-- [x] serialization to JSON (optional with schema);
-- [ ] v2.0: de-serialization from JSON (with schema);
-- [ ] v2.0: fput_field_xyz_cmp();
-- [ ] v2.0: fptu_field_xyz_set();
-- [ ] v2.0: support for headspace reservation;
-- [ ] v2.0: support for arrays and nested tuples;
-- [ ] v2.0: C++ bindings;
-- [ ] v2.0: unit test for `limits`;
-- [ ] v2.0: external scheme support and C++ binding auto-generation;
-- [ ] v2.0: ? support for sorted tuples.
-- [ ] v2.0: automatic grow for buffers (by one more indirection)
+- [ ] ro/rw-итераторы для loose полей.
+- [ ] fptu::value через tagged_pointer.
+- [ ] взаимодействие с boost::optional.
+- [ ] сериализация в JSON.
+- [ ] устойчивое сравнение кортежей.
+- [ ] std::hash.
+- [ ] uprobes/SystemTap и perfomance-penalty.
+- [ ] Зачистить combo_ptr.
+- [ ] more SIMD (sort, holes search, binary-search);
+- [ ] AVX512;
+- [ ] inlay iteration;
+
+- [ ] de-serialization from JSON (with schema);
+- [ ] unit test for `limits`;
+- [ ] support for sorted tuples.

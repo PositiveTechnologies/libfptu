@@ -1,6 +1,9 @@
 version: 2
 jobs:
   build:
+    environment:
+      - MALLOC_CHECK_: 7
+      - MALLOC_PERTURB_: 42
     docker:
       - image: circleci/buildpack-deps:19.04-browsers
     steps:
@@ -13,7 +16,7 @@ jobs:
       - run: cmake .
       - run: make --keep-going all
       - run: ulimit -c unlimited && make --keep-going test
-      - run: test/fptu_c_mode
+      - run: test ! -x test/fptu_c_mode || test/fptu_c_mode
       - run:
           command: |
             mkdir -p /tmp/artifacts

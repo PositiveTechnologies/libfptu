@@ -39,13 +39,14 @@
 
 class ECMAScript_keywords {
 private:
-  static inline unsigned int hash(const char *str, size_t len);
+  static inline unsigned int hash(const char *str, std::size_t len);
 
 public:
-  static const char *in_word_set(const char *str, size_t len);
+  static const char *in_word_set(const char *str, std::size_t len);
 };
 
-inline unsigned int ECMAScript_keywords::hash(const char *str, size_t len) {
+inline unsigned int ECMAScript_keywords::hash(const char *str,
+                                              std::size_t len) {
   static const unsigned char asso_values[] = {
       56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56,
       56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56,
@@ -59,7 +60,7 @@ inline unsigned int ECMAScript_keywords::hash(const char *str, size_t len) {
          asso_values[static_cast<unsigned char>(str[0])];
 }
 
-const char *ECMAScript_keywords::in_word_set(const char *str, size_t len) {
+const char *ECMAScript_keywords::in_word_set(const char *str, std::size_t len) {
   struct stringpool_t {
     char stringpool_str2[sizeof("in")];
     char stringpool_str3[sizeof("new")];

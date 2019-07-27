@@ -1,6 +1,6 @@
 language: cpp
 sudo: required
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -52,5 +52,7 @@ script: >
         exit -1;
       fi) &&
     make --keep-going all &&
-    make --keep-going test && test/fptu_c_mode;
+    (if [ "${TRAVIS_COMPILER}" != "clang" ]; then MALLOC_CHECK_=7 MALLOC_PERTURB_=42 make --keep-going test;
+    else echo "Skip tests due clang-CRTP-exceptions-bug"; fi) &&
+    ([ ! -x test/fptu_c_mode ] || test/fptu_c_mode);
   fi
