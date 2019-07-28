@@ -1,3 +1,4 @@
+<!-- Required extensions: pymdownx.betterem, pymdownx.tilde, pymdownx.emoji, pymdownx.tasklist, pymdownx.superfences -->
 - [ ] ro/rw-итераторы для loose полей.
 - [ ] fptu::value через tagged_pointer.
 - [ ] взаимодействие с boost::optional.
