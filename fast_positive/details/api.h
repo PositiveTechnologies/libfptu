@@ -16,7 +16,7 @@
  */
 
 #define FPTU_VERSION_MAJOR 0
-#define FPTU_VERSION_MINOR 0
+#define FPTU_VERSION_MINOR 2
 
 #include "fast_positive/config.h"
 #include "fast_positive/details/erthink/erthink_defs.h"
