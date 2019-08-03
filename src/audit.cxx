@@ -242,8 +242,9 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
 
   const char *trouble;
   onstack_allocation_arena area;
-  auditor validator(area, index_end - index_begin +
-                              (schema ? schema->stretchy_preplaced() : 0));
+  auditor validator(area,
+                    index_end - index_begin +
+                        (schema ? schema->number_of_stretchy_preplaced() : 0));
   for (const field_loose *loose = index_end; --loose >= index_begin;) {
     trouble = validator.check_loose(loose, payload_begin, payload_end);
     if (unlikely(trouble))

@@ -26,7 +26,8 @@
 
 namespace fptu {
 
-inline schema::schema() : stretchy_preplaced_(0) {}
+inline schema::schema()
+    : number_of_preplaced_(0), number_of_stretchy_preplaced_(0) {}
 schema::~schema() {}
 
 namespace {
@@ -50,7 +51,7 @@ struct schema_impl : public schema {
 
   void purge() noexcept {
     sorted_tokens_.clear();
-    stretchy_preplaced_ = 0;
+    number_of_preplaced_ = number_of_stretchy_preplaced_ = 0;
     preplaced_image_.clear();
     name2token_.clear();
     token2name_.clear();
@@ -165,7 +166,8 @@ void schema_impl::add_definition(std::string &&name, const token &ident,
                                 ident.preplaced_size());
       else
         preplaced_image_.append(ident.preplaced_size(), '\0');
-      stretchy_preplaced_ += ident.is_stretchy();
+      number_of_stretchy_preplaced_ += ident.is_stretchy();
+      number_of_preplaced_ += 1;
     }
 
     sorted_tokens_.push_back(ident);
@@ -323,6 +325,155 @@ string_view schema_impl::get_name_nothrow(const token &ident) const noexcept {
 
 std::unique_ptr<schema> schema::create() {
   return std::unique_ptr<schema>(new schema_impl());
+}
+
+__hot schema::token_vector::const_iterator
+schema::search_preplaced(const ptrdiff_t offset) const noexcept {
+  assert(offset >= 0 && size_t(offset) <= preplaced_bytes());
+
+  size_t span = number_of_preplaced();
+  assert(span <= sorted_tokens_.size());
+
+  /* Смещение prelaced-поля в старших битах тэга и токена, поэтому для поиска
+   * нормализация НЕ требуется, ибо дополнительные флаги не меняют порядка */
+  const details::tag_t tag(offset << details::tag_bits::offset_shift);
+  auto iter = sorted_tokens_.begin();
+  while (span > 3) {
+    const auto top = span;
+    span >>= 1;
+    const auto middle = iter + span;
+    assert(middle->is_preplaced());
+    if (middle->tag() < tag) {
+      iter = middle + 1;
+      span = top - span - 1;
+    }
+  }
+
+  switch (span) {
+  case 3:
+    assert(iter->is_preplaced());
+    if (iter->tag() >= tag)
+      break;
+    ++iter;
+    __fallthrough /* fall through */;
+  case 2:
+    assert(iter->is_preplaced());
+    if (iter->tag() >= tag)
+      break;
+    ++iter;
+    __fallthrough /* fall through */;
+  case 1:
+    assert(iter->is_preplaced());
+    if (iter->tag() >= tag)
+      break;
+    ++iter;
+    __fallthrough /* fall through */;
+  case 0:
+    break;
+  default:
+    assert(false);
+    __unreachable();
+  }
+  return iter;
+}
+
+__hot token schema::by_loose(const details::field_loose *field) const noexcept {
+  size_t span = sorted_tokens_.size() - number_of_preplaced();
+  if (likely(span)) {
+    auto iter = sorted_tokens_.begin() + number_of_preplaced();
+    /* id в теге и токене loose-поля расположено в младших битах, поэтому для
+     * поиска ТРЕБУЕТСЯ нормализация, ибо дополнительные флаги меняют порядок */
+    const details::tag_t normalized_tag = details::normalize_tag(
+        details::make_tag(field->genus_and_id, false, false, false), false);
+
+    while (span > 3) {
+      const auto top = span;
+      span >>= 1;
+      const auto middle = iter + span;
+      assert(middle->is_loose());
+      if (middle->normalized_tag() < normalized_tag) {
+        iter = middle + 1;
+        span = top - span - 1;
+      }
+    }
+
+    switch (span) {
+    case 3:
+      assert(iter->is_loose());
+      if (iter->normalized_tag() >= normalized_tag)
+        return (details::tag2genus_and_id(iter->tag()) == field->genus_and_id)
+                   ? *iter
+                   : token();
+      ++iter;
+      __fallthrough /* fall through */;
+    case 2:
+      assert(iter->is_loose());
+      if (iter->normalized_tag() >= normalized_tag)
+        return (details::tag2genus_and_id(iter->tag()) == field->genus_and_id)
+                   ? *iter
+                   : token();
+      ++iter;
+      __fallthrough /* fall through */;
+    case 1:
+      assert(iter->is_loose());
+      if (iter->normalized_tag() >= normalized_tag)
+        return (details::tag2genus_and_id(iter->tag()) == field->genus_and_id)
+                   ? *iter
+                   : token();
+      ++iter;
+      __fallthrough /* fall through */;
+    case 0:
+      break;
+    default:
+      assert(false);
+      __unreachable();
+    }
+  }
+
+  return token();
+}
+
+token schema::by_offset(const ptrdiff_t offset) const noexcept {
+  if (likely(offset >= 0 && offset < ptrdiff_t(preplaced_bytes()))) {
+    const auto iter = search_preplaced(offset);
+    const auto detent = tokens().begin() + number_of_preplaced();
+    assert(iter >= tokens().begin() && iter <= detent);
+    if (likely(iter < detent && offset == iter->preplaced_offset())) {
+      assert(iter->is_preplaced());
+      return *iter;
+    }
+  }
+  return token();
+}
+
+token schema::next_by_offset(const ptrdiff_t offset) const noexcept {
+  if (likely(offset >= 0 && offset < ptrdiff_t(preplaced_bytes()))) {
+    auto iter = search_preplaced(offset);
+    const auto detent = tokens().begin() + number_of_preplaced();
+    assert(iter >= tokens().begin() && iter <= detent);
+    if (likely(iter < detent)) {
+      assert(iter->preplaced_offset() >= offset);
+      iter += iter->preplaced_offset() == offset;
+      if (likely(iter < detent)) {
+        assert(iter->is_preplaced());
+        return *iter;
+      }
+    }
+  }
+  return token();
+}
+
+token schema::prev_by_offset(const ptrdiff_t offset) const noexcept {
+  if (likely(offset > 0 && offset <= ptrdiff_t(preplaced_bytes()))) {
+    auto iter = search_preplaced(offset);
+    assert(iter >= tokens().begin() &&
+           iter <= tokens().begin() + number_of_preplaced());
+    if (likely(--iter >= tokens().begin())) {
+      assert(iter->preplaced_offset() < offset);
+      return *iter;
+    }
+  }
+  return token();
 }
 
 token schema::get_token(const string_view &field_name,

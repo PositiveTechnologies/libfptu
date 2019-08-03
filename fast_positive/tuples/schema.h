@@ -226,15 +226,32 @@ public:
   const void *preplaced_init_image() const noexcept {
     return preplaced_image_.data();
   }
-  std::size_t stretchy_preplaced() const noexcept {
-    return stretchy_preplaced_;
+  constexpr std::size_t number_of_preplaced() const noexcept {
+    return number_of_preplaced_;
   }
+  constexpr bool have_preplaced() const noexcept {
+    return number_of_preplaced() > 0;
+  }
+  constexpr std::size_t number_of_stretchy_preplaced() const noexcept {
+    return number_of_stretchy_preplaced_;
+  }
+  constexpr bool have_stretchy_preplaced() const noexcept {
+    return number_of_stretchy_preplaced() > 0;
+  }
+
+  __pure_function token by_loose(const details::field_loose *) const noexcept;
+  __pure_function token by_offset(const ptrdiff_t offset) const noexcept;
+  __pure_function token next_by_offset(const ptrdiff_t offset) const noexcept;
+  __pure_function token prev_by_offset(const ptrdiff_t offset) const noexcept;
 
 protected:
   inline schema();
-  std::size_t stretchy_preplaced_;
+  unsigned number_of_preplaced_, number_of_stretchy_preplaced_;
   std::string preplaced_image_;
   token_vector sorted_tokens_;
+
+  token_vector::const_iterator search_preplaced(const ptrdiff_t offset) const
+      noexcept;
 };
 
 } // namespace fptu
