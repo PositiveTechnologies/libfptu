@@ -15,11 +15,11 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/schema.h"
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/bug.h"
-#include "fast_positive/details/essentials.h"
-#include "fast_positive/details/token.h"
+#include "fast_positive/tuples/schema.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/bug.h"
+#include "fast_positive/tuples/essentials.h"
+#include "fast_positive/tuples/token.h"
 
 #include <algorithm>
 #include <unordered_map>

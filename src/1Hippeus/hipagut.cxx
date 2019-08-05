@@ -20,12 +20,12 @@
  * Copyright (c) 2006-2013 Leonid Yuriev <leo@yuriev.ru>.
  */
 
-#include "fast_positive/details/api.h"
+#include "fast_positive/tuples/api.h"
 
-#include "fast_positive/details/1Hippeus/hipagut.h"
-#include "fast_positive/details/bug.h"
-#include "fast_positive/details/erthink/erthink_intrin.h"
-#include "fast_positive/details/erthink/erthink_mul.h"
+#include "fast_positive/erthink/erthink_intrin.h"
+#include "fast_positive/erthink/erthink_mul.h"
+#include "fast_positive/tuples/1Hippeus/hipagut.h"
+#include "fast_positive/tuples/details/bug.h"
 
 #include <time.h>
 static __always_inline std::size_t ticks() {

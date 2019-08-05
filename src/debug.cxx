@@ -15,20 +15,20 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/essentials.h"
-#include "fast_positive/details/exceptions.h"
-#include "fast_positive/details/field.h"
-#include "fast_positive/details/getter.h"
-#include "fast_positive/details/meta.h"
-#include "fast_positive/details/ro.h"
-#include "fast_positive/details/scan.h"
-#include "fast_positive/details/schema.h"
-#include "fast_positive/details/token.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/exceptions.h"
+#include "fast_positive/tuples/details/field.h"
+#include "fast_positive/tuples/details/getter.h"
+#include "fast_positive/tuples/details/meta.h"
+#include "fast_positive/tuples/details/ro.h"
+#include "fast_positive/tuples/details/scan.h"
+#include "fast_positive/tuples/essentials.h"
+#include "fast_positive/tuples/schema.h"
+#include "fast_positive/tuples/token.h"
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
-#include "fast_positive/details/erthink/erthink_optimize4size.h"
+#include "fast_positive/erthink/erthink_optimize4size.h"
 
 namespace std {
 

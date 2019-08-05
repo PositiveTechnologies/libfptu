@@ -15,10 +15,10 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/cpu_features.h"
-#include "fast_positive/details/erthink/erthink_defs.h"
-#include "fast_positive/details/erthink/erthink_intrin.h"
+#include "fast_positive/erthink/erthink_defs.h"
+#include "fast_positive/erthink/erthink_intrin.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/cpu_features.h"
 #include <string.h> // for memset()
 
 namespace fptu {

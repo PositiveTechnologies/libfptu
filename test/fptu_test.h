@@ -54,8 +54,8 @@
 #pragma warning(pop)
 #endif
 
-#include "fast_positive/details/legacy_compat.h"
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/details/legacy_compat.h"
+#include "fast_positive/tuples/internal.h"
 
 /* LY: reduce test runtime (significantly on Elbrus) */
 #if defined(__LCC__) && defined(NDEBUG) && defined(__OPTIMIZE__) &&            \

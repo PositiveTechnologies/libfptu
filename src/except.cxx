@@ -17,12 +17,12 @@
 
 #include "fast_positive/tuples.h"
 
-#include "fast_positive/details/bug.h"
-#include "fast_positive/details/ro.h"
-#include "fast_positive/details/rw.h"
+#include "fast_positive/tuples/details/bug.h"
+#include "fast_positive/tuples/details/ro.h"
+#include "fast_positive/tuples/details/rw.h"
 
-#include "fast_positive/details/erthink/erthink_optimize4size.h"
-#include "fast_positive/details/exceptions.h"
+#include "fast_positive/erthink/erthink_optimize4size.h"
+#include "fast_positive/tuples/details/exceptions.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(default)

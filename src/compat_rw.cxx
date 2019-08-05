@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/legacy_compat.h"
+#include "fast_positive/tuples/details/legacy_compat.h"
 
 size_t fptu_space(size_t items, std::size_t data_bytes) noexcept {
   return fptu::details::tuple_rw::estimate_required_space(

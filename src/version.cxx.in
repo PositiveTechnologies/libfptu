@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
 #if defined(_MSC_VER) && defined(FPTU_BUILD_TARGET)
 #pragma message("Configuration-depended FPTU_BUILD_TARGET: " FPTU_BUILD_TARGET)

@@ -15,9 +15,9 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/field.h"
-#include "fast_positive/details/scan.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/field.h"
+#include "fast_positive/tuples/details/scan.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -39,7 +39,7 @@ __cold const field_loose *fptu_scan_referential(const field_loose *begin,
 
 //------------------------------------------------------------------------------
 
-#include "fast_positive/details/erthink/erthink_optimize4speed.h"
+#include "fast_positive/erthink/erthink_optimize4speed.h"
 
 #define STEP_x1                                                                \
   do {                                                                         \

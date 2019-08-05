@@ -16,12 +16,12 @@
  */
 
 #include "../fptu_test.h"
-#include "fast_positive/details/cpu_features.h"
+#include "fast_positive/tuples/details/cpu_features.h"
 
 #include <array>
 #include <vector>
 
-#include "fast_positive/details/warnings_push_pt.h"
+#include "fast_positive/tuples/details/warnings_push_pt.h"
 
 //------------------------------------------------------------------------------
 

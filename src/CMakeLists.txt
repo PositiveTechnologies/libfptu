@@ -59,79 +59,85 @@ if(NOT LIBFPTU_TYPE)
   endif()
 endif()
 
+set(LIBFPTU_HEADERS
+  tuples.h
+  tuples/api.h
+  tuples/essentials.h
+  tuples/legacy.h
+  tuples/schema.h
+  tuples/string_view.h
+  tuples/token.h
+  tuples/internal.h
+
+  tuples/types.h
+  tuples/types/datetime.h
+  tuples/types/decimal.h
+  tuples/types/fixed_binary.h
+  tuples/types/float.h
+  tuples/types/integer128.h
+  tuples/types/ip_address.h
+  tuples/types/mac_address.h
+  tuples/types/property.h
+  tuples/types/uuid.h
+
+  erthink/erthink_arch.h
+  erthink/erthink_bswap.h
+  erthink/erthink_byteorder.h
+  erthink/erthink_d2a.h
+  erthink/erthink_defs.h
+  erthink/erthink_dynamic_constexpr.h
+  erthink/erthink_u2a.h
+  erthink/erthink_short_alloc.h
+  erthink/erthink_optimize4size.h
+  erthink/erthink_optimize4speed.h
+  erthink/erthink_ifunc.h
+  erthink/erthink_misc.h
+  erthink/erthink_endian.h
+
+  tuples/1Hippeus/actor.h
+  tuples/1Hippeus/buffer.h
+  tuples/1Hippeus/hipagut.h
+  tuples/1Hippeus/hipagut_allocator.h
+  tuples/1Hippeus/utils.h
+
+  tuples/details/audit.h
+  tuples/details/exceptions.h
+  tuples/details/field.h
+  tuples/details/getter.h
+  tuples/details/legacy_common.h
+  tuples/details/legacy_compat.h
+  tuples/details/meta.h
+  tuples/details/ro.h
+  tuples/details/rw.h
+  tuples/details/scan.h
+  tuples/details/tagged_pointer.h
+  tuples/details/type2genus.h
+  tuples/details/uio.h
+  tuples/details/utils.h
+  tuples/details/windows_mustdie.h
+  tuples/details/posix_modern.h
+  tuples/details/bug.h
+  tuples/details/cpu_features.h
+  tuples/details/crutches.h
+  tuples/details/nan.h
+
+  tuples/details/warnings_push_pt.h
+  tuples/details/warnings_push_system.h
+  tuples/details/warnings_pop.h
+  )
+
+foreach(file ${LIBFPTU_HEADERS})
+  list(APPEND LIBFPTU_HEADERS_PRETENDED "../fast_positive/${file}")
+endforeach()
+
 set(LIBFPTU_SOURCES
-  ${FAST_POSITIVE_CONFIG_H}
-  ../fast_positive/details/erthink/erthink_arch.h
-  ../fast_positive/details/erthink/erthink_bswap.h
-  ../fast_positive/details/erthink/erthink_byteorder.h
-  ../fast_positive/details/erthink/erthink_d2a.h
-  ../fast_positive/details/erthink/erthink_defs.h
-  ../fast_positive/details/erthink/erthink_dynamic_constexpr.h
-  ../fast_positive/details/erthink/erthink_u2a.h
-  ../fast_positive/details/erthink/erthink_short_alloc.h
-  ../fast_positive/details/erthink/erthink_optimize4size.h
-  ../fast_positive/details/erthink/erthink_optimize4speed.h
-  ../fast_positive/details/erthink/erthink_ifunc.h
-  ../fast_positive/details/erthink/erthink_misc.h
-  ../fast_positive/details/erthink/erthink_endian.h
-  ../fast_positive/details/erthink/erthink.h
-
-  ../fast_positive/details/1Hippeus/actor.h
-  ../fast_positive/details/1Hippeus/buffer.h
-  ../fast_positive/details/1Hippeus/hipagut.h
-  ../fast_positive/details/1Hippeus/hipagut_allocator.h
-  ../fast_positive/details/1Hippeus/utils.h
-
-  ../fast_positive/details/api.h
-  ../fast_positive/details/audit.h
-  ../fast_positive/details/fixed_binary.h
-  ../fast_positive/details/bug.h
-  ../fast_positive/details/cpu_features.h
-  ../fast_positive/details/datetime.h
-  ../fast_positive/details/decimal.h
-  ../fast_positive/details/essentials.h
-  ../fast_positive/details/exceptions.h
-  ../fast_positive/details/field.h
-  ../fast_positive/details/float.h
-  ../fast_positive/details/getter.h
-  ../fast_positive/details/integer128.h
-  ../fast_positive/details/ip_address.h
-  ../fast_positive/details/legacy_common.h
-  ../fast_positive/details/legacy_compat.h
-  ../fast_positive/details/mac_address.h
-  ../fast_positive/details/meta.h
-  ../fast_positive/details/nan.h
-  ../fast_positive/details/property.h
-  ../fast_positive/details/ro.h
-  ../fast_positive/details/rw.h
-  ../fast_positive/details/scan.h
-  ../fast_positive/details/schema.h
-  ../fast_positive/details/string_view.h
-  ../fast_positive/details/tagged_pointer.h
-  ../fast_positive/details/token.h
-  ../fast_positive/details/type2genus.h
-  ../fast_positive/details/types.h
-  ../fast_positive/details/uio.h
-  ../fast_positive/details/utils.h
-  ../fast_positive/details/uuid.h
-  ../fast_positive/details/crutches.h
-  ../fast_positive/details/windows_mustdie.h
-  ../fast_positive/details/posix_modern.h
-  ../fast_positive/details/warnings_push_pt.h
-  ../fast_positive/details/warnings_push_system.h
-  ../fast_positive/details/warnings_pop.h
-  ../fast_positive/tuples.h
-  ../fast_positive/tuples_internal.h
-  ../fast_positive/tuples_legacy.h
-
   1Hippeus/allot_stdcxx.cxx
   1Hippeus/buffer.cxx
   1Hippeus/hipagut.cxx
   1Hippeus/utils.cxx
 
-  ../fast_positive/details/TODO/casting.h
-  ../fast_positive/details/TODO/endianness.h
-  ../fast_positive/details/TODO/unaligned.h
+  ../fast_positive/tuples/TODO/casting.h
+  ../fast_positive/tuples/TODO/unaligned.h
   TODO/json_parse.cxx
   TODO/json_emit.cxx
   TODO/magic.cxx
@@ -183,14 +189,14 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif()
 
 if(LIBFPTU_TYPE STREQUAL "PILE")
-  add_library(fptu_objects OBJECT ${LIBFPTU_SOURCES})
+  add_library(fptu_objects OBJECT ${LIBFPTU_SOURCES} ${LIBFPTU_HEADERS_PRETENDED} ${LIBFPTU_CONFIG_H})
   add_library(fptu INTERFACE)
   target_compile_features(fptu_objects INTERFACE "cxx_std_${FPTU_CXX_STANDARD}")
   add_dependencies(fptu fptu_objects)
   target_link_libraries(fptu INTERFACE $<TARGET_OBJECTS:fptu_objects>)
   set(fptu_target fptu_objects)
 else()
-  add_library(fptu ${LIBFPTU_TYPE} ${LIBFPTU_SOURCES})
+  add_library(fptu ${LIBFPTU_TYPE} ${LIBFPTU_SOURCES} ${LIBFPTU_HEADERS_PRETENDED} ${LIBFPTU_CONFIG_H})
   set(fptu_target fptu)
 endif()
 
@@ -198,8 +204,8 @@ set_target_properties(${fptu_target} PROPERTIES
   PROJECT_LABEL "Fast Positive Tuples"
   FRAMEWORK TRUE
   VERSION "${FPTU_VERSION}"
-  PUBLIC_HEADER "../fast_positive/defs.h;../fast_positive/tuples.h;${FAST_POSITIVE_CONFIG_H}"
-  PRIVATE_HEADER ../fast_positive/tuples_internal.h
+  PUBLIC_HEADER "${LIBFPTU_CONFIG_H}"
+#  PRIVATE_HEADER "${LIBFPTU_PRIVATE_INCLUDES}"
   INTERPROCEDURAL_OPTIMIZATION $<BOOL:${INTERPROCEDURAL_OPTIMIZATION}>
   CXX_STANDARD ${FPTU_CXX_STANDARD}
   CXX_STANDARD_REQUIRED ON
@@ -236,9 +242,18 @@ install(TARGETS fptu
   LIBRARY DESTINATION lib COMPONENT runtime
   RUNTIME DESTINATION lib COMPONENT runtime
   ARCHIVE DESTINATION lib/static COMPONENT devel
-  PUBLIC_HEADER DESTINATION include/fast_positive INCLUDES DESTINATION include COMPONENT devel
-  PRIVATE_HEADER DESTINATION include/fast_positive INCLUDES DESTINATION include COMPONENT devel
+  PUBLIC_HEADER DESTINATION include/fast_positive/tuples INCLUDES DESTINATION include COMPONENT devel
+#  PRIVATE_HEADER DESTINATION include/fast_positive/ INCLUDES DESTINATION include COMPONENT devel
   )
+
+foreach(file ${LIBFPTU_HEADERS} erthink/LICENSE erthink/AUTHORS)
+  get_filename_component(dir ${file} DIRECTORY)
+  install(FILES "../fast_positive/${file}" DESTINATION "include/fast_positive/${dir}")
+endforeach()
+
+foreach(file LICENSE README.md)
+  install(FILES "../${file}" DESTINATION "include/fast_positive/tuples")
+endforeach()
 
 ################################################################################
 #
@@ -259,8 +274,8 @@ get_target_property(fptu_compile_options ${fptu_target} COMPILE_OPTIONS)
 if(NOT fptu_compile_options)
   set(fptu_compile_options "")
 endif()
-# append cmake's common cxx flags and defines
 
+# append cmake's common cxx flags and defines
 string(REPLACE " " ";" cmake_cxx_options "${CMAKE_CXX_FLAGS}" "${CMAKE_CXX_DEFINES}")
 list(INSERT fptu_compile_options 0 "${cmake_cxx_options}")
 unset(cmake_cxx_options)

@@ -19,15 +19,15 @@
 #error "The -mavx or /arch:AVX compiler's option is required"
 #endif
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/erthink/erthink_intrin.h"
-#include "fast_positive/details/field.h"
-#include "fast_positive/details/scan.h"
+#include "fast_positive/erthink/erthink_intrin.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/field.h"
+#include "fast_positive/tuples/details/scan.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 
-#include "fast_positive/details/erthink/erthink_optimize4speed.h"
+#include "fast_positive/erthink/erthink_optimize4speed.h"
 
 namespace fptu {
 namespace details {

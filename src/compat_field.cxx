@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/legacy_compat.h"
+#include "fast_positive/tuples/details/legacy_compat.h"
 
 //------------------------------------------------------------------------------
 

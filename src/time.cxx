@@ -15,11 +15,11 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
 #if defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS)
 #pragma warning(push, 1)
-#include "fast_positive/details/windows_mustdie.h"
+#include "fast_positive/tuples/details/windows_mustdie.h"
 #include <bcrypt.h> // for NTSTATUS
 #pragma warning(pop)
 #pragma warning(disable : 4191) /* unsafe conversion from 'FARPROC' to ... */

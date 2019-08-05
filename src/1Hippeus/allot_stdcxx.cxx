@@ -20,16 +20,16 @@
  * Copyright (c) 2006-2013 Leonid Yuriev <leo@yuriev.ru>.
  */
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/bug.h"
-#include "fast_positive/details/essentials.h"
-#include "fast_positive/details/exceptions.h"
-#include "fast_positive/details/utils.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/bug.h"
+#include "fast_positive/tuples/details/exceptions.h"
+#include "fast_positive/tuples/details/utils.h"
+#include "fast_positive/tuples/essentials.h"
 
-#include "fast_positive/details/1Hippeus/actor.h"
-#include "fast_positive/details/1Hippeus/buffer.h"
-#include "fast_positive/details/1Hippeus/hipagut.h"
-#include "fast_positive/details/1Hippeus/hipagut_allocator.h"
+#include "fast_positive/tuples/1Hippeus/actor.h"
+#include "fast_positive/tuples/1Hippeus/buffer.h"
+#include "fast_positive/tuples/1Hippeus/hipagut.h"
+#include "fast_positive/tuples/1Hippeus/hipagut_allocator.h"
 
 namespace {
 class buffer_allocator : public hippeus_allot_t,

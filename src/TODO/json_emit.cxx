@@ -20,9 +20,9 @@
 #pragma warning(disable : 4710) /* function not inlined */
 #endif
 
-#include "fast_positive/details/erthink/erthink_d2a.h"
-#include "fast_positive/details/erthink/erthink_u2a.h"
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/erthink/erthink_d2a.h"
+#include "fast_positive/erthink/erthink_u2a.h"
+#include "fast_positive/tuples/internal.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4774) /* '_snprintf_s' : format string expected in   \

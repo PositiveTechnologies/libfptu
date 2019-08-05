@@ -30,14 +30,14 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-#include "fast_positive/details/warnings_push_pt.h"
+#include "fast_positive/tuples/details/warnings_push_pt.h"
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/types.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/types.h"
 
 #ifdef __cplusplus
 
-#include "fast_positive/details/warnings_push_system.h"
+#include "fast_positive/tuples/details/warnings_push_system.h"
 
 #include <cmath>     // for std::ldexp
 #include <limits>    // for numeric_limits<>
@@ -46,19 +46,19 @@
 #include <stdexcept> // for std::invalid_argument
 #include <string>    // for std::string
 
-#include "fast_positive/details/warnings_pop.h"
+#include "fast_positive/tuples/details/warnings_pop.h"
 
-#include "fast_positive/details/audit.h"
-#include "fast_positive/details/essentials.h"
-#include "fast_positive/details/exceptions.h"
-#include "fast_positive/details/field.h"
-#include "fast_positive/details/getter.h"
-#include "fast_positive/details/legacy_common.h"
-#include "fast_positive/details/ro.h"
-#include "fast_positive/details/rw.h"
-#include "fast_positive/details/schema.h"
-#include "fast_positive/details/tagged_pointer.h"
-#include "fast_positive/details/token.h"
+#include "fast_positive/tuples/details/audit.h"
+#include "fast_positive/tuples/details/exceptions.h"
+#include "fast_positive/tuples/details/field.h"
+#include "fast_positive/tuples/details/getter.h"
+#include "fast_positive/tuples/details/legacy_common.h"
+#include "fast_positive/tuples/details/ro.h"
+#include "fast_positive/tuples/details/rw.h"
+#include "fast_positive/tuples/details/tagged_pointer.h"
+#include "fast_positive/tuples/essentials.h"
+#include "fast_positive/tuples/schema.h"
+#include "fast_positive/tuples/token.h"
 
 #endif /* __cplusplus */
 
@@ -74,7 +74,7 @@ class schema /* Минималистический справочник схем
    трансляция символических ("человеческих") имен полей в "токены
    доступа".
 
-   Полное определение в fast_positive/details/schema.h */
+   Полное определение в fast_positive/tuples/schema.h */
     ;
 
 /* Режимы проверки данных и их соответствия схеме при создании кортежей */
@@ -111,7 +111,7 @@ class token /* Токен доступа к полю кортежей.
     - смещение к данным для "быстрых" полей.
     и т.д.
 
-  Полное определение в fast_positive/details/token.h */
+  Полное определение в fast_positive/tuples/token.h */
     ;
 
 class variant_value /* Класс поддержки динамической типизации.
@@ -1440,4 +1440,4 @@ FPTU_API std::string hexadecimal(const void *data, std::size_t bytes);
 
 #endif /* __cplusplus */
 
-#include "fast_positive/details/warnings_pop.h"
+#include "fast_positive/tuples/details/warnings_pop.h"

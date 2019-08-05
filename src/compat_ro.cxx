@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/legacy_compat.h"
+#include "fast_positive/tuples/details/legacy_compat.h"
 
 const char *fptu_check_ro_ex(fptu_ro ro, bool holes_are_not_allowed) noexcept {
   return fptu::details::tuple_ro::audit(ro.sys.iov_base, ro.sys.iov_len,

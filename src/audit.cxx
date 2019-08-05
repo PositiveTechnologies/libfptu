@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
 #include <algorithm>
 #include <cassert>
@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "fast_positive/details/warnings_push_pt.h"
+#include "fast_positive/tuples/details/warnings_push_pt.h"
 
 namespace fptu {
 namespace details {
@@ -449,4 +449,4 @@ __hot const char *tuple_rw::audit(const tuple_rw *self) noexcept {
 } // namespace details
 } // namespace fptu
 
-#include "fast_positive/details/warnings_pop.h"
+#include "fast_positive/tuples/details/warnings_pop.h"

@@ -16,7 +16,7 @@
  */
 
 #if 0
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
 namespace fptu {
 

@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
 namespace fptu {
 

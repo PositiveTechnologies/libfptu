@@ -15,14 +15,14 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
-#include "fast_positive/details/cpu_features.h"
-#include "fast_positive/details/erthink/erthink_arch.h"
-#include "fast_positive/details/erthink/erthink_short_alloc.h"
-#include "fast_positive/details/meta.h"
-#include "fast_positive/details/rw.h"
-#include "fast_positive/details/scan.h"
+#include "fast_positive/erthink/erthink_arch.h"
+#include "fast_positive/erthink/erthink_short_alloc.h"
+#include "fast_positive/tuples/details/cpu_features.h"
+#include "fast_positive/tuples/details/meta.h"
+#include "fast_positive/tuples/details/rw.h"
+#include "fast_positive/tuples/details/scan.h"
 
 #include <algorithm>
 #include <cassert>
@@ -31,8 +31,8 @@
 #include <utility>
 #include <vector>
 
-#include "fast_positive/details/erthink/erthink_optimize4speed.h"
-#include "fast_positive/details/warnings_push_pt.h"
+#include "fast_positive/erthink/erthink_optimize4speed.h"
+#include "fast_positive/tuples/details/warnings_push_pt.h"
 
 //------------------------------------------------------------------------------
 
@@ -1001,4 +1001,4 @@ __hot bool tuple_rw::optimize(const optimize_flags flags) {
 } // namespace details
 } // namespace fptu
 
-#include "fast_positive/details/warnings_pop.h"
+#include "fast_positive/tuples/details/warnings_pop.h"

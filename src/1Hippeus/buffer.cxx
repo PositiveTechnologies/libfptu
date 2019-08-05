@@ -20,16 +20,16 @@
  * Copyright (c) 2006-2013 Leonid Yuriev <leo@yuriev.ru>.
  */
 
-#include "fast_positive/details/api.h"
-#include "fast_positive/details/bug.h"
+#include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/details/bug.h"
 
-#include "fast_positive/details/1Hippeus/actor.h"
-#include "fast_positive/details/1Hippeus/buffer.h"
-#include "fast_positive/details/1Hippeus/hipagut.h"
-#include "fast_positive/details/erthink/erthink_defs.h"
-#include "fast_positive/details/erthink/erthink_intrin.h"
-#include "fast_positive/details/exceptions.h"
-#include "fast_positive/details/memcheck_valgrind.h"
+#include "fast_positive/erthink/erthink_defs.h"
+#include "fast_positive/erthink/erthink_intrin.h"
+#include "fast_positive/tuples/1Hippeus/actor.h"
+#include "fast_positive/tuples/1Hippeus/buffer.h"
+#include "fast_positive/tuples/1Hippeus/hipagut.h"
+#include "fast_positive/tuples/details/exceptions.h"
+#include "fast_positive/tuples/details/memcheck_valgrind.h"
 
 bool hippeus_buffer_enforce_deep_checking;
 

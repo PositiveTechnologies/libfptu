@@ -15,13 +15,13 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/tuples_internal.h"
+#include "fast_positive/tuples/internal.h"
 
-#include "fast_positive/details/erthink/erthink_arch.h"
-#include "fast_positive/details/essentials.h"
-#include "fast_positive/details/meta.h"
+#include "fast_positive/erthink/erthink_arch.h"
+#include "fast_positive/tuples/details/meta.h"
+#include "fast_positive/tuples/essentials.h"
 
-#include "fast_positive/details/warnings_push_pt.h"
+#include "fast_positive/tuples/details/warnings_push_pt.h"
 
 namespace fptu {
 namespace details {

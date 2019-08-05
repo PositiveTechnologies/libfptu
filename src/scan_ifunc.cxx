@@ -15,10 +15,10 @@
  *  limitations under the License.
  */
 
-#include "fast_positive/details/cpu_features.h"
-#include "fast_positive/details/erthink/erthink_defs.h"
-#include "fast_positive/details/field.h"
-#include "fast_positive/details/scan.h"
+#include "fast_positive/erthink/erthink_defs.h"
+#include "fast_positive/tuples/details/cpu_features.h"
+#include "fast_positive/tuples/details/field.h"
+#include "fast_positive/tuples/details/scan.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
