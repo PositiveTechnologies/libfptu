@@ -219,18 +219,16 @@ protected:
       typename TOKEN, genus GENUS,
       typename erthink::enable_if_t<meta::genus_traits<GENUS>::physique !=
                                     meta::physique_kind::stretchy> * = nullptr>
-  inline combo_ptr assign_field_value(
-      combo_ptr field,
-      const typename meta::genus_traits<GENUS>::return_type value,
+  inline void *assign_field_value(
+      void *field, const typename meta::genus_traits<GENUS>::return_type value,
       const TOKEN token);
 
   template <
       typename TOKEN, genus GENUS,
       typename erthink::enable_if_t<meta::genus_traits<GENUS>::physique ==
                                     meta::physique_kind::stretchy> * = nullptr>
-  inline combo_ptr assign_field_value(
-      combo_ptr field,
-      const typename meta::genus_traits<GENUS>::return_type value,
+  inline void *assign_field_value(
+      void *field, const typename meta::genus_traits<GENUS>::return_type value,
       const TOKEN token);
 
   template <
@@ -490,10 +488,11 @@ public:
     constexpr const TOKEN &token() const noexcept { return accessor::token(); }
 
     iterator_rw &operator++() noexcept {
-      assert(accessor::field_.loose < accessor::tuple_->end_index());
-      accessor::field_.const_loose =
-          next(accessor::field_.const_loose, accessor::tuple_->end_index(),
-               accessor::token_.tag());
+      assert(static_cast<const field_loose *>(accessor::field_) <
+             accessor::tuple_->end_index());
+      accessor::field_ =
+          next(static_cast<const field_loose *>(accessor::field_),
+               accessor::tuple_->end_index(), accessor::token_.tag());
       return *this;
     }
     iterator_rw operator++(int) const noexcept {
@@ -507,16 +506,16 @@ public:
     cxx14_constexpr accessor &operator*() noexcept { return *this; }
 
     constexpr bool operator==(const accessor &other) const noexcept {
-      return accessor::field_.ptr == other.field_.ptr;
+      return accessor::field_ == other.field_;
     }
     constexpr bool operator!=(const accessor &other) const noexcept {
-      return accessor::field_.ptr != other.field_.ptr;
+      return accessor::field_ != other.field_;
     }
     constexpr bool operator==(const iterator_rw &other) const noexcept {
-      return accessor::field_.ptr == other.field_.ptr;
+      return accessor::field_ == other.field_;
     }
     constexpr bool operator!=(const iterator_rw &other) const noexcept {
-      return accessor::field_.ptr != other.field_.ptr;
+      return accessor::field_ != other.field_;
     }
 
     operator iterator_ro<TOKEN>() const noexcept {
@@ -525,10 +524,10 @@ public:
                                 accessor::token_);
     }
     constexpr bool operator==(const iterator_ro<TOKEN> &other) const noexcept {
-      return accessor::field_.ptr == other.field_.ptr;
+      return accessor::field_ == other.field_;
     }
     constexpr bool operator!=(const iterator_ro<TOKEN> &other) const noexcept {
-      return accessor::field_.ptr != other.field_.ptr;
+      return accessor::field_ != other.field_;
     }
   };
 
@@ -828,9 +827,8 @@ public: //----------------------------------------------------------------------
 template <typename TOKEN, genus GENUS,
           typename erthink::enable_if_t<meta::genus_traits<GENUS>::physique !=
                                         meta::physique_kind::stretchy> *>
-inline combo_ptr tuple_rw::assign_field_value(
-    combo_ptr field,
-    const typename meta::genus_traits<GENUS>::return_type value,
+inline void *tuple_rw::assign_field_value(
+    void *field, const typename meta::genus_traits<GENUS>::return_type value,
     const TOKEN token) {
   if (unlikely(token.type() != GENUS))
     throw_type_mismatch();
@@ -842,29 +840,30 @@ inline combo_ptr tuple_rw::assign_field_value(
         unlikely(meta::genus_traits<GENUS>::is_prohibited_nil(value)))
       throw_value_denil();
     // write value, no exceptions allowed
-    meta::genus_traits<GENUS>::write(field.preplaced, value);
+    meta::genus_traits<GENUS>::write(static_cast<field_preplaced *>(field),
+                                     value);
   } else {
     // loose
-    if (field.loose == nullptr) {
+    if (field == nullptr) {
       if (!token.is_discernible_null() &&
           meta::genus_traits<GENUS>::is_empty(value))
         return field;
       // absent, append new one (exception may be thrown)
-      field.loose =
-          alloc_loose(token.tag(), meta::genus_traits<GENUS>::loose_units);
+      field = alloc_loose(token.tag(), meta::genus_traits<GENUS>::loose_units);
     } else {
-      if (unlikely(field.loose >= end_index() || field.loose->type() != GENUS))
+      if (unlikely(static_cast<field_loose *>(field) >= end_index() ||
+                   static_cast<field_loose *>(field)->type() != GENUS))
         throw_index_corrupted();
       if (!token.is_discernible_null() &&
           meta::genus_traits<GENUS>::is_empty(value)) {
-        release_loose(field.loose, meta::genus_traits<GENUS>::loose_units);
+        release_loose(static_cast<field_loose *>(field),
+                      meta::genus_traits<GENUS>::loose_units);
         debug_check();
-        field.loose = nullptr;
-        return field;
+        return nullptr;
       }
     }
     // write value, no exceptions allowed
-    meta::genus_traits<GENUS>::write(field.loose, value);
+    meta::genus_traits<GENUS>::write(static_cast<field_loose *>(field), value);
   }
   debug_check();
   return field;
@@ -873,9 +872,8 @@ inline combo_ptr tuple_rw::assign_field_value(
 template <typename TOKEN, genus GENUS,
           typename erthink::enable_if_t<meta::genus_traits<GENUS>::physique ==
                                         meta::physique_kind::stretchy> *>
-inline combo_ptr tuple_rw::assign_field_value(
-    combo_ptr field,
-    const typename meta::genus_traits<GENUS>::return_type value,
+inline void *tuple_rw::assign_field_value(
+    void *field, const typename meta::genus_traits<GENUS>::return_type value,
     const TOKEN token) {
   if (unlikely(token.type() != GENUS))
     throw_type_mismatch();
@@ -887,23 +885,28 @@ inline combo_ptr tuple_rw::assign_field_value(
           ? meta::genus_traits<GENUS>::estimate_space(value)
           : 0;
   if (token.is_loose()) {
-    if (field.loose == nullptr) {
+    if (field == nullptr) {
       if (needed) {
         // absent loose, append new one (exception may be thrown)
-        field.loose = alloc_loose(token.tag(), needed);
-        assert(tag2genus(field.loose->genius_and_id) == GENUS);
+        field = alloc_loose(token.tag(), needed);
+        assert(tag2genus(static_cast<field_loose *>(field)->genius_and_id) ==
+               GENUS);
         // write value, no exceptions allowed
-        meta::genus_traits<GENUS>::write(field.loose->relative.payload(),
-                                         value);
+        meta::genus_traits<GENUS>::write(
+            static_cast<field_loose *>(field)->relative.payload(), value);
         debug_check();
       }
       return field;
     }
-    if (unlikely(field.loose >= end_index() || field.loose->type() != GENUS))
+    if (unlikely(static_cast<field_loose *>(field) >= end_index() ||
+                 static_cast<field_loose *>(field)->type() != GENUS))
       throw_index_corrupted();
   }
 
-  auto &relative = field.relative_reference();
+  static_assert(offsetof(field_preplaced, relative) ==
+                    offsetof(field_loose, relative),
+                "WTF?");
+  auto &relative = static_cast<field_preplaced *>(field)->relative;
   relative_payload *payload = nullptr;
   if (relative.have_payload()) {
     payload = relative.payload();
@@ -911,16 +914,17 @@ inline combo_ptr tuple_rw::assign_field_value(
     if (unlikely(needed != have)) {
       if (needed == 0) {
         if (token.is_loose()) {
-          release_loose(field.loose, have);
+          release_loose(static_cast<field_loose *>(field), have);
           debug_check();
-          field.loose = nullptr;
+          return nullptr;
         } else {
           // exception may be thrown in case no index-space
           release_data(payload, have);
           relative.reset_payload();
           debug_check();
+          return field;
         }
-        return field;
+        __unreachable();
       }
 
       // exception may be thrown
@@ -1011,20 +1015,23 @@ template <genus GENUS>
 inline void tuple_rw::accessor_rw<TOKEN>::assign(
     const typename meta::genus_traits<GENUS>::return_type value) {
   base::field_ = tuple_->template assign_field_value<TOKEN, GENUS>(
-      base::field_, value, base::token_);
+      const_cast<void *>(base::field_), value, base::token_);
 }
 
 template <typename TOKEN> inline void tuple_rw::accessor_rw<TOKEN>::remove() {
   if (likely(base::token_.is_preplaced())) {
-    tuple_->erase(base::field_.preplaced, base::token_.type(),
-                  base::token_.is_discernible_null());
+    tuple_->erase(
+        static_cast<field_preplaced *>(const_cast<void *>(base::field_)),
+        base::token_.type(), base::token_.is_discernible_null());
   } else {
-    assert(base::field_.loose != nullptr);
-    if (unlikely(base::field_.loose >= tuple_->end_index() ||
-                 base::field_.loose->type() != base::token_.type()))
+    assert(base::field_ != nullptr);
+    if (unlikely(static_cast<const field_loose *>(base::field_) >=
+                     tuple_->end_index() ||
+                 static_cast<field_loose *>(const_cast<void *>(base::field_))
+                         ->type() != base::token_.type()))
       throw_index_corrupted();
-    tuple_->erase(base::field_.loose);
-    base::field_.loose = nullptr;
+    tuple_->erase(static_cast<field_loose *>(const_cast<void *>(base::field_)));
+    base::field_ = nullptr;
   }
 }
 

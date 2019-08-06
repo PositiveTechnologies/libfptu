@@ -97,7 +97,7 @@ get(const field_loose *loose, const bool is_discernible_null) {
 
 template <typename TOKEN> class accessor_ro {
 protected:
-  combo_ptr field_;
+  const void *field_;
   TOKEN token_;
   template <typename> friend class iterator_ro;
   template <typename> friend class crtp_getter;
@@ -114,15 +114,20 @@ protected:
     if (likely(token_.is_preplaced())) {
       // preplaced
       if (token_.is_discernible_null() &&
-          unlikely(meta::genus_traits<GENUS>::is_denil(field_.preplaced)))
+          unlikely(meta::genus_traits<GENUS>::is_denil(
+              static_cast<const field_preplaced *>(field_))))
         throw_field_absent();
-      return meta::genus_traits<GENUS>::read(field_.preplaced);
+      return meta::genus_traits<GENUS>::read(
+          static_cast<const field_preplaced *>(field_));
     }
 
-    if (likely(field_.loose)) {
+    if (likely(field_)) {
       // loose exist
-      assert(tag2genus(field_.loose->genius_and_id) == GENUS);
-      return meta::genus_traits<GENUS>::read(field_.loose);
+      assert(
+          tag2genus(static_cast<const field_loose *>(field_)->genius_and_id) ==
+          GENUS);
+      return meta::genus_traits<GENUS>::read(
+          static_cast<const field_loose *>(field_));
     }
     //  loose absence
     if (unlikely(token_.is_discernible_null()))
@@ -138,13 +143,16 @@ protected:
     if (unlikely(token_.type() != GENUS))
       throw_type_mismatch();
 
-    if (likely(token_.is_preplaced() || field_.loose)) {
-      assert(token_.is_preplaced() ||
-             tag2genus(field_.loose->genius_and_id) == GENUS);
+    if (likely(token_.is_preplaced() || field_)) {
+      assert(
+          token_.is_preplaced() ||
+          tag2genus(static_cast<const field_loose *>(field_)->genius_and_id) ==
+              GENUS);
       static_assert(offsetof(field_preplaced, relative) ==
                         offsetof(field_loose, relative),
                     "WTF?");
-      const auto &relative = field_.relative_reference();
+      const auto &relative =
+          static_cast<const field_preplaced *>(field_)->relative;
       if (likely(relative.have_payload()))
         return meta::genus_traits<GENUS>::read(relative.payload());
     }
@@ -182,8 +190,10 @@ public:
   cxx14_constexpr accessor_ro &operator=(accessor_ro &&) noexcept = default;
 
   constexpr bool exist() const noexcept {
-    return token_.is_preplaced() ? field_.preplaced->is_null(token_.tag())
-                                 : field_.loose != nullptr;
+    return token_.is_preplaced()
+               ? static_cast<const field_preplaced *>(field_)->is_null(
+                     token_.tag())
+               : field_ != nullptr;
   }
   constexpr operator bool() const noexcept { return exist(); }
 
@@ -344,7 +354,8 @@ public:
   using reference = value_type &;
 #endif
 
-  constexpr iterator_ro() noexcept : detent_(accessor::field_.loose) {
+  constexpr iterator_ro() noexcept
+      : detent_(static_cast<const field_loose *>(accessor::field_)) {
     static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                         ? sizeof(void *) * 2
                                         : sizeof(void *) * 3),
@@ -356,9 +367,9 @@ public:
   constexpr const TOKEN &token() const noexcept { return accessor::token(); }
 
   iterator_ro &operator++() noexcept {
-    assert(accessor::field_.loose < detent_);
-    accessor::field_.const_loose =
-        next(accessor::field_.const_loose, detent_, accessor::token_.tag());
+    assert(static_cast<const field_loose *>(accessor::field_) < detent_);
+    accessor::field_ = next(static_cast<const field_loose *>(accessor::field_),
+                            detent_, accessor::token_.tag());
     return *this;
   }
   iterator_ro operator++(int) const noexcept {
@@ -369,16 +380,16 @@ public:
   constexpr const accessor &operator*() const noexcept { return *this; }
 
   constexpr bool operator==(const accessor &other) const noexcept {
-    return accessor::field_.ptr == other.field_.ptr;
+    return accessor::field_ == other.field_;
   }
   constexpr bool operator!=(const accessor &other) const noexcept {
-    return accessor::field_.ptr != other.field_.ptr;
+    return accessor::field_ != other.field_;
   }
   constexpr bool operator==(const iterator_ro &other) const noexcept {
-    return accessor::field_.ptr == other.field_.ptr;
+    return accessor::field_ == other.field_;
   }
   constexpr bool operator!=(const iterator_ro &other) const noexcept {
-    return accessor::field_.ptr != other.field_.ptr;
+    return accessor::field_ != other.field_;
   }
 };
 

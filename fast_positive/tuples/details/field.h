@@ -460,40 +460,6 @@ public:
 
 #pragma pack(pop)
 
-union combo_ptr /* TODO: drop this class */ {
-  void *ptr;
-  const void *const_ptr;
-  field_preplaced *preplaced;
-  const field_preplaced *const_preplaced;
-  field_loose *loose;
-  const field_loose *const_loose;
-#if !defined(__COVERITY__)
-  constexpr combo_ptr(const combo_ptr &) noexcept = default;
-#else
-  constexpr combo_ptr(const combo_ptr &ones) noexcept : ptr(ones.ptr) {}
-#endif
-  constexpr combo_ptr(void *ptr) noexcept : ptr(ptr) {}
-  constexpr combo_ptr(const field_preplaced *ptr) noexcept
-      : const_preplaced(ptr) {}
-  constexpr combo_ptr(const field_loose *ptr) noexcept : const_loose(ptr) {}
-
-  constexpr operator bool() const noexcept { return ptr != nullptr; }
-
-  cxx14_constexpr relative_offset &relative_reference() noexcept {
-    static_assert(offsetof(field_preplaced, relative) ==
-                      offsetof(field_loose, relative),
-                  "WTF?");
-    return preplaced->relative;
-  }
-
-  cxx14_constexpr const relative_offset &relative_reference() const noexcept {
-    static_assert(offsetof(field_preplaced, relative) ==
-                      offsetof(field_loose, relative),
-                  "WTF?");
-    return const_preplaced->relative;
-  }
-};
-
 } // namespace details
 
 class preplaced_string;

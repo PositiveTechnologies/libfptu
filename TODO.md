@@ -6,7 +6,7 @@
 - [ ] устойчивое сравнение кортежей.
 - [ ] std::hash.
 - [ ] uprobes/SystemTap и perfomance-penalty.
-- [ ] Зачистить combo_ptr.
+- [x] Зачистить combo_ptr.
 - [ ] more SIMD (sort, holes search, binary-search);
 - [ ] AVX512;
 - [ ] inlay iteration;
