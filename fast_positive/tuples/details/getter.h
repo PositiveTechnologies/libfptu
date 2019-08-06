@@ -35,7 +35,7 @@ namespace details {
 
 template <typename> class crtp_getter;
 template <typename> class accessor_ro;
-template <typename> class iterator_ro;
+template <typename> class collection_iterator_ro;
 template <typename> class collection_ro;
 class tuple_ro;
 class tuple_rw;
@@ -99,7 +99,7 @@ template <typename TOKEN> class accessor_ro {
 protected:
   const void *field_;
   TOKEN token_;
-  template <typename> friend class iterator_ro;
+  template <typename> friend class collection_iterator_ro;
   template <typename> friend class crtp_getter;
   friend class tuple_rw;
 
@@ -322,7 +322,7 @@ public:
 };
 
 template <typename TOKEN>
-class iterator_ro
+class collection_iterator_ro
     : protected accessor_ro<TOKEN>
 #if __cplusplus < 201703L
     ,
@@ -338,9 +338,9 @@ protected:
   friend class tuple_rw;
   using accessor = accessor_ro<TOKEN>;
 
-  explicit constexpr iterator_ro(const field_loose *target,
-                                 const field_loose *detent,
-                                 const TOKEN token) noexcept
+  explicit constexpr collection_iterator_ro(const field_loose *target,
+                                            const field_loose *detent,
+                                            const TOKEN token) noexcept
       : accessor(target, detent, token), detent_(detent) {
     constexpr_assert(token.is_collection());
   }
@@ -354,26 +354,27 @@ public:
   using reference = value_type &;
 #endif
 
-  constexpr iterator_ro() noexcept
+  constexpr collection_iterator_ro() noexcept
       : detent_(static_cast<const field_loose *>(accessor::field_)) {
     static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                         ? sizeof(void *) * 2
                                         : sizeof(void *) * 3),
                   "WTF?");
   }
-  constexpr iterator_ro(const iterator_ro &) noexcept = default;
-  cxx14_constexpr iterator_ro &
-  operator=(const iterator_ro &) noexcept = default;
+  constexpr collection_iterator_ro(const collection_iterator_ro &) noexcept =
+      default;
+  cxx14_constexpr collection_iterator_ro &
+  operator=(const collection_iterator_ro &) noexcept = default;
   constexpr const TOKEN &token() const noexcept { return accessor::token(); }
 
-  iterator_ro &operator++() noexcept {
+  collection_iterator_ro &operator++() noexcept {
     assert(static_cast<const field_loose *>(accessor::field_) < detent_);
     accessor::field_ = next(static_cast<const field_loose *>(accessor::field_),
                             detent_, accessor::token_.tag());
     return *this;
   }
-  iterator_ro operator++(int) const noexcept {
-    iterator_ro iterator(*this);
+  collection_iterator_ro operator++(int) const noexcept {
+    collection_iterator_ro iterator(*this);
     ++iterator;
     return iterator;
   }
@@ -385,10 +386,12 @@ public:
   constexpr bool operator!=(const accessor &other) const noexcept {
     return accessor::field_ != other.field_;
   }
-  constexpr bool operator==(const iterator_ro &other) const noexcept {
+  constexpr bool operator==(const collection_iterator_ro &other) const
+      noexcept {
     return accessor::field_ == other.field_;
   }
-  constexpr bool operator!=(const iterator_ro &other) const noexcept {
+  constexpr bool operator!=(const collection_iterator_ro &other) const
+      noexcept {
     return accessor::field_ != other.field_;
   }
 };
@@ -397,7 +400,7 @@ template <typename TOKEN> class collection_ro {
   template <typename> friend class crtp_getter;
   friend class tuple_rw;
 
-  iterator_ro<TOKEN> iterator_;
+  collection_iterator_ro<TOKEN> iterator_;
 
   constexpr collection_ro(const field_loose *first, const field_loose *detent,
                           const TOKEN token) noexcept
@@ -406,7 +409,7 @@ template <typename TOKEN> class collection_ro {
   }
 
 public:
-  using const_iterator = iterator_ro<TOKEN>;
+  using const_iterator = collection_iterator_ro<TOKEN>;
   constexpr collection_ro(const collection_ro &) = default;
   cxx14_constexpr collection_ro &operator=(const collection_ro &) = default;
   constexpr const TOKEN &token() const noexcept { return iterator_.token(); }
@@ -421,7 +424,7 @@ public:
 } // namespace details
 
 using dynamic_accessor_ro = details::accessor_ro<token>;
-using dynamic_iterator_ro = details::iterator_ro<token>;
+using dynamic_collection_iterator_ro = details::collection_iterator_ro<token>;
 using dynamic_collection_ro = details::collection_ro<token>;
 
 namespace details {

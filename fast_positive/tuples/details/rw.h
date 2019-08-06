@@ -262,7 +262,7 @@ protected:
 
 public:
   template <typename> class accessor_rw;
-  template <typename> class iterator_rw;
+  template <typename> class collection_iterator_rw;
   template <typename> class collection_rw;
 
   void erase(field_loose *loose) {
@@ -449,7 +449,7 @@ public:
   //----------------------------------------------------------------------------
 
   template <typename TOKEN>
-  class iterator_rw
+  class collection_iterator_rw
       : protected accessor_rw<TOKEN>
 #if __cplusplus < 201703L
       ,
@@ -461,8 +461,9 @@ public:
     friend class tuple_rw;
     using accessor = accessor_rw<TOKEN>;
 
-    explicit constexpr iterator_rw(tuple_rw *tuple, field_loose *target,
-                                   const TOKEN token) noexcept
+    explicit constexpr collection_iterator_rw(tuple_rw *tuple,
+                                              field_loose *target,
+                                              const TOKEN token) noexcept
         : accessor(tuple, target, token) {
       constexpr_assert(token.is_collection());
     }
@@ -476,18 +477,19 @@ public:
     using reference = value_type &;
 #endif
 
-    constexpr iterator_rw() noexcept : accessor() {
+    constexpr collection_iterator_rw() noexcept : accessor() {
       static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                           ? sizeof(void *) * 2
                                           : sizeof(void *) * 3),
                     "WTF?");
     }
-    constexpr iterator_rw(const iterator_rw &) noexcept = default;
-    cxx14_constexpr iterator_rw &
-    operator=(const iterator_rw &) noexcept = default;
+    constexpr collection_iterator_rw(const collection_iterator_rw &) noexcept =
+        default;
+    cxx14_constexpr collection_iterator_rw &
+    operator=(const collection_iterator_rw &) noexcept = default;
     constexpr const TOKEN &token() const noexcept { return accessor::token(); }
 
-    iterator_rw &operator++() noexcept {
+    collection_iterator_rw &operator++() noexcept {
       assert(static_cast<const field_loose *>(accessor::field_) <
              accessor::tuple_->end_index());
       accessor::field_ =
@@ -495,8 +497,8 @@ public:
                accessor::tuple_->end_index(), accessor::token_.tag());
       return *this;
     }
-    iterator_rw operator++(int) const noexcept {
-      iterator_rw iterator(*this);
+    collection_iterator_rw operator++(int) const noexcept {
+      collection_iterator_rw iterator(*this);
       ++iterator;
       return iterator;
     }
@@ -511,40 +513,45 @@ public:
     constexpr bool operator!=(const accessor &other) const noexcept {
       return accessor::field_ != other.field_;
     }
-    constexpr bool operator==(const iterator_rw &other) const noexcept {
+    constexpr bool operator==(const collection_iterator_rw &other) const
+        noexcept {
       return accessor::field_ == other.field_;
     }
-    constexpr bool operator!=(const iterator_rw &other) const noexcept {
+    constexpr bool operator!=(const collection_iterator_rw &other) const
+        noexcept {
       return accessor::field_ != other.field_;
     }
 
-    operator iterator_ro<TOKEN>() const noexcept {
-      return iterator_ro<TOKEN>(accessor::field_.const_loose,
-                                accessor::tuple_->end_index(),
-                                accessor::token_);
+    operator collection_iterator_ro<TOKEN>() const noexcept {
+      return collection_iterator_ro<TOKEN>(accessor::field_.const_loose,
+                                           accessor::tuple_->end_index(),
+                                           accessor::token_);
     }
-    constexpr bool operator==(const iterator_ro<TOKEN> &other) const noexcept {
+    constexpr bool operator==(const collection_iterator_ro<TOKEN> &other) const
+        noexcept {
       return accessor::field_ == other.field_;
     }
-    constexpr bool operator!=(const iterator_ro<TOKEN> &other) const noexcept {
+    constexpr bool operator!=(const collection_iterator_ro<TOKEN> &other) const
+        noexcept {
       return accessor::field_ != other.field_;
     }
   };
 
-  template <typename TOKEN> class collection_rw : protected iterator_rw<TOKEN> {
+  template <typename TOKEN>
+  class collection_rw : protected collection_iterator_rw<TOKEN> {
     template <typename> friend class crtp_getter;
     friend class tuple_rw;
 
     constexpr collection_rw(tuple_rw *tuple, field_loose *first,
                             const TOKEN token) noexcept
-        : iterator_rw<TOKEN>(tuple, first, token) {
+        : collection_iterator_rw<TOKEN>(tuple, first, token) {
       constexpr_assert(token.is_collection());
     }
 
   public:
-    using const_iterator = iterator_ro<TOKEN>;
+    using const_iterator = collection_iterator_ro<TOKEN>;
     using const_range = collection_ro<TOKEN>;
-    using iterator = iterator_rw<TOKEN>;
+    using iterator = collection_iterator_rw<TOKEN>;
     constexpr collection_rw(const collection_rw &) = default;
     cxx14_constexpr collection_rw &operator=(const collection_rw &) = default;
     constexpr const TOKEN &token() const noexcept { return iterator::token(); }
@@ -636,9 +643,9 @@ public: //----------------------------------------------------------------------
                           : optimize_flags::sort_index);
   }
 
-  bool erase(const iterator_rw<token> &it);
-  std::size_t erase(const iterator_rw<token> &begin,
-                    const iterator_rw<token> &end);
+  bool erase(const collection_iterator_rw<token> &it);
+  std::size_t erase(const collection_iterator_rw<token> &begin,
+                    const collection_iterator_rw<token> &end);
   std::size_t erase(const collection_rw<token> &collection);
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
   bool erase(const TOKEN &ident) {
@@ -764,7 +771,8 @@ public: //----------------------------------------------------------------------
     accessor.set_##NAME(value);                                                \
   }                                                                            \
   void set_##NAME(const token &ident, const VALUE_TYPE value);                 \
-  iterator_rw<token> insert_##NAME(const token &ident, const VALUE_TYPE value);
+  collection_iterator_rw<token> insert_##NAME(const token &ident,              \
+                                              const VALUE_TYPE value);
   HERE_GENUS_CASE(tuple_ro *, nested)
   HERE_GENUS_CASE(string_view &, string)
   HERE_GENUS_CASE(string_view &, varbinary)
@@ -1040,7 +1048,8 @@ template <typename TOKEN> inline void tuple_rw::accessor_rw<TOKEN>::remove() {
 //------------------------------------------------------------------------------
 
 using dynamic_accessor_rw = details::tuple_rw::accessor_rw<token>;
-using dynamic_iterator_rw = details::tuple_rw::iterator_rw<token>;
+using dynamic_collection_iterator_rw =
+    details::tuple_rw::collection_iterator_rw<token>;
 using dynamic_collection_rw = details::tuple_rw::collection_rw<token>;
 
 } // namespace fptu

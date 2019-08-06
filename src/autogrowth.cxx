@@ -212,8 +212,9 @@ void tuple_rw_managed::manage_space_deficit(const insufficient_space &wanna) {
     }                                                                          \
   }                                                                            \
                                                                                \
-  details::tuple_rw::iterator_rw<token> tuple_rw_managed::insert_##NAME(       \
-      const token &ident, const VALUE_TYPE value) {                            \
+  details::tuple_rw::collection_iterator_rw<token>                             \
+      tuple_rw_managed::insert_##NAME(const token &ident,                      \
+                                      const VALUE_TYPE value) {                \
     while (true /* может быть повторное исключение */) {                       \
       try {                                                                    \
         return base::insert_##NAME(ident, value);                              \
@@ -265,7 +266,7 @@ HERE_THUNK_MAKE(uint64_t, unsigned)
 HERE_THUNK_MAKE(double, float)
 #undef HERE_THUNK_MAKE
 
-bool tuple_rw_managed::erase(const dynamic_iterator_rw &it) {
+bool tuple_rw_managed::erase(const dynamic_collection_iterator_rw &it) {
   /* Места может не хватить только при удалении preplaced полей,
    * из-за необходимости добавления "дырки" в индекс.
    * Поэтому loose-поля можно удалять без try/catch страховки. */
@@ -309,8 +310,8 @@ bool tuple_rw_managed::erase(const token &ident) {
   }
 }
 
-std::size_t tuple_rw_managed::erase(const dynamic_iterator_rw &from,
-                                    const dynamic_iterator_rw &to) {
+std::size_t tuple_rw_managed::erase(const dynamic_collection_iterator_rw &from,
+                                    const dynamic_collection_iterator_rw &to) {
   assert(from.token() == to.token());
   if (from.token().is_loose())
     /* Места может не хватить только при удалении preplaced полей,

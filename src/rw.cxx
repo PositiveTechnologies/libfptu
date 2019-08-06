@@ -115,7 +115,7 @@ bool tuple_rw::erase(const token &ident) {
                                         : erase(collection(ident)) > 0;
 }
 
-bool tuple_rw::erase(const dynamic_iterator_rw &it) {
+bool tuple_rw::erase(const dynamic_collection_iterator_rw &it) {
   if (it.exist()) {
     (*it).remove();
     return true;
@@ -123,8 +123,8 @@ bool tuple_rw::erase(const dynamic_iterator_rw &it) {
   return false;
 }
 
-size_t tuple_rw::erase(const dynamic_iterator_rw &begin,
-                       const dynamic_iterator_rw &end) {
+size_t tuple_rw::erase(const dynamic_collection_iterator_rw &begin,
+                       const dynamic_collection_iterator_rw &end) {
   std::size_t count = 0;
   for (auto it = begin; it != end; ++it)
     count += erase(it) ? 1 : 0;
@@ -191,16 +191,16 @@ FPTU_API dynamic_accessor_rw tuple_rw::operator[](const token &ident) {
 }
 
 // template class FPTU_API_TYPE tuple_rw::accessor_rw<token>;
-// template class FPTU_API_TYPE tuple_rw::iterator_rw<token>;
+// template class FPTU_API_TYPE tuple_rw::collection_iterator_rw<token>;
 // template class FPTU_API_TYPE tuple_rw::collection_rw<token>;
 
 //------------------------------------------------------------------------------
 
 #define HERE_GENUS_CASE(VALUE_TYPE, NAME, GENUS)                               \
-  FPTU_API dynamic_iterator_rw tuple_rw::insert_##NAME(                        \
+  FPTU_API dynamic_collection_iterator_rw tuple_rw::insert_##NAME(             \
       const token &ident, const VALUE_TYPE value) {                            \
     field_loose *field = append_field<token, genus::GENUS>(value, ident);      \
-    return dynamic_iterator_rw(this, field, ident);                            \
+    return dynamic_collection_iterator_rw(this, field, ident);                 \
   }
 
 HERE_GENUS_CASE(tuple_ro *, nested, nested)
@@ -235,14 +235,14 @@ HERE_GENUS_CASE(mac_address_t, mac_address, mac)
 HERE_GENUS_CASE(ip_net_t &, ip_net, ipnet)
 #undef HERE_GENUS_CASE
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_uuid(const token &ident,
-                                                   const uuid_t &value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_uuid(const token &ident, const uuid_t &value) {
   field_loose *field = append_field<token, genus::bin128>(value.bin128, ident);
-  return dynamic_iterator_rw(this, field, ident);
+  return dynamic_collection_iterator_rw(this, field, ident);
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_float(const token &ident,
-                                                    const double value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_float(const token &ident, const double value) {
   if (ident.type() == f32) {
     if (!std::isinf(value) &&
         unlikely(value > std::numeric_limits<float>::max() ||
@@ -254,8 +254,8 @@ FPTU_API dynamic_iterator_rw tuple_rw::insert_float(const token &ident,
   }
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_integer(const token &ident,
-                                                      const int64_t value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_integer(const token &ident, const int64_t value) {
   switch (ident.type()) {
   default:
     throw_type_mismatch();
@@ -276,15 +276,15 @@ FPTU_API dynamic_iterator_rw tuple_rw::insert_integer(const token &ident,
   }
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_integer(const token &ident,
-                                                      const uint64_t value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_integer(const token &ident, const uint64_t value) {
   if (unlikely(value > uint64_t(std::numeric_limits<int64_t>::max())))
     throw_value_range();
   return insert_integer(ident, static_cast<int64_t>(value));
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_unsigned(const token &ident,
-                                                       const uint64_t value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_unsigned(const token &ident, const uint64_t value) {
   switch (ident.type()) {
   default:
     throw_type_mismatch();
@@ -305,23 +305,23 @@ FPTU_API dynamic_iterator_rw tuple_rw::insert_unsigned(const token &ident,
   }
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_unsigned(const token &ident,
-                                                       const int64_t value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_unsigned(const token &ident, const int64_t value) {
   if (unlikely(value < 0))
     throw_value_range();
   return insert_integer(ident, static_cast<uint64_t>(value));
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_int128(const token &ident,
-                                                     const int128_t &value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_int128(const token &ident, const int128_t &value) {
   if (ident.type() == bin128)
     return insert_bin128(
         ident, *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
   return insert_integer(ident, int64_t(value));
 }
 
-FPTU_API dynamic_iterator_rw tuple_rw::insert_uint128(const token &ident,
-                                                      const uint128_t &value) {
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_uint128(const token &ident, const uint128_t &value) {
   if (ident.type() == bin128)
     return insert_bin128(
         ident, *erthink::constexpr_pointer_cast<const binary128_t *>(&value));

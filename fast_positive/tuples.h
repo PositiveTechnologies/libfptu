@@ -606,7 +606,7 @@ public:
   inline void set_##NAME(const TOKEN &ident, const VALUE_TYPE value) {         \
     get_impl()->set_##NAME(ident, value);                                      \
   }                                                                            \
-  inline details::tuple_rw::iterator_rw<token> insert_##NAME(                  \
+  inline details::tuple_rw::collection_iterator_rw<token> insert_##NAME(       \
       const token &ident, const VALUE_TYPE value) {                            \
     return get_impl()->insert_##NAME(ident, value);                            \
   }
@@ -653,7 +653,7 @@ public:
   inline void set_nested(const TOKEN &ident, const tuple_ro_weak &value) {
     get_impl()->set_nested(ident, value.get_impl());
   }
-  details::tuple_rw::iterator_rw<token>
+  details::tuple_rw::collection_iterator_rw<token>
   insert_nested(const token &ident, const tuple_ro_weak &value) {
     return get_impl()->insert_nested(ident, value.get_impl());
   }
@@ -662,7 +662,7 @@ public:
   inline void set_string(const TOKEN &ident, const std::string &value) {
     get_impl()->set_string(ident, fptu::string_view(value));
   }
-  details::tuple_rw::iterator_rw<token>
+  details::tuple_rw::collection_iterator_rw<token>
   insert_string(const token &ident, const std::string &value) {
     return get_impl()->insert_string(ident, fptu::string_view(value));
   }
@@ -738,9 +738,11 @@ public:
     return get_impl()->sort_index(force);
   }
 
-  bool erase(const dynamic_iterator_rw &it) { return get_impl()->erase(it); }
-  std::size_t erase(const dynamic_iterator_rw &from,
-                    const dynamic_iterator_rw &to) {
+  bool erase(const dynamic_collection_iterator_rw &it) {
+    return get_impl()->erase(it);
+  }
+  std::size_t erase(const dynamic_collection_iterator_rw &from,
+                    const dynamic_collection_iterator_rw &to) {
     return get_impl()->erase(from, to);
   }
   std::size_t erase(const dynamic_collection_rw &collection) {
@@ -1218,8 +1220,8 @@ public:
     }                                                                          \
   }                                                                            \
   void set_##NAME(const token &ident, const VALUE_TYPE value);                 \
-  details::tuple_rw::iterator_rw<token> insert_##NAME(const token &ident,      \
-                                                      const VALUE_TYPE value);
+  details::tuple_rw::collection_iterator_rw<token> insert_##NAME(              \
+      const token &ident, const VALUE_TYPE value);
 
   HERE_THUNK_MAKE(tuple_ro_weak &, nested)
   HERE_THUNK_MAKE(string_view &, string)
@@ -1262,9 +1264,9 @@ public:
   HERE_THUNK_MAKE(double, float)
 #undef HERE_THUNK_MAKE
 
-  bool erase(const dynamic_iterator_rw &it);
-  std::size_t erase(const dynamic_iterator_rw &from,
-                    const dynamic_iterator_rw &to);
+  bool erase(const dynamic_collection_iterator_rw &it);
+  std::size_t erase(const dynamic_collection_iterator_rw &from,
+                    const dynamic_collection_iterator_rw &to);
   std::size_t erase(const dynamic_collection_rw &collection);
   bool erase(const token &ident);
 
