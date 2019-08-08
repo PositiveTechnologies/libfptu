@@ -339,6 +339,22 @@ class FPTU_API_TYPE token
           "offset < 0 || offset > details::max_preplaced_offset");
     return std::size_t(offset);
   }
+  static cxx14_constexpr uint16_t
+  validate_loose_descriptor(const uint16_t loose_descriptor) {
+    if (unlikely(details::descriptor2genus(loose_descriptor) > genus::hole))
+      throw_invalid_argument("loose_descriptor.type > fptu::genus::hole");
+    return loose_descriptor;
+  }
+
+  friend class loose_iterator_ro;
+  friend class loose_iterator_rw;
+  friend class field_iterator_ro;
+  friend class field_iterator_rw;
+  cxx14_constexpr
+  token(const uint16_t loose_descriptor, const bool collection = false,
+        const bool discernible_null = false, const bool saturated = false)
+      : base(details::make_tag(validate_loose_descriptor(loose_descriptor),
+                               collection, discernible_null, saturated)) {}
 
 public:
   constexpr token() noexcept : base() {}

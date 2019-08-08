@@ -185,7 +185,7 @@ void schema_impl::add_definition(std::string &&name, const token &ident,
   }
 
   std::sort(sorted_tokens_.begin(), sorted_tokens_.end());
-} // namespace
+}
 
 token schema_impl::define_preplaced(std::string &&name, fptu::genus type,
                                     const bool discernible_null,

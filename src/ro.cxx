@@ -33,6 +33,157 @@
 #include "fast_positive/erthink/erthink_optimize4speed.h"
 
 namespace fptu {
+
+//------------------------------------------------------------------------------
+
+token loose_iterator_ro::field_token(const fptu::schema *schema) const {
+  if (likely(schema)) {
+    const token ident = field_token_nothow(schema);
+    if (likely(ident.is_valid())) {
+      assert(ident.is_loose());
+      return ident;
+    }
+  }
+  throw schema_no_such_field();
+}
+
+token field_iterator_ro::field_token() const {
+  if (likely(schema_)) {
+    const token ident = field_token_nothrow();
+    if (likely(ident.is_valid())) {
+      assert(ident.is_preplaced() == on_preplaced_field());
+      return ident;
+    }
+  }
+  throw schema_no_such_field();
+}
+
+const token field_iterator_ro::preplaced_token() const {
+  if (likely(schema_)) {
+    const token ident = schema_->by_offset(preplaced_offset());
+    if (likely(ident.is_valid())) {
+      assert(ident.is_preplaced());
+      return ident;
+    }
+  }
+  throw schema_no_such_field();
+}
+
+bool field_iterator_ro::operator==(const token &ident) const {
+  if (on_preplaced_field())
+    return ident.is_preplaced() && preplaced_token() == ident;
+  return ident.is_loose() &&
+         loose()->genus_and_id == details::tag2genus_and_id(ident.tag());
+}
+
+field_iterator_ro &field_iterator_ro::operator++() {
+  ptrdiff_t offset = preplaced_offset();
+  if (offset >= 0) {
+    /* итератор в секторе preplaced-полей */
+    assert(schema_);
+    while (true) {
+      /* получаем токен следующего поля */
+      const token ident = schema_->next_by_offset(offset);
+      if (unlikely(!ident.is_valid() || !ident.is_preplaced()))
+        /* дошли до конца preplaced */
+        break;
+
+      /* устанавливаем итератор на следующее preplaced-поле */
+      offset = ident.preplaced_offset();
+      field_ = static_cast<const char *>(pivot_) + offset;
+
+      /* пропускаем null-евые поля */
+      if (likely(!preplaced()->is_null(ident.tag())))
+        return *this;
+    }
+
+    /* переходим к loose-полям */
+    field_ = static_cast<const details::field_loose *>(pivot_) - 1;
+  } else {
+    /* итератор в секторе loose-полей */
+    /* переходим к следующему loose-полю в порядке итерирования */
+    field_ = loose() - 1;
+  }
+
+  return *this;
+}
+
+field_iterator_ro &field_iterator_ro::operator--() {
+  ptrdiff_t offset = preplaced_offset();
+  if (offset < 0) {
+    /* итератор в секторе loose-полей */
+    /* переходим к предыдущему loose-полю в порядке итерирования */
+    field_ = loose() + 1;
+    if (field_ != pivot_)
+      return *this;
+
+    /* переходим к последнему preplaced-полю,
+     * корректировка смещения будет дальше */
+    assert(schema_);
+    offset = schema_->preplaced_bytes();
+    if (offset == 0)
+      return *this /* нет preplaced-полей */;
+  } else {
+    /* итератор в секторе preplaced-полей */
+    assert(schema_);
+    assert(offset != 0 /* нельзя декремировать begin */);
+  }
+
+  while (true) {
+    /* получаем токен предыдущего поля */
+    const token ident = schema_->prev_by_offset(offset);
+    assert(ident.is_valid() && ident.is_preplaced());
+
+    /* устанавливаем итератор на предыдущее preplaced-поле */
+    offset = ident.preplaced_offset();
+    field_ = static_cast<const char *>(pivot_) + offset;
+
+    /* останавливаемся если дошли до первого поля */
+    if (!offset)
+      break;
+
+    /* пропускаем null-евые поля */
+    if (!preplaced()->is_null(ident.tag()))
+      break;
+  }
+
+  return *this;
+}
+
+field_iterator_ro
+field_iterator_ro::begin(const void *pivot,
+                         const fptu::schema *schema) noexcept {
+  const auto last_loose = static_cast<const details::field_loose *>(pivot) - 1;
+  if (schema && schema->number_of_preplaced()) {
+    field_iterator_ro iter(static_cast<const details::field_preplaced *>(pivot),
+                           pivot, schema);
+    /* пропускаем null-евые preplaced-поля */
+    auto ident = schema->tokens().begin();
+    assert(ident->is_valid() && ident->preplaced_offset() == 0);
+    const auto detent = ident + schema->number_of_preplaced();
+    while (unlikely(iter.preplaced()->is_null(ident->tag()))) {
+      if (++ident == detent) {
+        /* дошли до конца preplaced, переходим к первому loose-полю */
+        iter.field_ = last_loose;
+        break;
+      }
+
+      /* устанавливаем итератор на следующее preplaced-поле */
+      assert(ident->is_valid());
+      iter.field_ =
+          static_cast<const char *>(pivot) + ident->preplaced_offset();
+    }
+    return iter;
+  } else {
+    /* нет схемы, preplaced-полей быть не может */
+    /* возращаем итератор на первое loose-поле;
+     * если loose-полей нет, то результат будет равен end() */
+    return field_iterator_ro(last_loose, pivot, schema);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 namespace details {
 
 const tuple_ro *tuple_ro::make_from_buffer(const void *ptr, std::size_t bytes,
@@ -171,5 +322,7 @@ preplaced_property::value() const {
 
   return traits::read(payload());
 }
+
+//------------------------------------------------------------------------------
 
 } // namespace fptu

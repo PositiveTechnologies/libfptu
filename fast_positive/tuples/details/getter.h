@@ -31,12 +31,18 @@
 #include "fast_positive/tuples/details/warnings_push_pt.h"
 
 namespace fptu {
+
+class loose_iterator_ro;
+class loose_iterator_rw;
+class field_iterator_ro;
+class field_iterator_rw;
+
 namespace details {
 
 template <typename> class crtp_getter;
 template <typename> class accessor_ro;
-template <typename> class collection_iterator_ro;
 template <typename> class collection_ro;
+template <typename> class collection_iterator_ro;
 class tuple_ro;
 class tuple_rw;
 
@@ -109,6 +115,10 @@ protected:
   template <typename> friend class collection_iterator_ro;
   template <typename> friend class crtp_getter;
   friend class tuple_rw;
+  friend class fptu::loose_iterator_ro;
+  friend class fptu::loose_iterator_rw;
+  friend class fptu::field_iterator_ro;
+  friend class fptu::field_iterator_rw;
 
   template <genus GENUS, typename erthink::enable_if_t<
                              meta::genus_traits<GENUS>::physique !=
@@ -185,12 +195,8 @@ protected:
 
   // for loose fields
   cxx14_constexpr accessor_ro(const field_loose *target,
-                              const field_loose *detent,
                               const TOKEN token) noexcept
-      : field_(target), token_(token) {
-    constexpr_assert(target < detent);
-    (void)detent;
-  }
+      : field_(target), token_(token) {}
 
 public:
   constexpr accessor_ro(const accessor_ro &) noexcept = default;
@@ -206,7 +212,7 @@ public:
                      token_.tag())
                : field_ != nullptr;
   }
-  constexpr operator bool() const noexcept { return exist(); }
+  explicit constexpr operator bool() const noexcept { return exist(); }
 
   constexpr genus type() const noexcept { return token_.type(); }
   constexpr const TOKEN &token() const noexcept { return token_; }
@@ -352,12 +358,16 @@ class collection_iterator_ro
 protected:
   template <typename> friend class collection_ro;
   friend class tuple_rw;
+  friend class fptu::loose_iterator_ro;
+  friend class fptu::loose_iterator_rw;
+  friend class fptu::field_iterator_ro;
+  friend class fptu::field_iterator_rw;
   using accessor = accessor_ro<TOKEN>;
 
   explicit constexpr collection_iterator_ro(const field_loose *target,
                                             const field_loose *detent,
                                             const TOKEN token) noexcept
-      : accessor(target, detent, token), detent_(detent) {
+      : accessor(target, token), detent_(detent) {
     constexpr_assert(token.is_collection());
   }
 
@@ -472,7 +482,8 @@ template <typename TUPLE> class crtp_getter {
     const field_loose *const detent = tuple.end_index();
     const field_loose *const first =
         lookup(tuple.is_sorted(), tuple.begin_index(), detent, token.tag());
-    return accessor_ro<TOKEN>(first, detent, token);
+    assert(first < detent);
+    return accessor_ro<TOKEN>(first, token);
   }
 
   template <typename TOKEN, typename CRTP_TUPLE>

@@ -282,6 +282,7 @@ public:
     using base = accessor_ro<TOKEN>;
     template <typename> friend class crtp_getter;
     friend class tuple_rw;
+    friend class fptu::loose_iterator_rw;
     tuple_rw *tuple_;
 
     template <genus GENUS>
@@ -303,7 +304,7 @@ public:
 
     constexpr accessor_rw(tuple_rw *tuple, field_loose *target,
                           const TOKEN token) noexcept
-        : base(target, tuple->end_index(), token), tuple_(tuple) {}
+        : base(target, token), tuple_(tuple) {}
 
     constexpr accessor_rw(tuple_rw *tuple, const base &accessor) noexcept
         : base(accessor), tuple_(tuple) {}
@@ -462,6 +463,8 @@ public:
 #endif
   {
     friend class tuple_rw;
+    friend class fptu::loose_iterator_ro;
+    friend class fptu::loose_iterator_rw;
     using accessor = accessor_rw<TOKEN>;
 
     explicit constexpr collection_iterator_rw(tuple_rw *tuple,
@@ -839,6 +842,36 @@ public: //----------------------------------------------------------------------
   template <typename TOKEN>
   __pure_function inline bool is_present(const TOKEN &ident) const {
     return crtp_getter::is_present(ident);
+  }
+
+  __pure_function field_iterator_ro cbegin(const fptu::schema *schema) const
+      noexcept {
+    return field_iterator_ro::begin(pivot(), schema);
+  }
+  __pure_function field_iterator_ro cend(const fptu::schema *schema) const
+      noexcept {
+    return field_iterator_ro::end(begin_index(), pivot(), schema);
+  }
+  __pure_function field_iterator_ro begin(const fptu::schema *schema) const
+      noexcept {
+    return cbegin(schema);
+  }
+  __pure_function field_iterator_ro end(const fptu::schema *schema) const
+      noexcept {
+    return cend(schema);
+  }
+
+  __pure_function loose_iterator_ro cbegin_loose() const noexcept {
+    return loose_iterator_ro(end_index() - 1);
+  }
+  __pure_function loose_iterator_ro cend_loose() const noexcept {
+    return loose_iterator_ro(begin_index() - 1);
+  }
+  __pure_function loose_iterator_ro begin_loose() const noexcept {
+    return cbegin_loose();
+  }
+  __pure_function loose_iterator_ro end_loose() const noexcept {
+    return cend_loose();
   }
 };
 

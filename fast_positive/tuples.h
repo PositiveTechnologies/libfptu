@@ -328,6 +328,49 @@ public:
   __pure_function operator iovec() const noexcept {
     return iovec(data(), size());
   }
+
+  //----------------------------------------------------------------------------
+
+  __pure_function field_iterator_ro cbegin() const noexcept {
+    return get_impl()->cbegin(defaults::schema.get());
+  }
+  __pure_function field_iterator_ro cbegin(const fptu::schema *schema) const
+      noexcept {
+    return get_impl()->cbegin(schema);
+  }
+  constexpr field_iterator_ro cend() const noexcept {
+    return get_impl()->cend(defaults::schema.get());
+  }
+  __pure_function field_iterator_ro cend(const fptu::schema *schema) const
+      noexcept {
+    return get_impl()->cend(schema);
+  }
+
+  __pure_function field_iterator_ro begin() const noexcept { return cbegin(); }
+  constexpr field_iterator_ro end() const noexcept { return cend(); }
+  __pure_function field_iterator_ro begin(const fptu::schema *schema) const
+      noexcept {
+    return cbegin(schema);
+  }
+  constexpr field_iterator_ro end(const fptu::schema *schema) const noexcept {
+    return cend(schema);
+  }
+
+  //----------------------------------------------------------------------------
+
+  constexpr loose_iterator_ro cbegin_loose() const noexcept {
+    return get_impl()->cbegin_loose();
+  }
+  constexpr loose_iterator_ro cend_loose() const noexcept {
+    return get_impl()->cend_loose();
+  }
+
+  constexpr loose_iterator_ro begin_loose() const noexcept {
+    return cbegin_loose();
+  }
+  constexpr loose_iterator_ro end_loose() const noexcept {
+    return cend_loose();
+  }
 };
 
 class FPTU_API_TYPE tuple_ro_weak : public tuple_crtp_reader<tuple_ro_weak>
@@ -830,6 +873,8 @@ public:
                                                       more_payload, schema);
   }
 
+  //----------------------------------------------------------------------------
+
   template <typename TOKEN>
   __pure_function inline details::tuple_rw::collection_rw<TOKEN>
   collection(const TOKEN &ident) {
@@ -840,6 +885,31 @@ public:
   __pure_function inline details::tuple_rw::accessor_rw<TOKEN>
   operator[](const TOKEN &ident) {
     return get_impl()->operator[](ident);
+  }
+
+  __pure_function field_iterator_ro cbegin() const noexcept {
+    return get_impl()->cbegin(schema());
+  }
+  constexpr field_iterator_ro cend() const noexcept {
+    return get_impl()->cend(schema());
+  }
+  __pure_function field_iterator_ro begin() const noexcept { return cbegin(); }
+  constexpr field_iterator_ro end() const noexcept { return cend(); }
+
+  //----------------------------------------------------------------------------
+
+  constexpr loose_iterator_ro cbegin_loose() const noexcept {
+    return get_impl()->cbegin_loose();
+  }
+  constexpr loose_iterator_ro cend_loose() const noexcept {
+    return get_impl()->cend_loose();
+  }
+
+  constexpr loose_iterator_ro begin_loose() const noexcept {
+    return cbegin_loose();
+  }
+  constexpr loose_iterator_ro end_loose() const noexcept {
+    return cend_loose();
   }
 };
 
