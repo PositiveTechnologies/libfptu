@@ -335,9 +335,9 @@ union relative_payload {
     uint32_t u32;
     int32_t i32;
     float f32;
-    uint64_t u64;
-    int64_t i64;
-    double f64;
+    uint64_t unaligned_u64;
+    int64_t unaligned_i64;
+    double unaligned_f64;
     char bytes[8];
     uint32_t fixed[16];
   } fixed;
