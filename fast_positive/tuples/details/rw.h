@@ -897,7 +897,7 @@ inline void *tuple_rw::assign_field_value(
       if (needed) {
         // absent loose, append new one (exception may be thrown)
         field = alloc_loose(token.tag(), needed);
-        assert(tag2genus(static_cast<field_loose *>(field)->genius_and_id) ==
+        assert(tag2genus(static_cast<field_loose *>(field)->genus_and_id) ==
                GENUS);
         // write value, no exceptions allowed
         meta::genus_traits<GENUS>::write(
@@ -978,7 +978,7 @@ inline field_loose *tuple_rw::append_field(
   // append new one (exception may be thrown)
   field_loose *field =
       alloc_loose(token.tag(), meta::genus_traits<GENUS>::loose_units);
-  assert(tag2genus(field->genius_and_id) == GENUS);
+  assert(tag2genus(field->genus_and_id) == GENUS);
 
   // write value, no exceptions allowed
   meta::genus_traits<GENUS>::write(field, value);
@@ -1006,7 +1006,7 @@ inline field_loose *tuple_rw::append_field(
   // append new one (exception may be thrown)
   field_loose *field = alloc_loose(token.tag(), needed);
   if (needed) {
-    assert(tag2genus(field->genius_and_id) == GENUS);
+    assert(tag2genus(field->genus_and_id) == GENUS);
     // write value, no exceptions allowed
     meta::genus_traits<GENUS>::write(field->relative.payload(), value);
   } else {

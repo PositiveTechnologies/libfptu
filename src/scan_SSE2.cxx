@@ -82,11 +82,11 @@ static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
 
 __hot const field_loose *fptu_scan_SSE2(const field_loose *begin,
                                         const field_loose *end,
-                                        uint16_t genius_and_id) {
+                                        uint16_t genus_and_id) {
   const ptrdiff_t bytes = (char *)end - (char *)begin;
   assert(bytes % 4 == 0);
 
-  const __m128i pattern = _mm_set1_epi16(genius_and_id);
+  const __m128i pattern = _mm_set1_epi16(genus_and_id);
   const field_loose *scan = begin;
 
   if (unlikely(bytes < 4 * 4)) {

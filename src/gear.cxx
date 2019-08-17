@@ -262,7 +262,7 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
   if (units == 0) {
     assert(is_inplaced(tag));
     field_loose *loose = index_alloc(0);
-    loose->genius_and_id = uint16_t(tag);
+    loose->genus_and_id = uint16_t(tag);
     loose->relative.reset_payload();
     mark_unsorted();
     return loose;
@@ -275,7 +275,7 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
     if (unlikely(tail_space_units() < units))
       throw_insufficient_space(1, units);
     hole = index_alloc(units);
-    hole->genius_and_id = uint16_t(tag);
+    hole->genus_and_id = uint16_t(tag);
     hole->relative.set_payload(&area_[tail_]);
     tail_ += units;
     mark_unsorted();
@@ -288,14 +288,14 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
     /* дырка использована полностью */
     junk_.volume -= uint16_t(units);
     junk_.count -= 1;
-    hole->genius_and_id = uint16_t(tag);
+    hole->genus_and_id = uint16_t(tag);
     mark_unsorted();
     return hole;
   }
 
   /* дырка использована не полностью */
   field_loose *loose = index_alloc(units);
-  loose->genius_and_id = uint16_t(tag);
+  loose->genus_and_id = uint16_t(tag);
   loose->relative.set_payload(hole->hole_begin());
   hole->relative.add_delta(excess);
   hole->hole_set_units(excess);
@@ -875,7 +875,7 @@ inline void gear::compactify(onstack_allocation_arena &onstack_arena) {
 //------------------------------------------------------------------------------
 
 struct sort_item {
-  uint16_t genius_and_id;
+  uint16_t genus_and_id;
   uint16_t inplaced_or_offset;
 
   cxx14_constexpr static uint16_t
@@ -894,7 +894,7 @@ struct sort_item {
 
   cxx14_constexpr sort_item(const field_loose *const field,
                             const unit_t *const basis) noexcept
-      : genius_and_id(field->genius_and_id),
+      : genus_and_id(field->genus_and_id),
         inplaced_or_offset(
             (is_inplaced(field->type()) || !field->relative.have_payload())
                 ? field->inplaced
@@ -910,7 +910,7 @@ bool gear::sort(onstack_allocation_arena &onstack_arena) {
   debug_check();
   if (std::is_sorted(begin_index(), end_index(),
                      [](const field_loose &a, const field_loose &b) {
-                       return a.genius_and_id > b.genius_and_id;
+                       return a.genus_and_id > b.genus_and_id;
                      })) {
     mark_sorted();
     debug_check();
@@ -925,13 +925,13 @@ bool gear::sort(onstack_allocation_arena &onstack_arena) {
   /* сортируем вектор по-убыванию, теперь дырки в начале вектора */
   std::sort(vector.begin(), vector.end(),
             [](const sort_item &a, const sort_item &b) {
-              return a.genius_and_id > b.genius_and_id;
+              return a.genus_and_id > b.genus_and_id;
             });
 
   /* создаем индекс заново в отсортированном порядке */
   field_loose *loose = begin_index();
   for (const auto &chunk : vector) {
-    loose->genius_and_id = chunk.genius_and_id;
+    loose->genus_and_id = chunk.genus_and_id;
     loose->inplaced = chunk.inplaced_or_offset;
     if (!is_inplaced(loose->type()) && chunk.inplaced_or_offset)
       loose->relative.set_payload(chunk.payload(basis));
@@ -940,7 +940,7 @@ bool gear::sort(onstack_allocation_arena &onstack_arena) {
   assert(loose == end_index());
   assert(std::is_sorted(begin_index(), end_index(),
                         [](const field_loose &a, const field_loose &b) {
-                          return a.genius_and_id > b.genius_and_id;
+                          return a.genus_and_id > b.genus_and_id;
                         }));
   debug_check();
 

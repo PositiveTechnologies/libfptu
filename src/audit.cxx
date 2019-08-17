@@ -191,7 +191,7 @@ const char *auditor::check_chunk(const unit_t *chunk_begin,
 const char *auditor::check_loose(const field_loose *loose,
                                  const unit_t *begin_payload,
                                  const unit_t *end_payload) {
-  const genus type = tag2genus(loose->genius_and_id);
+  const genus type = tag2genus(loose->genus_and_id);
   if (is_inplaced(type))
     return nullptr;
 
@@ -342,7 +342,7 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
   if ((flags & audit_flags::audit_tuple_sorted_loose) != 0 &&
       !std::is_sorted(index_begin, index_end,
                       [](const field_loose &a, const field_loose &b) {
-                        return a.genius_and_id < b.genius_and_id;
+                        return a.genus_and_id < b.genus_and_id;
                       }))
     return AUDIT_FAILURE("loose fields mis-sorted");
 

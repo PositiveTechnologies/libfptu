@@ -36,11 +36,11 @@ static void test_ScanIndex(fptu::details::scan_func_t scan) {
 
   for (ptrdiff_t tail = array.size(); tail > 0; --tail) {
     if (tail != ptrdiff_t(array.size()))
-      fake[tail].genius_and_id = 1;
+      fake[tail].genus_and_id = 1;
 
     for (ptrdiff_t head = -1; head < tail; ++head) {
       if (head >= 0)
-        fake[head].genius_and_id = 1;
+        fake[head].genus_and_id = 1;
 
       for (ptrdiff_t begin = array.size(); begin >= 0; --begin) {
         for (ptrdiff_t end = array.size(); end >= 0; --end) {
@@ -58,10 +58,10 @@ static void test_ScanIndex(fptu::details::scan_func_t scan) {
       }
 
       if (head >= 0)
-        fake[head].genius_and_id = 0;
+        fake[head].genus_and_id = 0;
     }
     if (tail != ptrdiff_t(array.size()))
-      fake[tail].genius_and_id = 0;
+      fake[tail].genus_and_id = 0;
   }
 }
 

@@ -405,23 +405,23 @@ struct field_loose {
         relative_offset relative;
         inplace_storage_t inplaced;
       };
-      uint16_t genius_and_id;
+      uint16_t genus_and_id;
     };
     uint32_t loose_header;
   };
 
-  constexpr genus type() const { return descriptor2genus(genius_and_id); }
+  constexpr genus type() const { return descriptor2genus(genus_and_id); }
   constexpr bool is_hole() const { return type() == hole; }
   constexpr unsigned id() const {
     constexpr_assert(!is_hole());
-    return descriptor2id(genius_and_id);
+    return descriptor2id(genus_and_id);
   }
   constexpr unsigned hole_get_units() const {
     constexpr_assert(is_hole());
-    return descriptor2id(genius_and_id);
+    return descriptor2id(genus_and_id);
   }
   void hole_set_units(size_t units) {
-    genius_and_id = uint16_t(details::make_hole(units));
+    genus_and_id = uint16_t(details::make_hole(units));
   }
   cxx14_constexpr const unit_t *hole_begin() const {
     constexpr_assert(is_hole() && hole_get_units() > 0);

@@ -30,9 +30,9 @@ namespace details {
 /* Artless reference implementation for testing & verification */
 __cold const field_loose *fptu_scan_referential(const field_loose *begin,
                                                 const field_loose *end,
-                                                uint16_t genius_and_id) {
+                                                uint16_t genus_and_id) {
   for (const field_loose *scan = begin; scan < end; ++scan)
-    if (genius_and_id == scan->genius_and_id)
+    if (genus_and_id == scan->genus_and_id)
       return scan;
   return nullptr;
 }
@@ -43,14 +43,14 @@ __cold const field_loose *fptu_scan_referential(const field_loose *begin,
 
 #define STEP_x1                                                                \
   do {                                                                         \
-    if (genius_and_id == scan->genius_and_id)                                  \
+    if (genus_and_id == scan->genus_and_id)                                    \
       return scan;                                                             \
     ++scan;                                                                    \
   } while (0)
 
 __hot const field_loose *fptu_scan_unroll(const field_loose *begin,
                                           const field_loose *end,
-                                          uint16_t genius_and_id) {
+                                          uint16_t genus_and_id) {
   ptrdiff_t items = end - begin;
 
   const field_loose *scan = begin;

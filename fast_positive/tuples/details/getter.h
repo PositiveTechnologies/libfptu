@@ -124,7 +124,7 @@ protected:
     if (likely(field_)) {
       // loose exist
       assert(
-          tag2genus(static_cast<const field_loose *>(field_)->genius_and_id) ==
+          tag2genus(static_cast<const field_loose *>(field_)->genus_and_id) ==
           GENUS);
       return meta::genus_traits<GENUS>::read(
           static_cast<const field_loose *>(field_));
@@ -146,7 +146,7 @@ protected:
     if (likely(token_.is_preplaced() || field_)) {
       assert(
           token_.is_preplaced() ||
-          tag2genus(static_cast<const field_loose *>(field_)->genius_and_id) ==
+          tag2genus(static_cast<const field_loose *>(field_)->genus_and_id) ==
               GENUS);
       static_assert(offsetof(field_preplaced, relative) ==
                         offsetof(field_loose, relative),
