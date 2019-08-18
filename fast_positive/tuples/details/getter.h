@@ -99,6 +99,9 @@ template <typename TOKEN> class accessor_ro {
 protected:
   const void *field_;
   TOKEN token_;
+  /* for a non-static tokens here is the 32-bit padding on 64-bit platforms due
+   * alignment */
+
   template <typename> friend class collection_iterator_ro;
   template <typename> friend class crtp_getter;
   friend class tuple_rw;
@@ -163,6 +166,7 @@ protected:
     return meta::genus_traits<GENUS>::empty();
   }
 
+  // default constructor for empty/invalid value
   constexpr accessor_ro() : field_((void *)(nullptr)), token_() {
     static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                         ? sizeof(void *)
@@ -170,10 +174,12 @@ protected:
                   "WTF?");
   }
 
+  // for preplaced fields
   constexpr accessor_ro(const field_preplaced *target,
                         const TOKEN token) noexcept
       : field_(target), token_(token) {}
 
+  // for loose fields
   cxx14_constexpr accessor_ro(const field_loose *target,
                               const field_loose *detent,
                               const TOKEN token) noexcept
@@ -331,7 +337,12 @@ class collection_iterator_ro
                            const accessor_ro<TOKEN> &>
 #endif
 {
-  const field_loose *detent_;
+  const field_loose *detent_ /* Указывает на конец индекса loose-дескприторов на
+                                момент создания итератора. Требуется для
+                                своевременной остановки поиска следующего
+                                подходящего элемента в индексе
+                                loose-дескрипторов. */
+      ;
 
 protected:
   template <typename> friend class collection_ro;
