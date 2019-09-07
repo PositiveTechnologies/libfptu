@@ -196,10 +196,10 @@ token schema_impl::define_preplaced(std::string &&name, fptu::genus type,
   const std::size_t align = (length > fundamentals::unit_size)
                                 ? size_t(fundamentals::unit_size)
                                 : length;
-  assert(utils::is_power2(align));
+  assert(align > 0 && align <= 256 && utils::is_power2(align));
   const std::size_t unaligned_offset = preplaced_image_.size();
   const std::size_t aligned_offset =
-      unaligned_offset + (align - unaligned_offset % align);
+      unaligned_offset + ((align - unaligned_offset) & (align - 1));
   if (unlikely(aligned_offset > details::max_preplaced_offset))
     throw_schema_definition_error("fptu: too many preplaced fields");
 
@@ -224,10 +224,10 @@ token schema_impl::define_preplaced_fixed_opacity(std::string &&name,
   else if (unlikely(!utils::is_power2(align)))
     throw_invalid_argument("alignment must be a power of 2");
 
-  assert(utils::is_power2(align));
+  assert(align > 0 && align <= 256 && utils::is_power2(align));
   const std::size_t unaligned_offset = preplaced_image_.size();
   const std::size_t aligned_offset =
-      unaligned_offset + (align - unaligned_offset % align);
+      unaligned_offset + ((align - unaligned_offset) & (align - 1));
   if (unlikely(aligned_offset > details::max_preplaced_offset))
     throw_schema_definition_error("fptu: too many preplaced fields");
 
