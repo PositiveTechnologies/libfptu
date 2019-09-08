@@ -172,7 +172,7 @@ public:
   using is_static_token = std::false_type;
   static constexpr bool is_static_preplaced() noexcept { return false; }
   constexpr tag_t tag() const noexcept { return tag_; }
-  constexpr token_nonstatic_tag() noexcept : tag_(~UINT32_C(0)) {
+  constexpr token_nonstatic_tag() noexcept : tag_(0) {
     static_assert(sizeof(tag_) == 4, "WTF?");
   }
   constexpr token_nonstatic_tag(const token_nonstatic_tag &) noexcept = default;
