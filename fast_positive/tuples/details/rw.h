@@ -311,6 +311,7 @@ public:
     cxx14_constexpr accessor_rw &
     operator=(const accessor_rw &) noexcept = default;
     constexpr accessor_rw(accessor_rw &&) noexcept = default;
+    constexpr accessor_rw *operator->() const noexcept { return this; }
 
     constexpr tuple_rw *tuple() const noexcept { return tuple_; }
 

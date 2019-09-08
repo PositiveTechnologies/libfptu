@@ -194,6 +194,7 @@ public:
   operator=(const accessor_ro &) noexcept = default;
   constexpr accessor_ro(accessor_ro &&) noexcept = default;
   cxx14_constexpr accessor_ro &operator=(accessor_ro &&) noexcept = default;
+  constexpr const accessor_ro *operator->() const noexcept { return this; }
 
   constexpr bool exist() const noexcept {
     return token_.is_preplaced()
