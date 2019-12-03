@@ -44,6 +44,22 @@
 
 namespace erthink {
 
+/* The ERTHINK_D2A_PEDANTRY_ACCURATE macro allows you to control the trade-off
+ * between conversion speed and accuracy:
+ *
+ *  - Define it to non-zero for accurately conversion to impeccable string
+ *    representation, which will be a nearest to the actual binary value.
+ *
+ *  - Otherwise (if ERTHINK_D2A_PEDANTRY_ACCURATE undefiner or defined to zero)
+ *    the conversion will be slightly faster and the result will also be correct
+ *    (inverse conversion via stdtod() will give the original value).
+ *    However, the string representation will be slightly larger than the ideal
+ *    nearest value. */
+
+#ifndef ERTHINK_D2A_PEDANTRY_ACCURATE
+#define ERTHINK_D2A_PEDANTRY_ACCURATE 0
+#endif
+
 #ifndef NAMESPACE_ERTHINK_D2A_DETAILS
 #define NAMESPACE_ERTHINK_D2A_DETAILS /* anonymous */
 #endif                                /* NAMESPACE_ERTHINK_D2A_DETAILS */
@@ -261,98 +277,163 @@ static diy_fp cached_power(const int in_exp2, int &out_exp10) {
   return diy_fp(power10_mas[index], power10_exp2[index]);
 }
 
-static inline void round(char *end, uint64_t delta, uint64_t rest,
-                         uint64_t ten_kappa, uint64_t upper) {
+#if ERTHINK_D2A_PEDANTRY_ACCURATE
+static __always_inline void round(char *end, uint64_t delta, uint64_t rest,
+                                  uint64_t ten_kappa, uint64_t upper) {
   while (rest < upper && delta - rest >= ten_kappa &&
          (rest + ten_kappa < upper || /* closer */
           upper - rest > rest + ten_kappa - upper)) {
+    assert(end[-1] > '0');
     end[-1] -= 1;
     rest += ten_kappa;
   }
 }
+#endif /* ERTHINK_D2A_PEDANTRY_ACCURATE */
 
-static inline char *make_digits(const diy_fp &v, const diy_fp &upper,
-                                uint64_t delta, char *const buffer,
-                                int &inout_exp10) {
-  const unsigned shift = unsigned(-upper.e);
+static inline char *make_digits(const diy_fp &value, uint64_t delta,
+                                char *const buffer, int &inout_exp10,
+                                const diy_fp &baseline) {
+  const unsigned shift = unsigned(-value.e);
   const uint64_t mask = UINT64_MAX >> (64 - shift);
   char *ptr = buffer;
-  const diy_fp gap = upper - v;
+#if ERTHINK_D2A_PEDANTRY_ACCURATE
+  const diy_fp gap = value - baseline;
+#else
+  (void)baseline;
+#endif /* ERTHINK_D2A_PEDANTRY_ACCURATE */
 
-  assert((upper.f >> shift) <= UINT_E9);
-  uint_fast32_t digit, body = static_cast<uint_fast32_t>(upper.f >> shift);
-  uint64_t tail = upper.f & mask;
+  assert((value.f >> shift) <= UINT_E9);
+  uint_fast32_t digit, body = static_cast<uint_fast32_t>(value.f >> shift);
+  uint64_t tail = value.f & mask;
   int kappa = dec_digits(body);
+  assert(kappa > 0);
 
-  while (kappa > 0) {
-    switch (kappa) {
+  do {
+    switch (--kappa) {
     default:
       assert(false);
       __unreachable();
-    case 10:
+    case 9:
       digit = body / UINT_E9;
       body %= UINT_E9;
       break;
-    case 9:
+    case 8:
       digit = body / UINT_E8;
       body %= UINT_E8;
       break;
-    case 8:
+    case 7:
       digit = body / UINT_E7;
       body %= UINT_E7;
       break;
-    case 7:
+    case 6:
       digit = body / UINT_E6;
       body %= UINT_E6;
       break;
-    case 6:
+    case 5:
       digit = body / UINT_E5;
       body %= UINT_E5;
       break;
-    case 5:
+    case 4:
       digit = body / UINT_E4;
       body %= UINT_E4;
       break;
-    case 4:
+    case 3:
       digit = body / 1000u;
       body %= 1000u;
       break;
-    case 3:
+    case 2:
       digit = body / 100u;
       body %= 100u;
       break;
-    case 2:
+    case 1:
       digit = body / 10u;
       body %= 10u;
       break;
-    case 1:
+    case 0:
       digit = body;
-      body = 0u;
-      break;
+      if (unlikely(tail < delta)) {
+      early_last:
+        *ptr++ = static_cast<char>(digit + '0');
+      early_skip:
+        inout_exp10 += kappa;
+#if ERTHINK_D2A_PEDANTRY_ACCURATE
+        assert(kappa >= 0);
+        round(ptr, delta, tail, dec_power(unsigned(kappa)) << shift, gap.f);
+#endif /* ERTHINK_D2A_PEDANTRY_ACCURATE */
+        return ptr;
+      }
+
+      while (true) {
+        if (likely(digit))
+          goto done;
+        --kappa;
+        tail *= 10;
+        delta *= 10;
+        digit = static_cast<uint_fast32_t>(tail >> shift);
+        tail &= mask;
+      }
     }
-    *ptr = static_cast<char>(digit + '0');
-    --kappa;
+  } while (unlikely(digit == 0));
+
+  while (true) {
+    *ptr++ = static_cast<char>(digit + '0');
+    switch (--kappa) {
+    default:
+      assert(false);
+      __unreachable();
+    case 9:
+      digit = body / UINT_E9;
+      body %= UINT_E9;
+      break;
+    case 8:
+      digit = body / UINT_E8;
+      body %= UINT_E8;
+      break;
+    case 7:
+      digit = body / UINT_E7;
+      body %= UINT_E7;
+      break;
+    case 6:
+      digit = body / UINT_E6;
+      body %= UINT_E6;
+      break;
+    case 5:
+      digit = body / UINT_E5;
+      body %= UINT_E5;
+      break;
+    case 4:
+      digit = body / UINT_E4;
+      body %= UINT_E4;
+      break;
+    case 3:
+      digit = body / 1000u;
+      body %= 1000u;
+      break;
+    case 2:
+      digit = body / 100u;
+      body %= 100u;
+      break;
+    case 1:
+      digit = body / 10u;
+      body %= 10u;
+      break;
+    case 0:
+      digit = body;
+      goto done;
+    }
+
     const uint64_t left = (static_cast<uint64_t>(body) << shift) + tail;
-    ptr += (digit || ptr > buffer);
-    if (left < delta) {
-      inout_exp10 += kappa;
-      assert(kappa >= 0);
-      round(ptr, delta, left, dec_power(unsigned(kappa)) << shift, gap.f);
-      return ptr;
+    if (unlikely(left < delta)) {
+      if (likely(digit))
+        goto early_last;
+      ++kappa;
+      goto early_skip;
     }
   }
 
-  if (ptr == buffer) {
-    do {
-      --kappa;
-      tail *= 10;
-      delta *= 10;
-      digit = static_cast<uint_fast32_t>(tail >> shift);
-      tail &= mask;
-    } while (unlikely(!digit));
-    *ptr++ = static_cast<char>(digit + '0');
-  }
-  while (tail > delta) {
+done:
+  *ptr++ = static_cast<char>(digit + '0');
+  while (likely(tail > delta)) {
     --kappa;
     tail *= 10;
     delta *= 10;
@@ -362,9 +443,11 @@ static inline char *make_digits(const diy_fp &v, const diy_fp &upper,
   }
 
   inout_exp10 += kappa;
+#if ERTHINK_D2A_PEDANTRY_ACCURATE
   assert(kappa >= -19 && kappa <= 0);
   const uint64_t unit = dec_power(unsigned(-kappa));
   round(ptr, delta, tail, mask + 1, gap.f * unit);
+#endif /* ERTHINK_D2A_PEDANTRY_ACCURATE */
   return ptr;
 }
 
@@ -376,7 +459,8 @@ static inline char *convert(diy_fp v, char *const buffer, int &out_exp10) {
   }
 
   const int left = clz64(v.f);
-#if 0
+#if 0 /* Given the remaining optimizations, on average it does not have a      \
+         positive effect, although a little faster in the simplest cases. */
   // LY: check to output as ordinal
   if (unlikely(v.e >= -52 && v.e <= left && (v.e >= 0 || (v.f << (64 + v.e)) == 0))) {
     uint64_t ordinal = (v.e < 0) ? v.f >> -v.e : v.f << v.e;
@@ -390,20 +474,19 @@ static inline char *convert(diy_fp v, char *const buffer, int &out_exp10) {
   assert(v.f <= UINT64_MAX / 2 && left > 1);
   v.e -= left;
   v.f <<= left;
+  const diy_fp dec_factor = cached_power(v.e, out_exp10);
 
   // LY: get boundaries
   const int mojo = v.f >= UINT64_C(0x8000000080000000) ? left - 1 : left - 2;
   const uint64_t half_epsilon = UINT64_C(1) << mojo;
   diy_fp upper(v.f + half_epsilon, v.e);
   diy_fp lower(v.f - half_epsilon, v.e);
-
-  const diy_fp dec_factor = cached_power(upper.e, out_exp10);
   upper.scale(dec_factor, false);
   lower.scale(dec_factor, true);
-  v = diy_fp::middle(upper, lower);
   --upper.f;
   assert(upper.f > lower.f);
-  return make_digits(v, upper, upper.f - lower.f - 1, buffer, out_exp10);
+  return make_digits(upper, upper.f - lower.f - 1, buffer, out_exp10,
+                     diy_fp::middle(upper, lower));
 }
 
 } // namespace grisu
