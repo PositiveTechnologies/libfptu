@@ -177,33 +177,35 @@ protected:
   unit_t reserve_for_RO_header;
   unit_t area_[1];
 
-  void *pivot() noexcept { return &area_[pivot_]; }
-  const void *pivot() const noexcept {
+  __pure_function void *pivot() noexcept { return &area_[pivot_]; }
+  __pure_function const void *pivot() const noexcept {
     return const_cast<tuple_rw *>(this)->pivot();
   }
 
-  field_loose *begin_index() noexcept {
+  __pure_function field_loose *begin_index() noexcept {
     return erthink::constexpr_pointer_cast<field_loose *>(&area_[head_]);
   }
-  field_loose *end_index() noexcept {
+  __pure_function field_loose *end_index() noexcept {
     return static_cast<field_loose *>(pivot());
   }
 
-  const field_loose *begin_index() const noexcept {
+  __pure_function const field_loose *begin_index() const noexcept {
     return const_cast<tuple_rw *>(this)->begin_index();
   }
-  const field_loose *end_index() const noexcept {
+  __pure_function const field_loose *end_index() const noexcept {
     return const_cast<tuple_rw *>(this)->end_index();
   }
 
-  const unit_t *begin_data_units() const noexcept {
+  __pure_function const unit_t *begin_data_units() const noexcept {
     return static_cast<const unit_t *>(pivot());
   }
-  const unit_t *end_data_units() const noexcept { return &area_[tail_]; }
-  const char *begin_data_bytes() const noexcept {
+  __pure_function const unit_t *end_data_units() const noexcept {
+    return &area_[tail_];
+  }
+  __pure_function const char *begin_data_bytes() const noexcept {
     return erthink::constexpr_pointer_cast<const char *>(begin_data_units());
   }
-  const char *end_data_bytes() const noexcept {
+  __pure_function const char *end_data_bytes() const noexcept {
     return erthink::constexpr_pointer_cast<const char *>(end_data_units());
   }
 
@@ -213,7 +215,7 @@ protected:
   void release_loose(field_loose *loose, const std::size_t units);
   relative_payload *realloc_data(relative_offset &ref, const std::size_t have,
                                  const std::size_t needed);
-  static const char *audit(const tuple_rw *self) noexcept;
+  __pure_function static const char *audit(const tuple_rw *self) noexcept;
   //----------------------------------------------------------------------------
   template <
       typename TOKEN, genus GENUS,
@@ -654,43 +656,51 @@ public: //----------------------------------------------------------------------
                                           : erase(collection(ident)) > 0;
   }
   bool erase(const token &ident);
-  const char *audit() const noexcept { return audit(this); }
+  __pure_function const char *audit() const noexcept { return audit(this); }
 
-  std::size_t head_space() const noexcept { return head_; }
-  std::size_t tail_space_units() const noexcept {
+  __pure_function std::size_t head_space() const noexcept { return head_; }
+  __pure_function std::size_t tail_space_units() const noexcept {
     assert(end_ >= tail_);
     return end_ - tail_;
   }
-  std::size_t tail_space_bytes() const noexcept {
+  __pure_function std::size_t tail_space_bytes() const noexcept {
     return units2bytes(tail_space_units());
   }
-  std::size_t junk_units() const noexcept { return junk_.volume + junk_.count; }
-  std::size_t junk_bytes() const noexcept { return units2bytes(junk_units()); }
-  bool empty() const noexcept { return head_ + junk_.count == tail_; }
-  std::size_t index_size() const noexcept {
+  __pure_function std::size_t junk_units() const noexcept {
+    return junk_.volume + junk_.count;
+  }
+  __pure_function std::size_t junk_bytes() const noexcept {
+    return units2bytes(junk_units());
+  }
+  __pure_function bool empty() const noexcept {
+    return head_ + junk_.count == tail_;
+  }
+  __pure_function std::size_t index_size() const noexcept {
     assert(pivot_ >= head_);
     return pivot_ - head_;
   }
-  std::size_t payload_size_units() const noexcept {
+  __pure_function std::size_t payload_size_units() const noexcept {
     assert(tail_ >= pivot_);
     return tail_ - pivot_;
   }
-  std::size_t payload_size_bytes() const noexcept {
+  __pure_function std::size_t payload_size_bytes() const noexcept {
     return units2bytes(payload_size_units());
   }
-  std::size_t loose_count() const noexcept {
+  __pure_function std::size_t loose_count() const noexcept {
     assert(index_size() >= junk_.count);
     return index_size() - junk_.count;
   }
-  std::size_t brutto_size() const noexcept {
+  __pure_function std::size_t brutto_size() const noexcept {
     return units2bytes(tail_ - head_ + /* header */ 1);
   }
-  std::size_t netto_size() const noexcept {
+  __pure_function std::size_t netto_size() const noexcept {
     return brutto_size() - junk_units();
   }
-  std::size_t capacity() const noexcept { return units2bytes(end_); }
+  __pure_function std::size_t capacity() const noexcept {
+    return units2bytes(end_);
+  }
 
-  bool have_preplaced() const noexcept {
+  __pure_function bool have_preplaced() const noexcept {
     return schema_ && schema_->preplaced_bytes() > 0;
   }
   bool is_sorted() const noexcept {
@@ -703,9 +713,10 @@ public: //----------------------------------------------------------------------
   }
 
   /* TODO: перенести как inline во внутренний включаемый файл */
-  static size_t estimate_required_space(size_t items, std::size_t data_bytes,
-                                        const fptu::schema *schema,
-                                        bool dont_account_preplaced = false) {
+  __pure_function static size_t
+  estimate_required_space(size_t items, std::size_t data_bytes,
+                          const fptu::schema *schema,
+                          bool dont_account_preplaced = false) {
     const std::size_t preplaced_bytes = schema ? schema->preplaced_bytes() : 0;
     if (unlikely(preplaced_bytes > fundamentals::max_tuple_bytes_netto))
       throw_invalid_schema();
@@ -724,10 +735,10 @@ public: //----------------------------------------------------------------------
   }
 
   /* TODO: перенести как inline во внутренний включаемый файл */
-  static std::size_t estimate_required_space(const tuple_ro *ro,
-                                             const std::size_t more_items,
-                                             const std::size_t more_payload,
-                                             const fptu::schema *schema) {
+  __pure_function static std::size_t
+  estimate_required_space(const tuple_ro *ro, const std::size_t more_items,
+                          const std::size_t more_payload,
+                          const fptu::schema *schema) {
     /* Во избежание двойной работы здесь НЕ проверяется корректность переданного
      * экземпляра tuple_ro и его соответствие схеме. Такая проверка должна
      * выполняться один раз явным вызовом валидирующих функций. Например, внутри
@@ -750,7 +761,7 @@ public: //----------------------------------------------------------------------
                                    true);
   }
 
-  bool operator==(const tuple_ro *ro) const noexcept {
+  __pure_function bool operator==(const tuple_ro *ro) const noexcept {
     return ro->flat == &area_[head_ - 1];
   }
   bool operator!=(const tuple_ro *ro) const noexcept { return !(*this == ro); }

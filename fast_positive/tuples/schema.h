@@ -53,7 +53,7 @@ public:
 
   /* Оценивает размер кортежа для переданного набора токенов и ожидаемого
    * среднего размера поле переменной длины. */
-  static std::size_t
+  __pure_function static std::size_t
   estimate_tuple_size(const token_vector &,
                       std::size_t expected_average_stretchy_length = 42);
 
@@ -178,13 +178,13 @@ public:
     option_enforce_false,
     option_enforce_true
   };
-  virtual token get_token_nothrow(
+  __pure_function virtual token get_token_nothrow(
       const string_view &field_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const
       noexcept = 0;
 
-  token get_token(
+  __pure_function token get_token(
       const string_view &field_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const;
@@ -197,31 +197,38 @@ public:
     return get_token(string_view(field_name));
   }
 
-  virtual token get_token_nothrow(
+  __pure_function virtual token get_token_nothrow(
       const token &inlay_token, const string_view &inner_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const
       noexcept = 0;
-  token get_token(
+  __pure_function token get_token(
       const token &inlay_token, const string_view &inner_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const;
 
   // Получение имён полей по токенам -------------------------------------------
-  virtual string_view get_name_nothrow(const token &) const noexcept = 0;
-  string_view get_name(const token &ident) const;
+  __pure_function virtual string_view get_name_nothrow(const token &) const
+      noexcept = 0;
+  __pure_function string_view get_name(const token &ident) const;
   string_view operator[](const token &token) const { return get_name(token); }
 
   // Собственные потребности libfptu -------------------------------------------
-  const token_vector &tokens() const { return sorted_tokens_; }
+  constexpr const token_vector &tokens() const noexcept {
+    return sorted_tokens_;
+  }
   std::size_t preplaced_bytes() const noexcept {
     return preplaced_image_.size();
   }
   std::size_t preplaced_units() const noexcept {
     return details::bytes2units(preplaced_bytes());
   }
-  const void *preplaced_init_image() const { return preplaced_image_.data(); }
-  std::size_t stretchy_preplaced() const { return stretchy_preplaced_; }
+  const void *preplaced_init_image() const noexcept {
+    return preplaced_image_.data();
+  }
+  std::size_t stretchy_preplaced() const noexcept {
+    return stretchy_preplaced_;
+  }
 
 protected:
   inline schema();
