@@ -98,6 +98,10 @@ get(const field_loose *loose, const bool is_discernible_null) {
 template <typename TOKEN> class accessor_ro {
 protected:
   const void *field_;
+
+#if __has_cpp_attribute(no_unique_address)
+  [[no_unique_address]]
+#endif
   TOKEN token_;
   /* for a non-static tokens here is the 32-bit padding on 64-bit platforms due
    * alignment */
