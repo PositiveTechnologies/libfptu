@@ -37,14 +37,15 @@ template <details::tag_t> struct token_static;
 
 namespace details {
 
-template <typename> struct token_operations;
-
 template <typename TOKEN> struct token_operations : public TOKEN {
   constexpr token_operations() noexcept = default;
   constexpr token_operations(const token_operations &) noexcept = default;
   constexpr token_operations(const tag_t tag) noexcept : TOKEN(tag) {}
 
   constexpr tag_t tag() const noexcept { return TOKEN::tag(); }
+  constexpr tag_t normalized_tag() const noexcept {
+    return details::normalize_tag(tag());
+  }
   constexpr genus type() const noexcept { return details::tag2genus(tag()); }
   constexpr bool is_valid() const noexcept { return tag() != 0; }
   constexpr unsigned id() const noexcept { return details::tag2id(tag()); }
@@ -172,6 +173,9 @@ public:
   using is_static_token = std::false_type;
   static constexpr bool is_static_preplaced() noexcept { return false; }
   constexpr tag_t tag() const noexcept { return tag_; }
+  constexpr tag_t normalized_tag() const noexcept {
+    return details::normalize_tag(tag());
+  }
   constexpr token_nonstatic_tag() noexcept : tag_(0) {
     static_assert(sizeof(tag_) == 4, "WTF?");
   }
@@ -215,7 +219,7 @@ public:
   struct hash {
     constexpr std::size_t operator()(const token_nonstatic_tag &ident) const
         noexcept {
-      const auto m = ident.tag() * size_t(2709533891);
+      const auto m = ident.normalized_tag() * size_t(2709533891);
       return m ^ (m >> 19);
     }
   };
@@ -246,6 +250,9 @@ struct token_static : public details::token_static_tag {
       details::is_preplaced(TAG) ? details::tag2offset(TAG) : PTRDIFF_MAX;
   using traits = meta::genus_traits<static_genus>;
   constexpr details::tag_t tag() const noexcept { return TAG; }
+  constexpr details::tag_t normalized_tag() const noexcept {
+    return details::normalize_tag(tag());
+  }
 
 protected:
   cxx14_constexpr token_static(const details::tag_t tag) noexcept {

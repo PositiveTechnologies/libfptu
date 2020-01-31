@@ -142,6 +142,7 @@ enum genus : unsigned /* тип данных, 5 бит */ {
 
 namespace details {
 
+using loose_genus_and_id_t = uint16_t;
 using tag_t = uint32_t;
 using genus_mask_t = uint32_t;
 using unit_t = uint32_t;
@@ -226,8 +227,13 @@ static constexpr bool is_inplaced(const genus type) noexcept {
       utils::bitset_mask<i16, u16, i8, u8, boolean, enumeration>::value, type);
 }
 
+static inline constexpr loose_genus_and_id_t
+tag2genus_and_id(const tag_t tag) noexcept {
+  return loose_genus_and_id_t(tag >> tag_bits::id_shift);
+}
+
 static inline constexpr genus tag2genus(const tag_t tag) noexcept {
-  return genus(uint16_t(tag) >> tag_bits::genus_shift);
+  return genus(loose_genus_and_id_t(tag) >> tag_bits::genus_shift);
 }
 
 static inline constexpr bool is_inplaced(const tag_t tag) noexcept {
@@ -279,12 +285,12 @@ static constexpr unsigned tag2id(const tag_t tag) noexcept {
 }
 
 static constexpr unsigned
-descriptor2id(const uint16_t loose_descriptor) noexcept {
+descriptor2id(const loose_genus_and_id_t loose_descriptor) noexcept {
   return (loose_descriptor >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
 static inline constexpr genus
-descriptor2genus(const uint16_t loose_descriptor) noexcept {
+descriptor2genus(const loose_genus_and_id_t loose_descriptor) noexcept {
   return genus(loose_descriptor >> tag_bits::genus_shift);
 }
 
@@ -295,6 +301,17 @@ static constexpr tag_t make_tag(const genus type, const unsigned id,
   constexpr_assert(type <= hole && id <= tag_bits::max_ident);
   return tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
                (id << tag_bits::id_shift) +
+               (collection ? tag_bits::loose_collection_flag : 0u) +
+               (discernible_null ? tag_bits::discernible_null_flag : 0u) +
+               (saturated ? tag_bits::saturation_flag : 0u));
+}
+
+static constexpr tag_t make_tag(const loose_genus_and_id_t loose_descriptor,
+                                const bool collection,
+                                const bool discernible_null,
+                                const bool saturated) noexcept {
+  constexpr_assert(descriptor2genus(loose_descriptor) != hole);
+  return tag_t(tag_bits::loose_threshold + loose_descriptor +
                (collection ? tag_bits::loose_collection_flag : 0u) +
                (discernible_null ? tag_bits::discernible_null_flag : 0u) +
                (saturated ? tag_bits::saturation_flag : 0u));
@@ -321,34 +338,26 @@ static constexpr tag_t tag_from_offset(const std::size_t offset,
                (saturated ? tag_bits::saturation_flag : 0u));
 }
 
-static constexpr bool tag_less(const tag_t a, const tag_t b) noexcept {
-  const auto xa =
-      a | (is_preplaced(a)
-               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
-               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
-                     tag_bits::loose_collection_flag);
-  const auto xb =
-      b | (is_preplaced(b)
-               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
-               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
-                     tag_bits::loose_collection_flag);
-
-  return xa < xb;
+static inline constexpr tag_t normalize_tag(const tag_t tag,
+                                            const bool as_preplaced) noexcept {
+  assert(is_preplaced(tag) == as_preplaced);
+  return tag |
+         (as_preplaced
+              ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
+              : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
+                    tag_bits::loose_collection_flag);
 }
 
-static constexpr bool tag_same(const tag_t a, const tag_t b) noexcept {
-  const auto xa =
-      a | (is_preplaced(a)
-               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
-               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
-                     tag_bits::loose_collection_flag);
-  const auto xb =
-      b | (is_preplaced(b)
-               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
-               : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
-                     tag_bits::loose_collection_flag);
+static inline constexpr tag_t normalize_tag(const tag_t tag) noexcept {
+  return normalize_tag(tag, is_preplaced(tag));
+}
 
-  return xa == xb;
+static inline constexpr bool tag_less(const tag_t a, const tag_t b) noexcept {
+  return normalize_tag(a) < normalize_tag(b);
+}
+
+static inline constexpr bool tag_same(const tag_t a, const tag_t b) noexcept {
+  return normalize_tag(a) == normalize_tag(b);
 }
 
 //------------------------------------------------------------------------------

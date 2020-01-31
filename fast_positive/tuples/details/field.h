@@ -405,7 +405,7 @@ struct field_loose {
         relative_offset relative;
         inplace_storage_t inplaced;
       };
-      uint16_t genus_and_id;
+      loose_genus_and_id_t /* uint16_t */ genus_and_id;
     };
     uint32_t loose_header;
   };
@@ -421,7 +421,7 @@ struct field_loose {
     return descriptor2id(genus_and_id);
   }
   void hole_set_units(size_t units) {
-    genus_and_id = uint16_t(details::make_hole(units));
+    genus_and_id = loose_genus_and_id_t(details::make_hole(units));
   }
   cxx14_constexpr const unit_t *hole_begin() const {
     constexpr_assert(is_hole() && hole_get_units() > 0);
@@ -437,7 +437,7 @@ struct field_loose {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     loose_header = details::make_hole(0) << 16;
 #else
-    loose_header = uint16_t(details::make_hole(0));
+    loose_header = loose_genus_and_id_t(details::make_hole(0));
 #endif
     assert(hole_get_units() == 0 && !relative.have_payload());
   }
