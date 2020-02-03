@@ -218,6 +218,35 @@ public:
   constexpr const TOKEN &token() const noexcept { return token_; }
   constexpr operator TOKEN() const noexcept { return token_; }
 
+  constexpr bool is_saturated() const noexcept {
+    return token().is_saturated();
+  }
+  constexpr bool is_rangechecking() const noexcept {
+    return token().is_rangechecking();
+  }
+  constexpr bool is_discernible_null() const noexcept {
+    return token().is_discernible_null();
+  }
+  constexpr bool is_preplaced() const noexcept {
+    return token().is_preplaced();
+  }
+  constexpr bool is_loose() const noexcept { return token().is_loose(); }
+  constexpr bool is_inlay() const noexcept { return token().is_inlay(); }
+  constexpr bool is_collection() const noexcept {
+    return token().is_collection();
+  }
+
+  constexpr bool is_stretchy() const noexcept { return token().is_stretchy(); }
+  constexpr bool is_bool() const noexcept { return token().is_bool(); }
+  constexpr bool is_enum() const noexcept { return token().is_enum(); }
+  constexpr bool is_text() const noexcept { return token().is_text(); }
+  constexpr bool is_number() const noexcept { return token().is_number(); }
+  constexpr bool is_integer() const noexcept { return token().is_integer(); }
+  constexpr bool is_signed() const noexcept { return token().is_signed(); }
+  constexpr bool is_unsigned() const noexcept { return token().is_unsigned(); }
+  constexpr bool is_float() const noexcept { return token().is_float(); }
+  constexpr bool is_decimal() const noexcept { return token().is_decimal(); }
+
   constexpr string_view get_string() const { return get<text>(); }
   constexpr string_view get_varbinary() const { return get<varbin>(); }
   constexpr const tuple_ro *get_nested() const {
