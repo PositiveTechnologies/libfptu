@@ -286,6 +286,7 @@ public:
   HERE_CRTP_MAKE(int64_t, get_integer)
   HERE_CRTP_MAKE(uint64_t, get_unsigned)
   HERE_CRTP_MAKE(double, get_float)
+  HERE_CRTP_MAKE(double, get_number_as_ieee754double)
 #undef HERE_CRTP_MAKE
 
   __pure_function explicit constexpr operator bool() const noexcept {
@@ -630,6 +631,7 @@ public:
   HERE_CRTP_MAKE(int64_t, get_integer)
   HERE_CRTP_MAKE(uint64_t, get_unsigned)
   HERE_CRTP_MAKE(double, get_float)
+  HERE_CRTP_MAKE(double, get_number_as_ieee754double)
 #undef HERE_CRTP_MAKE
 
   template <typename TOKEN>

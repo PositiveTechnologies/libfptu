@@ -79,6 +79,16 @@ enum fundamentals : std::ptrdiff_t {
   max_preplaced_size = (1u << ident_bitness) - 1,
 };
 
+/* The min/max "safe" values which could be converted
+ * to IEEE-754 double (64 bit) without loss precision */
+constexpr int64_t safe64_number_max = INT64_C(0x001FFFFFFFFFFFFF);
+constexpr int64_t safe64_number_min = -safe64_number_max;
+
+/* The min/max "safe" values which could be converted
+ * to IEEE-754 single (32 bit) without loss precision */
+constexpr int32_t safe32_number_max = INT32_C(0x001FFFFF);
+constexpr int32_t safe32_number_min = -safe32_number_max;
+
 enum configure {
   onstask_allocation_threshold = 2048,
   sort_index_threshold = 256

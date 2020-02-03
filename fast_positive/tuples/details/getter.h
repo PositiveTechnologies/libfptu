@@ -322,6 +322,38 @@ public:
     return (type() == f32) ? get_f32() : get_f64();
   }
 
+  __pure_function double get_number_as_ieee754double() const {
+    switch (type()) {
+    default:
+      throw_type_mismatch();
+    case f32:
+      return get_f32();
+    case f64:
+      return get_f64();
+    case i8:
+      return get_i8();
+    case i16:
+      return get_i16();
+    case i32:
+      return get_i32();
+    case i64:
+      if (unlikely(get_i64() < safe64_number_min ||
+                   get_i64() > safe64_number_max))
+        throw_value_range();
+      return get_i64();
+    case u8:
+      return get_u8();
+    case u16:
+      return get_u16();
+    case u32:
+      return get_u32();
+    case u64:
+      if (unlikely(get_u64() > safe64_number_max))
+        throw_value_range();
+      return get_u64();
+    }
+  }
+
   cxx14_constexpr int64_t get_integer() const {
     switch (type()) {
     default:
@@ -577,7 +609,9 @@ public:
   HERE_CRTP_MAKE(int64_t, get_integer)
   HERE_CRTP_MAKE(uint64_t, get_unsigned)
   HERE_CRTP_MAKE(double, get_float)
+  HERE_CRTP_MAKE(double, get_number_as_ieee754double)
 #undef HERE_CRTP_MAKE
+
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
   __pure_function inline collection_ro<TOKEN>
   collection(const TOKEN &ident) const {
