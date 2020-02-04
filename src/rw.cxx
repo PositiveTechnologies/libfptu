@@ -181,6 +181,12 @@ HERE_GENUS_CASE(uint64_t, integer)
 HERE_GENUS_CASE(int64_t, unsigned)
 HERE_GENUS_CASE(uint64_t, unsigned)
 HERE_GENUS_CASE(double, float)
+HERE_GENUS_CASE(int32_t, number)
+HERE_GENUS_CASE(uint32_t, number)
+HERE_GENUS_CASE(int64_t, number)
+HERE_GENUS_CASE(uint64_t, number)
+HERE_GENUS_CASE(float, number)
+HERE_GENUS_CASE(double, number)
 #undef HERE_GENUS_CASE
 
 FPTU_API dynamic_collection_rw tuple_rw::collection(const token &ident) {
@@ -327,6 +333,272 @@ tuple_rw::insert_uint128(const token &ident, const uint128_t &value) {
     return insert_bin128(
         ident, *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
   return insert_unsigned(ident, uint64_t(value));
+}
+
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_number(const token &ident, const int32_t value) {
+  switch (ident.type()) {
+  default:
+    throw_type_mismatch();
+  case f32:
+    if (unlikely(value < safe32_number_min || value > safe32_number_max))
+      throw_value_range();
+    return insert_f32(ident, static_cast<float>(value));
+  case f64:
+    return insert_f64(ident, static_cast<double>(value));
+  case i8:
+    if (unlikely(value < INT8_MIN || value > INT8_MAX))
+      throw_value_range();
+    return insert_i8(ident, static_cast<int8_t>(value));
+  case i16:
+    if (unlikely(value < INT16_MIN || value > INT16_MAX))
+      throw_value_range();
+    return insert_i16(ident, static_cast<int16_t>(value));
+  case i32:
+    return insert_i32(ident, value);
+  case i64:
+    return insert_i64(ident, value);
+  case u8:
+    if (unlikely(value < 0 || value > UINT8_MAX))
+      throw_value_range();
+    return insert_u8(ident, static_cast<uint8_t>(value));
+  case u16:
+    if (unlikely(value < 0 || value > UINT16_MAX))
+      throw_value_range();
+    return insert_u16(ident, static_cast<uint16_t>(value));
+  case u32:
+    if (unlikely(value < 0))
+      throw_value_range();
+    return insert_u32(ident, static_cast<uint32_t>(value));
+  case u64:
+    if (unlikely(value < 0))
+      throw_value_range();
+    return insert_u64(ident, static_cast<uint64_t>(value));
+  }
+}
+
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_number(const token &ident, const uint32_t value) {
+  switch (ident.type()) {
+  default:
+    throw_type_mismatch();
+  case f32:
+    if (unlikely(value > safe32_number_max))
+      throw_value_range();
+    return insert_f32(ident, static_cast<float>(value));
+  case f64:
+    return insert_f64(ident, static_cast<double>(value));
+  case i8:
+    if (unlikely(value > INT8_MAX))
+      throw_value_range();
+    return insert_i8(ident, static_cast<int8_t>(value));
+  case i16:
+    if (unlikely(value > INT16_MAX))
+      throw_value_range();
+    return insert_i16(ident, static_cast<int16_t>(value));
+  case i32:
+    if (unlikely(value > INT32_MAX))
+      throw_value_range();
+    return insert_i32(ident, value);
+  case i64:
+    return insert_i64(ident, value);
+  case u8:
+    if (unlikely(value > UINT8_MAX))
+      throw_value_range();
+    return insert_u8(ident, static_cast<uint8_t>(value));
+  case u16:
+    if (unlikely(value > UINT16_MAX))
+      throw_value_range();
+    return insert_u16(ident, static_cast<uint16_t>(value));
+  case u32:
+    return insert_u32(ident, static_cast<uint32_t>(value));
+  case u64:
+    return insert_u64(ident, static_cast<uint64_t>(value));
+  }
+}
+
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_number(const token &ident, const int64_t value) {
+  switch (ident.type()) {
+  default:
+    throw_type_mismatch();
+  case f32:
+    if (unlikely(value < safe32_number_min || value > safe32_number_max))
+      throw_value_range();
+    return insert_f32(ident, static_cast<float>(value));
+  case f64:
+    if (unlikely(value < safe64_number_min || value > safe64_number_max))
+      throw_value_range();
+    return insert_f64(ident, static_cast<double>(value));
+  case i8:
+    if (unlikely(value < INT8_MIN || value > INT8_MAX))
+      throw_value_range();
+    return insert_i8(ident, static_cast<int8_t>(value));
+  case i16:
+    if (unlikely(value < INT16_MIN || value > INT16_MAX))
+      throw_value_range();
+    return insert_i16(ident, static_cast<int16_t>(value));
+  case i32:
+    if (unlikely(value < INT32_MIN || value > INT32_MAX))
+      throw_value_range();
+    return insert_i32(ident, value);
+  case i64:
+    return insert_i64(ident, value);
+  case u8:
+    if (unlikely(value < 0 || value > UINT8_MAX))
+      throw_value_range();
+    return insert_u8(ident, static_cast<uint8_t>(value));
+  case u16:
+    if (unlikely(value < 0 || value > UINT16_MAX))
+      throw_value_range();
+    return insert_u16(ident, static_cast<uint16_t>(value));
+  case u32:
+    if (unlikely(value < 0 || value > UINT32_MAX))
+      throw_value_range();
+    return insert_u32(ident, static_cast<uint32_t>(value));
+  case u64:
+    if (unlikely(value < 0))
+      throw_value_range();
+    return insert_u64(ident, static_cast<uint64_t>(value));
+  }
+}
+
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_number(const token &ident, const uint64_t value) {
+  switch (ident.type()) {
+  default:
+    throw_type_mismatch();
+  case f32:
+    if (unlikely(value > safe32_number_max))
+      throw_value_range();
+    return insert_f32(ident, static_cast<float>(value));
+  case f64:
+    if (unlikely(value > safe64_number_max))
+      throw_value_range();
+    return insert_f64(ident, static_cast<double>(value));
+  case i8:
+    if (unlikely(value > INT8_MAX))
+      throw_value_range();
+    return insert_i8(ident, static_cast<int8_t>(value));
+  case i16:
+    if (unlikely(value > INT16_MAX))
+      throw_value_range();
+    return insert_i16(ident, static_cast<int16_t>(value));
+  case i32:
+    if (unlikely(value > INT32_MAX))
+      throw_value_range();
+    return insert_i32(ident, value);
+  case i64:
+    if (unlikely(value > INT64_MAX))
+      throw_value_range();
+    return insert_i64(ident, value);
+  case u8:
+    if (unlikely(value > UINT8_MAX))
+      throw_value_range();
+    return insert_u8(ident, static_cast<uint8_t>(value));
+  case u16:
+    if (unlikely(value > UINT16_MAX))
+      throw_value_range();
+    return insert_u16(ident, static_cast<uint16_t>(value));
+  case u32:
+    if (unlikely(value > UINT32_MAX))
+      throw_value_range();
+    return insert_u32(ident, static_cast<uint32_t>(value));
+  case u64:
+    return insert_u64(ident, static_cast<uint64_t>(value));
+  }
+}
+
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_number(const token &ident, const float value) {
+  switch (ident.type()) {
+  default:
+    throw_type_mismatch();
+  case f32:
+    return insert_f32(ident, static_cast<float>(value));
+  case f64:
+    return insert_f64(ident, static_cast<double>(value));
+  case i8:
+    if (unlikely(value < INT8_MIN || value > INT8_MAX))
+      throw_value_range();
+    return insert_i8(ident, static_cast<int8_t>(value));
+  case i16:
+    if (unlikely(value < INT16_MIN || value > INT16_MAX))
+      throw_value_range();
+    return insert_i16(ident, static_cast<int16_t>(value));
+  case i32:
+    if (unlikely(value < INT32_MIN || value > INT32_MAX))
+      throw_value_range();
+    return insert_i32(ident, value);
+  case i64:
+    if (unlikely(value < INT64_MIN || value > INT64_MAX))
+      throw_value_range();
+    return insert_i64(ident, value);
+  case u8:
+    if (unlikely(value < 0 || value > UINT8_MAX))
+      throw_value_range();
+    return insert_u8(ident, static_cast<uint8_t>(value));
+  case u16:
+    if (unlikely(value < 0 || value > UINT16_MAX))
+      throw_value_range();
+    return insert_u16(ident, static_cast<uint16_t>(value));
+  case u32:
+    if (unlikely(value < 0 || value > UINT32_MAX))
+      throw_value_range();
+    return insert_u32(ident, static_cast<uint32_t>(value));
+  case u64:
+    if (unlikely(value < 0 || value > UINT64_MAX))
+      throw_value_range();
+    return insert_u64(ident, static_cast<uint64_t>(value));
+  }
+}
+
+FPTU_API dynamic_collection_iterator_rw
+tuple_rw::insert_number(const token &ident, const double value) {
+  switch (ident.type()) {
+  default:
+    throw_type_mismatch();
+  case f32:
+    if (!std::isinf(value) &&
+        unlikely(value > std::numeric_limits<float>::max() ||
+                 value < std::numeric_limits<float>::lowest()))
+      throw_value_range();
+    return insert_f32(ident, static_cast<float>(value));
+  case f64:
+    return insert_f64(ident, static_cast<double>(value));
+  case i8:
+    if (unlikely(value < INT8_MIN || value > INT8_MAX))
+      throw_value_range();
+    return insert_i8(ident, static_cast<int8_t>(value));
+  case i16:
+    if (unlikely(value < INT16_MIN || value > INT16_MAX))
+      throw_value_range();
+    return insert_i16(ident, static_cast<int16_t>(value));
+  case i32:
+    if (unlikely(value < INT32_MIN || value > INT32_MAX))
+      throw_value_range();
+    return insert_i32(ident, value);
+  case i64:
+    if (unlikely(value < INT64_MIN || value > INT64_MAX))
+      throw_value_range();
+    return insert_i64(ident, value);
+  case u8:
+    if (unlikely(value < 0 || value > UINT8_MAX))
+      throw_value_range();
+    return insert_u8(ident, static_cast<uint8_t>(value));
+  case u16:
+    if (unlikely(value < 0 || value > UINT16_MAX))
+      throw_value_range();
+    return insert_u16(ident, static_cast<uint16_t>(value));
+  case u32:
+    if (unlikely(value < 0 || value > UINT32_MAX))
+      throw_value_range();
+    return insert_u32(ident, static_cast<uint32_t>(value));
+  case u64:
+    if (unlikely(value < 0 || value > UINT64_MAX))
+      throw_value_range();
+    return insert_u64(ident, static_cast<uint64_t>(value));
+  }
 }
 
 //------------------------------------------------------------------------------

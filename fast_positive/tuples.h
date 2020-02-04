@@ -692,6 +692,12 @@ public:
   HERE_CRTP_MAKE(int64_t, unsigned)
   HERE_CRTP_MAKE(uint64_t, unsigned)
   HERE_CRTP_MAKE(double, float)
+  HERE_CRTP_MAKE(int32_t, number)
+  HERE_CRTP_MAKE(uint32_t, number)
+  HERE_CRTP_MAKE(int64_t, number)
+  HERE_CRTP_MAKE(uint64_t, number)
+  HERE_CRTP_MAKE(float, number)
+  HERE_CRTP_MAKE(double, number)
 #undef HERE_CRTP_MAKE
 
   template <typename TOKEN>
@@ -1334,6 +1340,12 @@ public:
   HERE_THUNK_MAKE(int64_t, unsigned)
   HERE_THUNK_MAKE(uint64_t, unsigned)
   HERE_THUNK_MAKE(double, float)
+  HERE_THUNK_MAKE(int32_t, number)
+  HERE_THUNK_MAKE(uint32_t, number)
+  HERE_THUNK_MAKE(int64_t, number)
+  HERE_THUNK_MAKE(uint64_t, number)
+  HERE_THUNK_MAKE(float, number)
+  HERE_THUNK_MAKE(double, number)
 #undef HERE_THUNK_MAKE
 
   bool erase(const dynamic_collection_iterator_rw &it);

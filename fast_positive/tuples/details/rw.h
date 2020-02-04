@@ -375,10 +375,9 @@ public:
             unlikely(value > std::numeric_limits<float>::max() ||
                      value < std::numeric_limits<float>::lowest()))
           throw_value_range();
-        set_f32(static_cast<float>(value));
-      } else {
-        set_f64(value);
+        return set_f32(static_cast<float>(value));
       }
+      return set_f64(value);
     }
 
     void set_integer(const int64_t value) {
@@ -405,7 +404,7 @@ public:
     void set_integer(const uint64_t value) {
       if (unlikely(value > uint64_t(std::numeric_limits<int64_t>::max())))
         throw_value_range();
-      set_integer(static_cast<int64_t>(value));
+      return set_integer(static_cast<int64_t>(value));
     }
 
     void set_unsigned(const uint64_t value) {
@@ -432,21 +431,281 @@ public:
     void set_unsigned(const int64_t value) {
       if (unlikely(value < 0))
         throw_value_range();
-      set_integer(static_cast<uint64_t>(value));
+      return set_integer(static_cast<uint64_t>(value));
     }
 
     void set_int128(const int128_t &value) {
       if (base::type() == bin128)
         return assign<bin128>(
             *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
-      set_integer(int64_t(value));
+      return set_integer(int64_t(value));
     }
 
     void set_uint128(const uint128_t &value) {
       if (base::type() == bin128)
         return assign<bin128>(
             *erthink::constexpr_pointer_cast<const binary128_t *>(&value));
-      set_unsigned(uint64_t(value));
+      return set_unsigned(uint64_t(value));
+    }
+
+    void set_number(const int32_t value) {
+      switch (base::type()) {
+      default:
+        throw_type_mismatch();
+      case f32:
+        if (unlikely(value < safe32_number_min || value > safe32_number_max))
+          throw_value_range();
+        return set_f32(static_cast<float>(value));
+      case f64:
+        return set_f64(static_cast<double>(value));
+      case i8:
+        if (unlikely(value < INT8_MIN || value > INT8_MAX))
+          throw_value_range();
+        return set_i8(static_cast<int8_t>(value));
+      case i16:
+        if (unlikely(value < INT16_MIN || value > INT16_MAX))
+          throw_value_range();
+        return set_i16(static_cast<int16_t>(value));
+      case i32:
+        return set_i32(value);
+      case i64:
+        return set_i64(value);
+      case u8:
+        if (unlikely(value < 0 || value > UINT8_MAX))
+          throw_value_range();
+        return set_u8(static_cast<uint8_t>(value));
+      case u16:
+        if (unlikely(value < 0 || value > UINT16_MAX))
+          throw_value_range();
+        return set_u16(static_cast<uint16_t>(value));
+      case u32:
+        if (unlikely(value < 0))
+          throw_value_range();
+        return set_u32(static_cast<uint32_t>(value));
+      case u64:
+        if (unlikely(value < 0))
+          throw_value_range();
+        return set_u64(static_cast<uint64_t>(value));
+      }
+    }
+
+    void set_number(const uint32_t value) {
+      switch (base::type()) {
+      default:
+        throw_type_mismatch();
+      case f32:
+        if (unlikely(value > safe32_number_max))
+          throw_value_range();
+        return set_f32(static_cast<float>(value));
+      case f64:
+        return set_f64(static_cast<double>(value));
+      case i8:
+        if (unlikely(value > INT8_MAX))
+          throw_value_range();
+        return set_i8(static_cast<int8_t>(value));
+      case i16:
+        if (unlikely(value > INT16_MAX))
+          throw_value_range();
+        return set_i16(static_cast<int16_t>(value));
+      case i32:
+        if (unlikely(value > INT32_MAX))
+          throw_value_range();
+        return set_i32(value);
+      case i64:
+        return set_i64(value);
+      case u8:
+        if (unlikely(value > UINT8_MAX))
+          throw_value_range();
+        return set_u8(static_cast<uint8_t>(value));
+      case u16:
+        if (unlikely(value > UINT16_MAX))
+          throw_value_range();
+        return set_u16(static_cast<uint16_t>(value));
+      case u32:
+        return set_u32(static_cast<uint32_t>(value));
+      case u64:
+        return set_u64(static_cast<uint64_t>(value));
+      }
+    }
+
+    void set_number(const int64_t value) {
+      switch (base::type()) {
+      default:
+        throw_type_mismatch();
+      case f32:
+        if (unlikely(value < safe32_number_min || value > safe32_number_max))
+          throw_value_range();
+        return set_f32(static_cast<float>(value));
+      case f64:
+        if (unlikely(value < safe64_number_min || value > safe64_number_max))
+          throw_value_range();
+        return set_f64(static_cast<double>(value));
+      case i8:
+        if (unlikely(value < INT8_MIN || value > INT8_MAX))
+          throw_value_range();
+        return set_i8(static_cast<int8_t>(value));
+      case i16:
+        if (unlikely(value < INT16_MIN || value > INT16_MAX))
+          throw_value_range();
+        return set_i16(static_cast<int16_t>(value));
+      case i32:
+        if (unlikely(value < INT32_MIN || value > INT32_MAX))
+          throw_value_range();
+        return set_i32(value);
+      case i64:
+        return set_i64(value);
+      case u8:
+        if (unlikely(value < 0 || value > UINT8_MAX))
+          throw_value_range();
+        return set_u8(static_cast<uint8_t>(value));
+      case u16:
+        if (unlikely(value < 0 || value > UINT16_MAX))
+          throw_value_range();
+        return set_u16(static_cast<uint16_t>(value));
+      case u32:
+        if (unlikely(value < 0 || value > UINT32_MAX))
+          throw_value_range();
+        return set_u32(static_cast<uint32_t>(value));
+      case u64:
+        if (unlikely(value < 0))
+          throw_value_range();
+        return set_u64(static_cast<uint64_t>(value));
+      }
+    }
+
+    void set_number(const uint64_t value) {
+      switch (base::type()) {
+      default:
+        throw_type_mismatch();
+      case f32:
+        if (unlikely(value > safe32_number_max))
+          throw_value_range();
+        return set_f32(static_cast<float>(value));
+      case f64:
+        if (unlikely(value > safe64_number_max))
+          throw_value_range();
+        return set_f64(static_cast<double>(value));
+      case i8:
+        if (unlikely(value > INT8_MAX))
+          throw_value_range();
+        return set_i8(static_cast<int8_t>(value));
+      case i16:
+        if (unlikely(value > INT16_MAX))
+          throw_value_range();
+        return set_i16(static_cast<int16_t>(value));
+      case i32:
+        if (unlikely(value > INT32_MAX))
+          throw_value_range();
+        return set_i32(value);
+      case i64:
+        if (unlikely(value > INT64_MAX))
+          throw_value_range();
+        return set_i64(value);
+      case u8:
+        if (unlikely(value > UINT8_MAX))
+          throw_value_range();
+        return set_u8(static_cast<uint8_t>(value));
+      case u16:
+        if (unlikely(value > UINT16_MAX))
+          throw_value_range();
+        return set_u16(static_cast<uint16_t>(value));
+      case u32:
+        if (unlikely(value > UINT32_MAX))
+          throw_value_range();
+        return set_u32(static_cast<uint32_t>(value));
+      case u64:
+        return set_u64(static_cast<uint64_t>(value));
+      }
+    }
+
+    void set_number(const float value) {
+      switch (base::type()) {
+      default:
+        throw_type_mismatch();
+      case f32:
+        return set_f32(static_cast<float>(value));
+      case f64:
+        return set_f64(static_cast<double>(value));
+      case i8:
+        if (unlikely(value < INT8_MIN || value > INT8_MAX))
+          throw_value_range();
+        return set_i8(static_cast<int8_t>(value));
+      case i16:
+        if (unlikely(value < INT16_MIN || value > INT16_MAX))
+          throw_value_range();
+        return set_i16(static_cast<int16_t>(value));
+      case i32:
+        if (unlikely(value < INT32_MIN || value > INT32_MAX))
+          throw_value_range();
+        return set_i32(value);
+      case i64:
+        if (unlikely(value < INT64_MIN || value > INT64_MAX))
+          throw_value_range();
+        return set_i64(value);
+      case u8:
+        if (unlikely(value < 0 || value > UINT8_MAX))
+          throw_value_range();
+        return set_u8(static_cast<uint8_t>(value));
+      case u16:
+        if (unlikely(value < 0 || value > UINT16_MAX))
+          throw_value_range();
+        return set_u16(static_cast<uint16_t>(value));
+      case u32:
+        if (unlikely(value < 0 || value > UINT32_MAX))
+          throw_value_range();
+        return set_u32(static_cast<uint32_t>(value));
+      case u64:
+        if (unlikely(value < 0 || value > UINT64_MAX))
+          throw_value_range();
+        return set_u64(static_cast<uint64_t>(value));
+      }
+    }
+
+    void set_number(const double value) {
+      switch (base::type()) {
+      default:
+        throw_type_mismatch();
+      case f32:
+        if (!std::isinf(value) &&
+            unlikely(value > std::numeric_limits<float>::max() ||
+                     value < std::numeric_limits<float>::lowest()))
+          throw_value_range();
+        return set_f32(static_cast<float>(value));
+      case f64:
+        return set_f64(static_cast<double>(value));
+      case i8:
+        if (unlikely(value < INT8_MIN || value > INT8_MAX))
+          throw_value_range();
+        return set_i8(static_cast<int8_t>(value));
+      case i16:
+        if (unlikely(value < INT16_MIN || value > INT16_MAX))
+          throw_value_range();
+        return set_i16(static_cast<int16_t>(value));
+      case i32:
+        if (unlikely(value < INT32_MIN || value > INT32_MAX))
+          throw_value_range();
+        return set_i32(value);
+      case i64:
+        if (unlikely(value < INT64_MIN || value > INT64_MAX))
+          throw_value_range();
+        return set_i64(value);
+      case u8:
+        if (unlikely(value < 0 || value > UINT8_MAX))
+          throw_value_range();
+        return set_u8(static_cast<uint8_t>(value));
+      case u16:
+        if (unlikely(value < 0 || value > UINT16_MAX))
+          throw_value_range();
+        return set_u16(static_cast<uint16_t>(value));
+      case u32:
+        if (unlikely(value < 0 || value > UINT32_MAX))
+          throw_value_range();
+        return set_u32(static_cast<uint32_t>(value));
+      case u64:
+        if (unlikely(value < 0 || value > UINT64_MAX))
+          throw_value_range();
+        return set_u64(static_cast<uint64_t>(value));
+      }
     }
   };
 
@@ -826,6 +1085,12 @@ public: //----------------------------------------------------------------------
   HERE_GENUS_CASE(int64_t, unsigned)
   HERE_GENUS_CASE(uint64_t, unsigned)
   HERE_GENUS_CASE(double, float)
+  HERE_GENUS_CASE(int32_t, number)
+  HERE_GENUS_CASE(uint32_t, number)
+  HERE_GENUS_CASE(int64_t, number)
+  HERE_GENUS_CASE(uint64_t, number)
+  HERE_GENUS_CASE(float, number)
+  HERE_GENUS_CASE(double, number)
 #undef HERE_GENUS_CASE
 
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
