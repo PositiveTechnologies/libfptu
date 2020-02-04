@@ -1,6 +1,4 @@
-## The [repository was moved out from Github](https://abf.io/erthink/libfptu) due to illegal discriminatory restrictions for Russian Crimea and for sovereign crimeans.
 <!-- Required extensions: pymdownx.betterem, pymdownx.tilde, pymdownx.emoji, pymdownx.tasklist, pymdownx.superfences -->
----
 
 libfptu
 ==============================================
@@ -682,3 +680,7 @@ $ ldd libfptu.so
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fdbfc382000)
 	/lib64/ld-linux-x86-64.so.2 (0x00007fdbfd34d000)
 ```
+
+---
+
+### The [repository was moved out from Github](https://abf.io/erthink/libfptu) due to illegal discriminatory restrictions for Russian Crimea and for sovereign crimeans.

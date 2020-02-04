@@ -1,5 +1,8 @@
 <!-- Required extensions: pymdownx.betterem, pymdownx.tilde, pymdownx.emoji, pymdownx.tasklist, pymdownx.superfences -->
-- [ ] ro/rw-итераторы для loose полей.
+- [x] ro-итераторы для полей.
+- [x] тесты ro-итераторов.
+- [ ] rw-итераторы для полей.
+- [ ] имена enum-значений в схеме.
 - [ ] fptu::value через tagged_pointer.
 - [ ] взаимодействие с boost::optional.
 - [ ] сериализация в JSON.
