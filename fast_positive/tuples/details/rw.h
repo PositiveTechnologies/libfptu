@@ -216,7 +216,9 @@ protected:
   relative_payload *realloc_data(relative_offset &ref, const std::size_t have,
                                  const std::size_t needed);
   __pure_function static const char *audit(const tuple_rw *self) noexcept;
+
   //----------------------------------------------------------------------------
+
   template <
       typename TOKEN, genus GENUS,
       typename erthink::enable_if_t<meta::genus_traits<GENUS>::physique !=
@@ -706,6 +708,69 @@ public:
           throw_value_range();
         return set_u64(static_cast<uint64_t>(value));
       }
+    }
+
+    //--------------------------------------------------------------------------
+
+#define HERE_GENUS_CASE(VALUE_TYPE, NAME)                                      \
+  VALUE_TYPE operator=(VALUE_TYPE value) {                                     \
+    set_##NAME(value);                                                         \
+    return value;                                                              \
+  }
+
+    HERE_GENUS_CASE(const string_view &, string)
+    HERE_GENUS_CASE(const tuple_ro *, nested)
+    HERE_GENUS_CASE(const property_pair &, property)
+    HERE_GENUS_CASE(bool, bool)
+    HERE_GENUS_CASE(int8_t, number)
+    HERE_GENUS_CASE(uint8_t, number)
+    HERE_GENUS_CASE(int16_t, number)
+    HERE_GENUS_CASE(uint16_t, number)
+    HERE_GENUS_CASE(int32_t, number)
+    HERE_GENUS_CASE(uint32_t, number)
+    HERE_GENUS_CASE(int64_t, number)
+    HERE_GENUS_CASE(uint64_t, number)
+    HERE_GENUS_CASE(float, number)
+    HERE_GENUS_CASE(double, number)
+    HERE_GENUS_CASE(decimal64, decimal)
+    HERE_GENUS_CASE(datetime_t, datetime)
+    HERE_GENUS_CASE(const uuid_t &, uuid)
+    HERE_GENUS_CASE(const int128_t &, int128)
+    HERE_GENUS_CASE(const uint128_t &, uint128)
+    HERE_GENUS_CASE(const binary96_t &, bin96)
+    HERE_GENUS_CASE(const binary128_t &, bin128)
+    HERE_GENUS_CASE(const binary160_t &, bin160)
+    HERE_GENUS_CASE(const binary192_t &, bin192)
+    HERE_GENUS_CASE(const binary224_t &, bin224)
+    HERE_GENUS_CASE(const binary256_t &, bin256)
+    HERE_GENUS_CASE(const binary320_t &, bin320)
+    HERE_GENUS_CASE(const binary384_t &, bin384)
+    HERE_GENUS_CASE(const binary512_t &, bin512)
+    HERE_GENUS_CASE(const ip_address_t &, ip_address)
+    HERE_GENUS_CASE(const mac_address_t, mac_address)
+    HERE_GENUS_CASE(const ip_net_t &, ip_net)
+#undef HERE_GENUS_CASE
+
+    const std::string &operator=(const std::string &value) {
+      set_string(value);
+      return value;
+    }
+
+    const char *operator=(const char value[]) {
+      set_string(string_view(value));
+      return value;
+    }
+
+    template <std::size_t size>
+    const char (&operator=(const char (&value)[size]))[size] {
+      set_string(string_view(value));
+      return value;
+    }
+
+    template <std::size_t size>
+    std::array<char, size> &operator=(std::array<char, size> &value) {
+      set_string(string_view(value));
+      return value;
     }
   };
 
