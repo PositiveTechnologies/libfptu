@@ -115,7 +115,7 @@ protected:
                     unsigned(buffer_size - pure_tuple_size()) >>
                         fptu::fundamentals::unit_shift);
     head_ = tail_ = pivot_ = unsigned(items_limit);
-    if (schema_) {
+    if (schema_ && schema_->number_of_preplaced()) {
       tail_ += unsigned(schema_->preplaced_units());
       std::memcpy(pivot(), schema_->preplaced_init_image(),
                   schema_->preplaced_bytes());
