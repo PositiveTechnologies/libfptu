@@ -400,6 +400,10 @@ public:
       /* to tuple_ro_weak was a literal type */
       default /* { pimpl_ = nullptr; } */;
 
+  inline tuple_ro_weak(const tuple_ro_managed &);
+  inline tuple_ro_weak(const tuple_rw_fixed &);
+  inline tuple_ro_weak(const tuple_rw_managed &);
+
   constexpr tuple_ro_weak(const tuple_ro_weak &) noexcept = default;
   tuple_ro_weak &operator=(const tuple_ro_weak &) noexcept = default;
 
@@ -1368,6 +1372,15 @@ public:
 };
 
 //------------------------------------------------------------------------------
+
+inline tuple_ro_weak::tuple_ro_weak(const tuple_ro_managed &body)
+    : tuple_ro_weak(body.take_weak()) {}
+
+inline tuple_ro_weak::tuple_ro_weak(const tuple_rw_fixed &body)
+    : tuple_ro_weak(body.take_weak_asis()) {}
+
+inline tuple_ro_weak::tuple_ro_weak(const tuple_rw_managed &body)
+    : tuple_ro_weak(body.take_weak_asis()) {}
 
 inline tuple_ro_weak /* preplaced_nested::value_type */
 preplaced_nested::value_nothrow() const noexcept {
