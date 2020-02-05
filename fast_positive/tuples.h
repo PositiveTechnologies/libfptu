@@ -1537,6 +1537,10 @@ FPTU_API std::string hexadecimal(const void *data, std::size_t bytes);
 
 } /* namespace fptu */
 
+namespace std {
+FPTU_API fptu::string_view to_string(const fptu::genus type);
+} /* namespace std */
+
 #endif /* __cplusplus */
 
 #include "fast_positive/tuples/details/warnings_pop.h"

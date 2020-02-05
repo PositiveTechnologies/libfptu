@@ -203,3 +203,40 @@ mdbx_e2k_strnlen_bug_workaround(const char *s, std::size_t maxlen) {
   return n;
 }
 #endif /* Elbrus's memcmp() bug. */
+
+FPTU_API fptu::string_view std::to_string(const fptu::genus type) {
+  static const char *typenames[32] = {"text",
+                                      "varbin",
+                                      "nested",
+                                      "property",
+                                      "i8",
+                                      "u8",
+                                      "i16",
+                                      "u16",
+                                      "i32",
+                                      "u32",
+                                      "f32",
+                                      "t32",
+                                      "i64",
+                                      "u64",
+                                      "f64",
+                                      "d64",
+                                      "t64",
+                                      "bin96",
+                                      "bin128",
+                                      "bin160",
+                                      "bin192",
+                                      "bin224",
+                                      "bin256",
+                                      "bin320",
+                                      "bin384",
+                                      "bin512",
+                                      "app_reserved_64",
+                                      "app_reserved_128",
+                                      "mac",
+                                      "ip",
+                                      "ipnet",
+                                      "hole"};
+  assert(type >= 0 && type <= 31);
+  return typenames[type];
+}
