@@ -327,30 +327,30 @@ public:
     default:
       throw_type_mismatch();
     case f32:
-      return get_f32();
+      return static_cast<double>(get_f32());
     case f64:
       return get_f64();
     case i8:
-      return get_i8();
+      return static_cast<double>(get_i8());
     case i16:
-      return get_i16();
+      return static_cast<double>(get_i16());
     case i32:
-      return get_i32();
+      return static_cast<double>(get_i32());
     case i64:
       if (unlikely(get_i64() < safe64_number_min ||
                    get_i64() > safe64_number_max))
         throw_value_range();
-      return get_i64();
+      return static_cast<double>(get_i64());
     case u8:
-      return get_u8();
+      return static_cast<double>(get_u8());
     case u16:
-      return get_u16();
+      return static_cast<double>(get_u16());
     case u32:
-      return get_u32();
+      return static_cast<double>(get_u32());
     case u64:
       if (unlikely(get_u64() > safe64_number_max))
         throw_value_range();
-      return get_u64();
+      return static_cast<double>(get_u64());
     }
   }
 

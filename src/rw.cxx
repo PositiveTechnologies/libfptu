@@ -399,9 +399,9 @@ tuple_rw::insert_number(const token &ident, const uint32_t value) {
   case i32:
     if (unlikely(value > INT32_MAX))
       throw_value_range();
-    return insert_i32(ident, value);
+    return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
-    return insert_i64(ident, value);
+    return insert_i64(ident, static_cast<int64_t>(value));
   case u8:
     if (unlikely(value > UINT8_MAX))
       throw_value_range();
@@ -411,9 +411,9 @@ tuple_rw::insert_number(const token &ident, const uint32_t value) {
       throw_value_range();
     return insert_u16(ident, static_cast<uint16_t>(value));
   case u32:
-    return insert_u32(ident, static_cast<uint32_t>(value));
+    return insert_u32(ident, value);
   case u64:
-    return insert_u64(ident, static_cast<uint64_t>(value));
+    return insert_u64(ident, value);
   }
 }
 
@@ -441,7 +441,7 @@ tuple_rw::insert_number(const token &ident, const int64_t value) {
   case i32:
     if (unlikely(value < INT32_MIN || value > INT32_MAX))
       throw_value_range();
-    return insert_i32(ident, value);
+    return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
     return insert_i64(ident, value);
   case u8:
@@ -487,11 +487,11 @@ tuple_rw::insert_number(const token &ident, const uint64_t value) {
   case i32:
     if (unlikely(value > INT32_MAX))
       throw_value_range();
-    return insert_i32(ident, value);
+    return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
     if (unlikely(value > INT64_MAX))
       throw_value_range();
-    return insert_i64(ident, value);
+    return insert_i64(ident, static_cast<int64_t>(value));
   case u8:
     if (unlikely(value > UINT8_MAX))
       throw_value_range();
@@ -505,19 +505,21 @@ tuple_rw::insert_number(const token &ident, const uint64_t value) {
       throw_value_range();
     return insert_u32(ident, static_cast<uint32_t>(value));
   case u64:
-    return insert_u64(ident, static_cast<uint64_t>(value));
+    return insert_u64(ident, value);
   }
 }
 
 FPTU_API dynamic_collection_iterator_rw
 tuple_rw::insert_number(const token &ident, const float value) {
+  if (unlikely(std::isnan(value)) && !ident.is_float())
+    throw_value_range();
   switch (ident.type()) {
   default:
     throw_type_mismatch();
   case f32:
-    return insert_f32(ident, static_cast<float>(value));
+    return insert_f32(ident, value);
   case f64:
-    return insert_f64(ident, static_cast<double>(value));
+    return insert_f64(ident, value);
   case i8:
     if (unlikely(value < INT8_MIN || value > INT8_MAX))
       throw_value_range();
@@ -529,11 +531,11 @@ tuple_rw::insert_number(const token &ident, const float value) {
   case i32:
     if (unlikely(value < INT32_MIN || value > INT32_MAX))
       throw_value_range();
-    return insert_i32(ident, value);
+    return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
     if (unlikely(value < INT64_MIN || value > INT64_MAX))
       throw_value_range();
-    return insert_i64(ident, value);
+    return insert_i64(ident, static_cast<int64_t>(value));
   case u8:
     if (unlikely(value < 0 || value > UINT8_MAX))
       throw_value_range();
@@ -555,6 +557,8 @@ tuple_rw::insert_number(const token &ident, const float value) {
 
 FPTU_API dynamic_collection_iterator_rw
 tuple_rw::insert_number(const token &ident, const double value) {
+  if (unlikely(std::isnan(value)) && !ident.is_float())
+    throw_value_range();
   switch (ident.type()) {
   default:
     throw_type_mismatch();
@@ -565,7 +569,7 @@ tuple_rw::insert_number(const token &ident, const double value) {
       throw_value_range();
     return insert_f32(ident, static_cast<float>(value));
   case f64:
-    return insert_f64(ident, static_cast<double>(value));
+    return insert_f64(ident, value);
   case i8:
     if (unlikely(value < INT8_MIN || value > INT8_MAX))
       throw_value_range();
@@ -577,11 +581,11 @@ tuple_rw::insert_number(const token &ident, const double value) {
   case i32:
     if (unlikely(value < INT32_MIN || value > INT32_MAX))
       throw_value_range();
-    return insert_i32(ident, value);
+    return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
     if (unlikely(value < INT64_MIN || value > INT64_MAX))
       throw_value_range();
-    return insert_i64(ident, value);
+    return insert_i64(ident, static_cast<int64_t>(value));
   case u8:
     if (unlikely(value < 0 || value > UINT8_MAX))
       throw_value_range();
