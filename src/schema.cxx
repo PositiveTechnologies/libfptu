@@ -168,7 +168,8 @@ void schema_impl::add_definition(std::string &&name, const token &ident,
         preplaced_image_.append(ident.preplaced_size(), '\0');
         const auto initial_value_ptr =
             erthink::constexpr_pointer_cast<details::field_preplaced *>(
-                preplaced_image_.data() + ident.preplaced_offset());
+                const_cast<char *>(preplaced_image_.data()) +
+                ident.preplaced_offset());
         details::preplaced_erase(ident.type(), initial_value_ptr,
                                  ident.is_discernible_null());
       }

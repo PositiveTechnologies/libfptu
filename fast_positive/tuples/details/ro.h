@@ -76,8 +76,8 @@ public:
   cxx14_constexpr loose_iterator_ro &
   operator=(const loose_iterator_ro &) noexcept = default;
 
-  constexpr dynamic_accessor_ro operator[](const difference_type index) const
-      noexcept {
+  cxx14_constexpr dynamic_accessor_ro
+  operator[](const difference_type index) const noexcept {
     return dynamic_accessor_ro(
         field_ - index,
         /* При чтении можно обойтись без всех token-флажков:
@@ -88,10 +88,10 @@ public:
            - is_rangechecking/is_saturated: не нужен при чтении. */
         field_token(false, false, false));
   }
-  constexpr dynamic_accessor_ro operator*() const noexcept {
+  cxx14_constexpr dynamic_accessor_ro operator*() const noexcept {
     return operator[](0);
   }
-  constexpr dynamic_accessor_ro operator->() const noexcept {
+  cxx14_constexpr dynamic_accessor_ro operator->() const noexcept {
     return operator*();
   }
 

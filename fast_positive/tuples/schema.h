@@ -214,7 +214,7 @@ public:
   string_view operator[](const token &token) const { return get_name(token); }
 
   // Собственные потребности libfptu -------------------------------------------
-  constexpr const token_vector &tokens() const noexcept {
+  cxx14_constexpr const token_vector &tokens() const noexcept {
     return sorted_tokens_;
   }
   std::size_t preplaced_bytes() const noexcept {
@@ -226,16 +226,16 @@ public:
   const void *preplaced_init_image() const noexcept {
     return preplaced_image_.data();
   }
-  constexpr std::size_t number_of_preplaced() const noexcept {
+  cxx14_constexpr std::size_t number_of_preplaced() const noexcept {
     return number_of_preplaced_;
   }
-  constexpr bool have_preplaced() const noexcept {
+  cxx14_constexpr bool have_preplaced() const noexcept {
     return number_of_preplaced() > 0;
   }
-  constexpr std::size_t number_of_stretchy_preplaced() const noexcept {
+  cxx14_constexpr std::size_t number_of_stretchy_preplaced() const noexcept {
     return number_of_stretchy_preplaced_;
   }
-  constexpr bool have_stretchy_preplaced() const noexcept {
+  cxx14_constexpr bool have_stretchy_preplaced() const noexcept {
     return number_of_stretchy_preplaced() > 0;
   }
 
