@@ -16,6 +16,7 @@
  */
 
 #include "../fptu_test.h"
+#include "fast_positive/erthink/erthink_misc.h"
 #include "fast_positive/tuples/details/cpu_features.h"
 
 #include <array>
@@ -208,7 +209,7 @@ TEST(Smoke, trivia_schema_definition) {
     for (fptu::genus type = fptu::genus(0); type != fptu::genus::hole;
          type = fptu::genus(type + 1))
       schema->define_field(
-          false, fptu::format("#%u of %s", n, std::to_string(type).c_str()),
+          false, fptu::format("#%u of %s", n, std::to_string(type).data()),
           type);
   std::set<std::string> names = {"datafield1",   "event_src.host",
                                  "event_src.ip", "event_src.title",
@@ -249,6 +250,180 @@ TEST(Smoke, trivia_schema_definition) {
                 std::string("syslog"));
   rw.set_string(fptu::defaults::schema->get_token("type"), std::string("norm"));
   rw.take_managed_clone_optimized();
+}
+
+//------------------------------------------------------------------------------
+
+template <typename Iter>
+ptrdiff_t distance_safe(Iter from, Iter to, const bool forward,
+                        const ptrdiff_t limit) {
+  assert(limit > 0);
+  ptrdiff_t result = 0;
+  while (from != to && limit > result) {
+    if (forward)
+      ++from;
+    else
+      --to;
+    result += 1;
+  }
+  return result;
+}
+
+TEST(Smoke, trivia_iteration_ro) {
+  static const fptu::genus basic_typeset[] = {
+      fptu::genus::text, fptu::genus::i8,  fptu::genus::u16, fptu::genus::i32,
+      fptu::genus::f32,  fptu::genus::u64, fptu::genus::f64};
+  const int types_num = erthink::array_length(basic_typeset);
+  const int whole_limit = types_num * 2;
+  int schema_iteration = 0, whole_variations = 0;
+  // iterate schema variants
+  for (int defined = 0; defined <= whole_limit; ++defined)
+    for (int preplaced = 0; preplaced <= defined; ++preplaced)
+      for (int shift_type = 0; shift_type < types_num; ++shift_type) {
+
+        // prepare schema
+        schema_iteration += 1;
+        std::string context(fptu::format("schema #%d {", schema_iteration));
+        auto schema = fptu::schema::create();
+        for (int i = 1; i <= defined; ++i) {
+          const bool define_preplaced = (i <= preplaced);
+          const fptu::genus type = basic_typeset[(i + shift_type) % types_num];
+          std::string field_name(fptu::format("%c%02d_%s",
+                                              define_preplaced ? 'P' : 'l', i,
+                                              std::to_string(type).data()));
+          context.append(" ");
+          context.append(field_name);
+          schema->define_field(define_preplaced, std::move(field_name), type,
+                               /* discernible_null */ true);
+        }
+        context.append(" }");
+        SCOPED_TRACE(context);
+        fptu::defaults::setup(fptu::initiation_scale::small, std::move(schema));
+
+        // iterate null/non-null combinations
+        int content_iteration = 0;
+        for (int shift_nulls = 0; shift_nulls == 0 || shift_nulls < defined;
+             ++shift_nulls)
+          for (int nulls = 0; nulls <= defined; ++nulls) {
+            // make tuple
+            content_iteration += 1;
+            fptu::tuple_rw_managed rw;
+            std::string context(fptu::format("tuple #%d {", content_iteration));
+            for (int i = 0; i < defined; ++i) {
+              const bool null = (i + shift_nulls) % defined < nulls;
+              if (null)
+                continue;
+
+              const fptu::token token = fptu::defaults::schema->tokens().at(i);
+              context.append(" ");
+              context.append(fptu::defaults::schema->get_name(token));
+
+              auto field = rw[token];
+              if (field.is_text())
+                field = "42";
+              else
+                field = 42;
+            }
+
+            context.append(" }");
+            SCOPED_TRACE(context);
+
+            // check RW
+            int expected = defined - nulls;
+            {
+              const auto begin = rw.begin();
+              const auto end = rw.end();
+              if (expected != 0) {
+                ASSERT_NE(begin, end);
+              } else {
+                ASSERT_EQ(begin, end);
+              }
+
+              ASSERT_EQ(expected,
+                        distance_safe(begin, end, true, expected + 1));
+              ASSERT_EQ(expected,
+                        distance_safe(begin, end, false, expected + 1));
+
+              // check loose-iterators
+              ASSERT_EQ(end, rw.cend());
+              ASSERT_EQ(end, rw.end_loose());
+              ASSERT_EQ(end, rw.cend_loose());
+              // forward
+              auto loose = rw.cbegin_loose();
+              int n = 0;
+              for (auto i = begin; i != end; ++i) {
+                if (i->is_loose()) {
+                  ASSERT_EQ(loose, i);
+                  ++loose;
+                  ++n;
+                }
+              }
+              ASSERT_EQ(loose, end);
+              ASSERT_EQ(loose, rw.cend_loose());
+              // bakcward
+              loose = rw.cend_loose();
+              for (auto i = end; i != begin;) {
+                --i;
+                if (i->is_loose()) {
+                  ASSERT_EQ(rw.cbegin_loose() + n, loose);
+                  ASSERT_EQ(rw.cbegin_loose(), loose - n);
+                  --loose;
+                  --n;
+                  ASSERT_EQ(loose, i);
+                }
+              }
+              ASSERT_EQ(loose, rw.cbegin_loose());
+            }
+
+            // check RO
+            {
+              fptu::tuple_ro_weak ro(rw);
+              const auto begin = ro.begin();
+              const auto end = ro.end();
+              if (defined - nulls != 0) {
+                ASSERT_NE(begin, end);
+              } else {
+                ASSERT_EQ(begin, end);
+              }
+              ASSERT_EQ(expected,
+                        distance_safe(begin, end, true, expected + 1));
+              ASSERT_EQ(expected,
+                        distance_safe(begin, end, false, expected + 1));
+
+              // check loose-iterators
+              ASSERT_EQ(end, ro.end_loose());
+              ASSERT_EQ(end, ro.cend_loose());
+              // forward
+              auto loose = ro.cbegin_loose();
+              int n = 0;
+              for (auto i = begin; i != end; ++i) {
+                if (i->is_loose()) {
+                  ASSERT_EQ(loose, i);
+                  ++loose;
+                  ++n;
+                }
+              }
+              ASSERT_EQ(loose, end);
+              ASSERT_EQ(loose, ro.cend_loose());
+              // bakcward
+              loose = ro.cend_loose();
+              for (auto i = end; i != begin;) {
+                --i;
+                if (i->is_loose()) {
+                  ASSERT_EQ(ro.cbegin_loose() + n, loose);
+                  ASSERT_EQ(ro.cbegin_loose(), loose - n);
+                  --loose;
+                  --n;
+                  ASSERT_EQ(loose, i);
+                }
+              }
+              ASSERT_EQ(loose, ro.cbegin_loose());
+            }
+            whole_variations += 1;
+          }
+      }
+  std::cerr << "[          ]       " << whole_variations << " variations"
+            << std::endl;
 }
 
 //------------------------------------------------------------------------------
