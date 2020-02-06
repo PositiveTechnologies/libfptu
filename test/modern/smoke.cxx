@@ -273,7 +273,7 @@ TEST(Smoke, trivia_iteration_ro) {
   static const fptu::genus basic_typeset[] = {
       fptu::genus::text, fptu::genus::i8,  fptu::genus::u16, fptu::genus::i32,
       fptu::genus::f32,  fptu::genus::u64, fptu::genus::f64};
-  const int types_num = erthink::array_length(basic_typeset);
+  const int types_num = int(erthink::array_length(basic_typeset));
   const int whole_limit = types_num * 2;
   int schema_iteration = 0, whole_variations = 0;
   // iterate schema variants
@@ -283,7 +283,8 @@ TEST(Smoke, trivia_iteration_ro) {
 
         // prepare schema
         schema_iteration += 1;
-        std::string context(fptu::format("schema #%d {", schema_iteration));
+        std::string context_schema(
+            fptu::format("schema #%d {", schema_iteration));
         auto schema = fptu::schema::create();
         for (int i = 1; i <= defined; ++i) {
           const bool define_preplaced = (i <= preplaced);
@@ -291,13 +292,13 @@ TEST(Smoke, trivia_iteration_ro) {
           std::string field_name(fptu::format("%c%02d_%s",
                                               define_preplaced ? 'P' : 'l', i,
                                               std::to_string(type).data()));
-          context.append(" ");
-          context.append(field_name);
+          context_schema.append(" ");
+          context_schema.append(field_name);
           schema->define_field(define_preplaced, std::move(field_name), type,
                                /* discernible_null */ true);
         }
-        context.append(" }");
-        SCOPED_TRACE(context);
+        context_schema.append(" }");
+        SCOPED_TRACE(context_schema);
         fptu::defaults::setup(fptu::initiation_scale::small, std::move(schema));
 
         // iterate null/non-null combinations
@@ -308,15 +309,16 @@ TEST(Smoke, trivia_iteration_ro) {
             // make tuple
             content_iteration += 1;
             fptu::tuple_rw_managed rw;
-            std::string context(fptu::format("tuple #%d {", content_iteration));
+            std::string context_tuple(
+                fptu::format("tuple #%d {", content_iteration));
             for (int i = 0; i < defined; ++i) {
               const bool null = (i + shift_nulls) % defined < nulls;
               if (null)
                 continue;
 
               const fptu::token token = fptu::defaults::schema->tokens().at(i);
-              context.append(" ");
-              context.append(fptu::defaults::schema->get_name(token));
+              context_tuple.append(" ");
+              context_tuple.append(fptu::defaults::schema->get_name(token));
 
               auto field = rw[token];
               if (field.is_text())
@@ -325,8 +327,8 @@ TEST(Smoke, trivia_iteration_ro) {
                 field = 42;
             }
 
-            context.append(" }");
-            SCOPED_TRACE(context);
+            context_tuple.append(" }");
+            SCOPED_TRACE(context_tuple);
 
             // check RW
             int expected = defined - nulls;
