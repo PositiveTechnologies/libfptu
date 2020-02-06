@@ -343,7 +343,10 @@ schema::search_preplaced(const ptrdiff_t offset) const noexcept {
 
   /* Смещение prelaced-поля в старших битах тэга и токена, поэтому для поиска
    * нормализация НЕ требуется, ибо дополнительные флаги не меняют порядка */
-  const details::tag_t tag(offset << details::tag_bits::offset_shift);
+  const details::tag_t tag(
+      static_cast<details::tag_t>(offset << details::tag_bits::offset_shift));
+  assert(tag >> details::tag_bits::offset_shift == size_t(offset));
+
   auto iter = sorted_tokens_.begin();
   while (span > 3) {
     const auto top = span;
