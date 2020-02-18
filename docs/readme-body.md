@@ -1,6 +1,4 @@
-## The [repository was moved out from Github](https://abf.io/erthink/libfptu) due to illegal discriminatory restrictions for Russian Crimea and for sovereign crimeans.
 <!-- Required extensions: pymdownx.betterem, pymdownx.tilde, pymdownx.emoji, pymdownx.tasklist, pymdownx.superfences -->
----
 
 libfptu
 ==============================================
@@ -16,9 +14,14 @@ by [Positive Technologies](https://www.ptsecurity.ru).
 Machine-handy format for linear representation of small data structures
 for (de)serialization, messaging and placement in shared memory.
 "Fast Positive tuples" is designed according to the ["Less is more"](https://en.wikipedia.org/wiki/Minimalism_(computing)) idiom.
-English translation [by Google](https://translate.googleusercontent.com/translate_c?act=url&ie=UTF8&sl=ru&tl=en&u=https://github.com/leo-yuriev/libfptu/tree/devel)
-and [by Yandex](https://translate.yandex.ru/translate?url=https%3A%2F%2Fgithub.com%2Fleo-yuriev%2Flibfptu%2Ftree%2Fdevel&lang=ru-en).
-@BADGES@
+English translation [by Google](https://translate.googleusercontent.com/translate_c?act=url&ie=UTF8&sl=ru&tl=en&u=https://github.com/erthink/libfptu/tree/devel)
+and [by Yandex](https://translate.yandex.ru/translate?url=https%3A%2F%2Fgithub.com%2Ferthink%2Flibfptu%2Ftree%2Fdevel&lang=ru-en).
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://travis-ci.org/erthink/libfptu.svg?branch=devel)](https://travis-ci.org/erthink/libfptu)
+[![Build status](https://ci.appveyor.com/api/projects/status/8617mtix9paivmkx/branch/devel?svg=true)](https://ci.appveyor.com/project/erthink/libfptu/branch/devel)
+[![CircleCI](https://circleci.com/gh/erthink/libfptu/tree/devel.svg?style=svg)](https://circleci.com/gh/erthink/libfptu/tree/devel)
+[![Coverity Scan Status](https://scan.coverity.com/projects/12919/badge.svg)](https://scan.coverity.com/projects/erthink-libfptu)
 
 ## Кратко
 
@@ -430,9 +433,9 @@ category](http://www.cplusplus.com/reference/iterator/ForwardIterator/))
 элементов коллекций не гарантируется какой-либо порядок. Отсутствие
 таких гарантий позволяет не жертвовать эффективностью операций изменения
 данных и снизить стоимость итерирования. При этом порядок элементов
-детерминирован и, в большинстве случаев, сначала будут проитерированы
+детерминирован и в большинстве случаев сначала будут проитерированы
 элементы добавленные последними. Однако, порядок определяется всей
-историей операций с кортежем, а не только порядком добавления значений полей.
+историей операций, а не только порядком добавления.
 
  - **_Хрупкость_** или
 [Инвалидация](https://stackoverflow.com/questions/16904454/what-is-iterator-invalidation)
@@ -445,12 +448,10 @@ category](http://www.cplusplus.com/reference/iterator/ForwardIterator/))
 
     - итераторы _НЕ инвалидируются_:
         - При удалении loose-полей.
-        - При изменении значений любых полей фиксированной длины.
+        - При изменении значений полей фиксированной длины,
+          вне зависимости от типа поля loose/prelaced.
 
-    - пограничные случаи:
-        - Если в выделенном под кортеж буфере достаточно места.
-
-    - в остальных случаях при изменении кортежа итераторы _могут стать невалидными_:
+    - в результате других изменений итераторы _могут стать невалидными_:
         - Удаление или обнуление значения preplaced-поля переменной длины
           (например строки) приведет к образованию зазора внутри данных
           кортежа. Сохранение информации об этом зазоре может потребовать
@@ -464,7 +465,7 @@ category](http://www.cplusplus.com/reference/iterator/ForwardIterator/))
           в индексе. Что влечет инвалидацию итераторов.
         - Если добавление элементов коллекций, новых полей или изменение
           изменений существующих не приводят к инвалидации итераторов,
-          то эти изменения могут быть как заметны через ранее полученные
+          то это изменения могут быть как заметны через ранее полученные
           итераторы, так и нет.
 
 ************************************************************************
@@ -655,3 +656,7 @@ $ ldd libfptu.so
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fdbfc382000)
 	/lib64/ld-linux-x86-64.so.2 (0x00007fdbfd34d000)
 ```
+
+---
+
+#### This is a mirror of the origin repository that was moved to [abf.io](https://abf.io/erthink/) because of discriminatory restrictions for Russian Crimea.

@@ -14,14 +14,14 @@ by [Positive Technologies](https://www.ptsecurity.ru).
 Machine-handy format for linear representation of small data structures
 for (de)serialization, messaging and placement in shared memory.
 "Fast Positive tuples" is designed according to the ["Less is more"](https://en.wikipedia.org/wiki/Minimalism_(computing)) idiom.
-English translation [by Google](https://translate.googleusercontent.com/translate_c?act=url&ie=UTF8&sl=ru&tl=en&u=https://github.com/leo-yuriev/libfptu/tree/devel)
-and [by Yandex](https://translate.yandex.ru/translate?url=https%3A%2F%2Fgithub.com%2Fleo-yuriev%2Flibfptu%2Ftree%2Fdevel&lang=ru-en).
+English translation [by Google](https://translate.googleusercontent.com/translate_c?act=url&ie=UTF8&sl=ru&tl=en&u=https://github.com/erthink/libfptu/tree/devel)
+and [by Yandex](https://translate.yandex.ru/translate?url=https%3A%2F%2Fgithub.com%2Ferthink%2Flibfptu%2Ftree%2Fdevel&lang=ru-en).
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://travis-ci.org/leo-yuriev/libfptu.svg?branch=devel)](https://travis-ci.org/leo-yuriev/libfptu)
-[![Build status](https://ci.appveyor.com/api/projects/status/8617mtix9paivmkx/branch/devel?svg=true)](https://ci.appveyor.com/project/leo-yuriev/libfptu/branch/devel)
-[![CircleCI](https://circleci.com/gh/leo-yuriev/libfptu/tree/devel.svg?style=svg)](https://circleci.com/gh/leo-yuriev/libfptu/tree/devel)
-[![Coverity Scan Status](https://scan.coverity.com/projects/12919/badge.svg)](https://scan.coverity.com/projects/leo-yuriev-libfptu)
+[![Build Status](https://travis-ci.org/erthink/libfptu.svg?branch=devel)](https://travis-ci.org/erthink/libfptu)
+[![Build status](https://ci.appveyor.com/api/projects/status/8617mtix9paivmkx/branch/devel?svg=true)](https://ci.appveyor.com/project/erthink/libfptu/branch/devel)
+[![CircleCI](https://circleci.com/gh/erthink/libfptu/tree/devel.svg?style=svg)](https://circleci.com/gh/erthink/libfptu/tree/devel)
+[![Coverity Scan Status](https://scan.coverity.com/projects/12919/badge.svg)](https://scan.coverity.com/projects/erthink-libfptu)
 
 ## Кратко
 

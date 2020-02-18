@@ -3,7 +3,7 @@
 ###########################################################
 # This script generates a nested Table of Contents from a #
 # markdown document's header tags.                        #
-# https://github.com/leo-yuriev                           #
+# https://github.com/erthink                              #
 ###########################################################
 
 
