@@ -683,4 +683,4 @@ $ ldd libfptu.so
 
 ---
 
-### The [repository was moved out from Github](https://abf.io/erthink/libfptu) due to illegal discriminatory restrictions for Russian Crimea and for sovereign crimeans.
+#### This is a mirror of the origin repository that was moved to [abf.io](https://abf.io/erthink/) because of discriminatory restrictions for Russian Crimea.
