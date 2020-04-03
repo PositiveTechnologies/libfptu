@@ -4,6 +4,8 @@ jobs:
     environment:
       - MALLOC_CHECK_: 7
       - MALLOC_PERTURB_: 42
+      - GTEST_SHUFFLE: 1
+      - GTEST_RUNTIME_LIMIT: 199
     docker:
       - image: circleci/buildpack-deps:bionic-browsers
     steps:
@@ -15,7 +17,9 @@ jobs:
       - run: cmake --version
       - run: cmake .
       - run: make --keep-going all
-      - run: ulimit -c unlimited && make --keep-going test
+      - run: |
+          ulimit -c unlimited
+          make --keep-going test
       - run: test ! -x test/fptu_c_mode || test/fptu_c_mode
       - run:
           command: |
