@@ -23,6 +23,7 @@
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/details/bug.h"
 
+#include "fast_positive/erthink/erthink_casting.h"
 #include "fast_positive/erthink/erthink_defs.h"
 #include "fast_positive/tuples/1Hippeus/utils.h"
 #include <array>
@@ -35,7 +36,7 @@ namespace hippeus {
 namespace {
 
 /* LY: выдает маску с 0xFF для первых n-байт в порядке адресации. */
-template <typename word> constexpr word aheadmask(size_t bytes) {
+template <typename word> cxx11_constexpr word aheadmask(size_t bytes) {
   constexpr_assert(bytes > 0 && bytes < sizeof(word));
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   return (~word(0)) >> 8 * (sizeof(word) - bytes);
@@ -47,7 +48,7 @@ template <typename word> constexpr word aheadmask(size_t bytes) {
 }
 
 /* LY: выдает маску с 0xFF для последних n-байт в порядке адресации. */
-template <typename word> static constexpr word tailmask(size_t bytes) {
+template <typename word> static cxx11_constexpr word tailmask(size_t bytes) {
   constexpr_assert(bytes > 0 && bytes < sizeof(word));
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   return (~word(0)) << 8 * (sizeof(word) - bytes);
@@ -63,11 +64,11 @@ __always_inline uintptr_t *uintptr_applier(uintptr_t *ptr, ptrdiff_t bytes,
                                            F functor) {
   const uintptr_t whole = ~uintptr_t(0);
   const std::size_t unalign =
-      reinterpret_cast<uintptr_t>(ptr) % sizeof(uintptr_t);
+      erthink::bit_cast<uintptr_t>(ptr) % sizeof(uintptr_t);
 
   if (unalign) {
-    ptr = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(ptr) -
-                                        unalign);
+    ptr = erthink::bit_cast<uintptr_t *>(erthink::bit_cast<uintptr_t>(ptr) -
+                                         unalign);
     bytes -= sizeof(uintptr_t) - unalign;
     uintptr_t gatemask = whole;
     if (bytes < 0)
@@ -178,7 +179,7 @@ void __flatten pollute(void *ptr, ptrdiff_t bytes, uintptr_t xormask) {
                       pollute_functor<false>(xormask));
     else {
       uintptr_t seed =
-          /*cpu_ticks() ^*/ bytes ^ reinterpret_cast<uintptr_t>(ptr);
+          /*cpu_ticks() ^*/ bytes ^ erthink::bit_cast<uintptr_t>(ptr);
       uintptr_applier(static_cast<uintptr_t *>(ptr), bytes,
                       pollute_functor<true>(seed));
     }

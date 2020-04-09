@@ -55,18 +55,18 @@ __cold const last_error &fptu_set_error(fptu_error code, const char *message) {
 
 //------------------------------------------------------------------------------
 
-static constexpr bool is_filter(fptu_type_or_filter type_or_filter) {
+static cxx11_constexpr bool is_filter(fptu_type_or_filter type_or_filter) {
   return (uint32_t(type_or_filter) & fptu_flag_not_filter) ? false : true;
 }
 
-static constexpr fptu::details::tag_t colid2tag(fptu_type_or_filter legacy_type,
-                                                unsigned column) {
+static cxx11_constexpr fptu::details::tag_t
+colid2tag(fptu_type_or_filter legacy_type, unsigned column) {
   return fptu::details::tag_t(legacy_type) +
          (column << fptu::details::tag_bits::id_shift);
 }
 
-static constexpr bool match(const fptu_field *pf, unsigned column,
-                            fptu_type_or_filter type_or_filter) {
+static cxx11_constexpr bool match(const fptu_field *pf, unsigned column,
+                                  fptu_type_or_filter type_or_filter) {
   constexpr_assert(is_filter(type_or_filter));
   return !pf->is_hole() && pf->colnum() == column &&
          (fptu_filter(type_or_filter) & fptu_filter_mask(pf->legacy_type())) !=
@@ -75,7 +75,7 @@ static constexpr bool match(const fptu_field *pf, unsigned column,
 
 __hot const fptu_field *
 fptu_first(const fptu_field *begin, const fptu_field *end, unsigned column,
-           fptu_type_or_filter type_or_filter) noexcept {
+           fptu_type_or_filter type_or_filter) cxx11_noexcept {
   if (!is_filter(type_or_filter)) {
     const fptu_field *pf =
         static_cast<const fptu_field *>(fptu::details::lookup(
@@ -91,16 +91,16 @@ fptu_first(const fptu_field *begin, const fptu_field *end, unsigned column,
   return end;
 }
 
-__hot const fptu_field *fptu_next(const fptu_field *from, const fptu_field *end,
-                                  unsigned column,
-                                  fptu_type_or_filter type_or_filter) noexcept {
+__hot const fptu_field *
+fptu_next(const fptu_field *from, const fptu_field *end, unsigned column,
+          fptu_type_or_filter type_or_filter) cxx11_noexcept {
   return fptu_first(from + 1, end, column, type_or_filter);
 }
 
 __hot const fptu_field *fptu_first_ex(const fptu_field *begin,
                                       const fptu_field *end,
                                       fptu_field_filter filter, void *context,
-                                      void *param) noexcept {
+                                      void *param) cxx11_noexcept {
   for (const fptu_field *pf = begin; pf < end; ++pf) {
     if (pf->is_hole())
       continue;
@@ -113,7 +113,7 @@ __hot const fptu_field *fptu_first_ex(const fptu_field *begin,
 __hot const fptu_field *fptu_next_ex(const fptu_field *from,
                                      const fptu_field *end,
                                      fptu_field_filter filter, void *context,
-                                     void *param) noexcept {
+                                     void *param) cxx11_noexcept {
   return fptu_first_ex(from + 1, end, filter, context, param);
 }
 
@@ -141,27 +141,27 @@ static std::size_t count_ex(const fptu_field *begin, const fptu_field *end,
 }
 
 size_t fptu_field_count_rw(const fptu_rw *pt, unsigned column,
-                           fptu_type_or_filter type_or_filter) noexcept {
+                           fptu_type_or_filter type_or_filter) cxx11_noexcept {
   return count(fptu_begin_rw(pt), fptu_end_rw(pt), column, type_or_filter);
 }
 
 size_t fptu_field_count_ro(fptu_ro ro, unsigned column,
-                           fptu_type_or_filter type_or_filter) noexcept {
+                           fptu_type_or_filter type_or_filter) cxx11_noexcept {
   return count(fptu_begin_ro(ro), fptu_end_ro(ro), column, type_or_filter);
 }
 
 size_t fptu_field_count_rw_ex(const fptu_rw *pt, fptu_field_filter filter,
-                              void *context, void *param) noexcept {
+                              void *context, void *param) cxx11_noexcept {
   return count_ex(fptu_begin_rw(pt), fptu_end_rw(pt), filter, context, param);
 }
 
 size_t fptu_field_count_ro_ex(fptu_ro ro, fptu_field_filter filter,
-                              void *context, void *param) noexcept {
+                              void *context, void *param) cxx11_noexcept {
   return count_ex(fptu_begin_ro(ro), fptu_end_ro(ro), filter, context, param);
 }
 
 int fptu_erase(fptu_rw *pt, unsigned column,
-               fptu_type_or_filter type_or_filter) noexcept {
+               fptu_type_or_filter type_or_filter) cxx11_noexcept {
   if (unlikely(column > fptu_max_cols)) {
     static_assert(FPTU_EINVAL > 0, "should be positive");
     return -FPTU_EINVAL;
@@ -183,7 +183,7 @@ int fptu_erase(fptu_rw *pt, unsigned column,
 
 //------------------------------------------------------------------------------
 
-__cold const char *fptu_type_name(const fptu_type type) noexcept {
+__cold const char *fptu_type_name(const fptu_type type) cxx11_noexcept {
   switch (fptu::details::tag_t(/* hush 'not in enumerated' */ type)) {
   default: {
     static __thread char buf[32];
@@ -226,27 +226,29 @@ __cold const char *fptu_type_name(const fptu_type type) noexcept {
 //------------------------------------------------------------------------------
 /* legacy C-compatible API */
 
-unsigned fptu_get_colnum(fptu_tag_t tag) noexcept {
+unsigned fptu_get_colnum(fptu_tag_t tag) cxx11_noexcept {
   return fptu::get_colnum(tag);
 }
 
-fptu_type fptu_get_type(fptu_tag_t tag) noexcept { return fptu::get_type(tag); }
+fptu_type fptu_get_type(fptu_tag_t tag) cxx11_noexcept {
+  return fptu::get_type(tag);
+}
 
-uint_fast16_t fptu_make_tag(unsigned column, fptu_type type) noexcept {
+uint_fast16_t fptu_make_tag(unsigned column, fptu_type type) cxx11_noexcept {
   return fptu::make_tag(column, type);
 }
 
-bool fptu_tag_is_fixedsize(fptu_tag_t tag) noexcept {
+bool fptu_tag_is_fixedsize(fptu_tag_t tag) cxx11_noexcept {
   return fptu::tag_is_fixedsize(tag);
 }
 
-bool fptu_tag_is_deleted(fptu_tag_t tag) noexcept {
+bool fptu_tag_is_deleted(fptu_tag_t tag) cxx11_noexcept {
   return fptu::tag_is_dead(tag);
 }
 
 fptu_lge __hot fptu_cmp_binary(const void *left_data, std::size_t left_len,
                                const void *right_data,
-                               std::size_t right_len) noexcept {
+                               std::size_t right_len) cxx11_noexcept {
   int diff = std::memcmp(left_data, right_data, std::min(left_len, right_len));
   if (diff == 0)
     diff = fptu::cmp2int(left_len, right_len);

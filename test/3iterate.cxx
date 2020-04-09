@@ -20,14 +20,14 @@
 #include <stdlib.h>
 
 static bool field_filter_any(const fptu_field *, void *context,
-                             void *param) noexcept {
+                             void *param) cxx11_noexcept {
   (void)context;
   (void)param;
   return true;
 }
 
 static bool field_filter_none(const fptu_field *, void *context,
-                              void *param) noexcept {
+                              void *param) cxx11_noexcept {
   (void)context;
   (void)param;
   return false;

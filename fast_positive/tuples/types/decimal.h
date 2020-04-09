@@ -40,15 +40,15 @@ typedef union FPTU_API_TYPE fptu_decimal32 {
   int32_t i32;
 #ifdef __cplusplus
   fptu_decimal32() = default;
-  explicit constexpr fptu_decimal32(short i) : i32(i) {
+  explicit cxx11_constexpr fptu_decimal32(short i) : i32(i) {
     constexpr_assert(i == 0);
   }
   friend bool operator==(const fptu_decimal32 a,
-                         const fptu_decimal32 b) noexcept {
+                         const fptu_decimal32 b) cxx11_noexcept {
     return a.u32 == b.u32;
   }
   friend bool operator!=(const fptu_decimal32 a,
-                         const fptu_decimal32 b) noexcept {
+                         const fptu_decimal32 b) cxx11_noexcept {
     return a.u32 != b.u32;
   }
 #endif /* __cplusplus */
@@ -59,15 +59,15 @@ typedef union FPTU_API_TYPE fptu_decimal64 {
   int64_t i64;
 #ifdef __cplusplus
   fptu_decimal64() = default;
-  explicit constexpr fptu_decimal64(short i) : i64(i) {
+  explicit cxx11_constexpr fptu_decimal64(short i) : i64(i) {
     constexpr_assert(i == 0);
   }
   friend bool operator==(const fptu_decimal64 a,
-                         const fptu_decimal64 b) noexcept {
+                         const fptu_decimal64 b) cxx11_noexcept {
     return a.u64 == b.u64;
   }
   friend bool operator!=(const fptu_decimal64 a,
-                         const fptu_decimal64 b) noexcept {
+                         const fptu_decimal64 b) cxx11_noexcept {
     return a.u64 != b.u64;
   }
 #endif /* __cplusplus */
@@ -78,8 +78,8 @@ typedef union FPTU_API_TYPE fptu_decimal128 {
   fptu_int128_t i128;
 #ifdef __cplusplus
   fptu_decimal128() = default;
-  explicit constexpr fptu_decimal128(int64_t i) : i128(i) {}
-  explicit constexpr fptu_decimal128(uint64_t u) : u128(u) {}
+  explicit cxx11_constexpr fptu_decimal128(int64_t i) : i128(i) {}
+  explicit cxx11_constexpr fptu_decimal128(uint64_t u) : u128(u) {}
 #endif /* __cplusplus */
 } fptu_decimal128_t;
 

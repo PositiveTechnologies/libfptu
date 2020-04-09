@@ -261,24 +261,26 @@ enum fptu_filter {
 };
 DEFINE_ENUM_FLAG_OPERATORS(fptu_filter)
 
-static inline constexpr fptu_filter fptu_filter_mask(fptu_type type) {
+static cxx11_constexpr fptu_filter fptu_filter_mask(fptu_type type) {
   return fptu_filter(UINT32_C(1) << fptu::details::tag2genus(type));
 }
 
 enum class fptu_type_or_filter : uint32_t {};
 using fptu_tag_t = uint_fast16_t;
 
-FPTU_API unsigned fptu_get_colnum(fptu_tag_t tag) noexcept;
-FPTU_API fptu_type fptu_get_type(fptu_tag_t tag) noexcept;
-FPTU_API uint_fast16_t fptu_make_tag(unsigned column, fptu_type type) noexcept;
-FPTU_API bool fptu_tag_is_fixedsize(fptu_tag_t tag) noexcept;
-FPTU_API bool fptu_tag_is_deleted(fptu_tag_t tag) noexcept;
+FPTU_API unsigned fptu_get_colnum(fptu_tag_t tag) cxx11_noexcept;
+FPTU_API fptu_type fptu_get_type(fptu_tag_t tag) cxx11_noexcept;
+FPTU_API uint_fast16_t fptu_make_tag(unsigned column,
+                                     fptu_type type) cxx11_noexcept;
+FPTU_API bool fptu_tag_is_fixedsize(fptu_tag_t tag) cxx11_noexcept;
+FPTU_API bool fptu_tag_is_deleted(fptu_tag_t tag) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
 /* Возвращает минимальный размер буфера, который необходим для размещения
  * кортежа с указанным кол-вом полей и данных. */
-FPTU_API std::size_t fptu_space(size_t items, std::size_t data_bytes) noexcept;
+FPTU_API std::size_t fptu_space(size_t items,
+                                std::size_t data_bytes) cxx11_noexcept;
 
 /* Инициализирует в буфере кортеж, резервируя (отступая) место достаточное
  * для добавления до items_limit полей. Оставшееся место будет
@@ -289,7 +291,7 @@ FPTU_API std::size_t fptu_space(size_t items, std::size_t data_bytes) noexcept;
  * объекта вызвать fptu_destroy(), то будет предстринята попытка освободить
  * буфер посредством free(). */
 FPTU_API fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
-                            std::size_t items_limit) noexcept;
+                            std::size_t items_limit) cxx11_noexcept;
 
 /* Выделяет и инициализирует кортеж достаточный для размещения заданного кол-ва
  * полей и данных.
@@ -298,31 +300,31 @@ FPTU_API fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
  * fptu_destroy() по окончании использования. Либо nullptr при неверных
  * параметрах или нехватке памяти. */
 FPTU_API fptu_rw *fptu_alloc(size_t items_limit,
-                             std::size_t data_bytes) noexcept;
-FPTU_API void fptu_destroy(fptu_rw *pt) noexcept;
+                             std::size_t data_bytes) cxx11_noexcept;
+FPTU_API void fptu_destroy(fptu_rw *pt) cxx11_noexcept;
 
 /* Очищает ранее инициализированный кортеж.
  * В случае успеха возвращает ноль, иначе код ошибки. */
-FPTU_API fptu_error fptu_clear(fptu_rw *pt) noexcept;
+FPTU_API fptu_error fptu_clear(fptu_rw *pt) cxx11_noexcept;
 
 /* Возвращает кол-во свободных слотов для добавления дескрипторов
  * полей в заголовок кортежа. */
-FPTU_API std::size_t fptu_space4items(const fptu_rw *pt) noexcept;
+FPTU_API std::size_t fptu_space4items(const fptu_rw *pt) cxx11_noexcept;
 
 /* Возвращает остаток места доступного для размещения данных. */
-FPTU_API std::size_t fptu_space4data(const fptu_rw *pt) noexcept;
+FPTU_API std::size_t fptu_space4data(const fptu_rw *pt) cxx11_noexcept;
 
 /* Возвращает объем мусора в байтах, который станет доступным для
  * добавления полей и данных после fptu_shrink(). */
-FPTU_API std::size_t fptu_junkspace(const fptu_rw *pt) noexcept;
+FPTU_API std::size_t fptu_junkspace(const fptu_rw *pt) cxx11_noexcept;
 
 /* Проверяет сериализованную форму кортежа на корректность.
  *
  * Возвращает nullptr если ошибок не обнаружено, либо указатель на константную
  * строку с краткой информацией о проблеме (нарушенное условие). */
-FPTU_API const char *fptu_check_ro_ex(fptu_ro ro,
-                                      bool holes_are_not_allowed) noexcept;
-static inline const char *fptu_check_ro(fptu_ro ro) noexcept {
+FPTU_API const char *
+fptu_check_ro_ex(fptu_ro ro, bool holes_are_not_allowed) cxx11_noexcept;
+static inline const char *fptu_check_ro(fptu_ro ro) cxx11_noexcept {
   return fptu_check_ro_ex(ro, false);
 }
 
@@ -330,7 +332,7 @@ static inline const char *fptu_check_ro(fptu_ro ro) noexcept {
  *
  * Возвращает nullptr если ошибок не обнаружено, либо указатель на константную
  * строку с краткой информацией о проблеме (нарушенное условие). */
-FPTU_API const char *fptu_check_rw(const fptu_rw *pt) noexcept;
+FPTU_API const char *fptu_check_rw(const fptu_rw *pt) cxx11_noexcept;
 
 /* Возвращает сериализованную форму кортежа, которая находится внутри
  * модифицируемой. Дефрагментация не выполняется, поэтому сериализованная
@@ -338,7 +340,7 @@ FPTU_API const char *fptu_check_rw(const fptu_rw *pt) noexcept;
  *
  * Возвращаемый результат валиден до изменения или разрушения исходной
  * модифицируемой формы кортежа. */
-FPTU_API fptu_ro fptu_take_noshrink(const fptu_rw *pt) noexcept;
+FPTU_API fptu_ro fptu_take_noshrink(const fptu_rw *pt) cxx11_noexcept;
 
 /* Проверяет содержимое сериализованной формы на корректность. Одновременно
  * возвращает размер буфера, который потребуется для модифицируемой формы,
@@ -356,15 +358,15 @@ struct fptu_cbfs_result {
 FPTU_API std::size_t
 fptu_check_and_get_buffer_size_ex(fptu_ro ro, unsigned more_items,
                                   unsigned more_payload,
-                                  struct fptu_cbfs_result *cbfs) noexcept;
+                                  struct fptu_cbfs_result *cbfs) cxx11_noexcept;
 
 FPTU_API std::size_t
 fptu_check_and_get_buffer_size(fptu_ro ro, unsigned more_items,
                                unsigned more_payload,
-                               const char **error) noexcept;
+                               const char **error) cxx11_noexcept;
 
 FPTU_API std::size_t fptu_get_buffer_size(fptu_ro ro, unsigned more_items,
-                                          unsigned more_payload) noexcept;
+                                          unsigned more_payload) cxx11_noexcept;
 
 /* Строит в указанном буфере модифицируемую форму кортежа из сериализованной.
  * Проверка корректности данных в сериализованной форме не производится.
@@ -377,15 +379,15 @@ FPTU_API std::size_t fptu_get_buffer_size(fptu_ro ro, unsigned more_items,
  * заданы неверные параметры или размер буфера недостаточен. */
 FPTU_API fptu_rw *fptu_fetch(fptu_ro ro, void *buffer_space,
                              std::size_t buffer_bytes,
-                             unsigned more_items) noexcept;
+                             unsigned more_items) cxx11_noexcept;
 FPTU_API fptu_rw *fptu_fetch_ex(fptu_ro ro, void *buffer_space,
                                 std::size_t buffer_bytes, unsigned more_items,
-                                struct fptu_cbfs_result *cbfs) noexcept;
+                                struct fptu_cbfs_result *cbfs) cxx11_noexcept;
 
 /* Производит дефрагментацию модифицируемой формы кортежа.
  * Возвращает true если была произведена дефрагментация, что можно
  * использовать как признак инвалидации итераторов. */
-FPTU_API bool fptu_shrink(fptu_rw *pt) noexcept;
+FPTU_API bool fptu_shrink(fptu_rw *pt) cxx11_noexcept;
 
 /* Производит дефрагментацию модифицируемой формы кортежа при наличии
  * пустот/мусора после удаления полей.
@@ -416,13 +418,13 @@ static __inline fptu_ro fptu_take(fptu_rw *pt) {
  * Возвращается кол-во удаленных полей (больше либо равно нулю),
  * либо отрицательный код ошибки. */
 FPTU_API int fptu_erase(fptu_rw *pt, unsigned column,
-                        fptu_type_or_filter type_or_filter) noexcept;
-FPTU_API void fptu_erase_field(fptu_rw *pt, fptu_field *pf) noexcept;
+                        fptu_type_or_filter type_or_filter) cxx11_noexcept;
+FPTU_API void fptu_erase_field(fptu_rw *pt, fptu_field *pf) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
-FPTU_API bool fptu_is_empty_ro(fptu_ro ro) noexcept;
-FPTU_API bool fptu_is_empty_rw(const fptu_rw *pt) noexcept;
+FPTU_API bool fptu_is_empty_ro(fptu_ro ro) cxx11_noexcept;
+FPTU_API bool fptu_is_empty_rw(const fptu_rw *pt) cxx11_noexcept;
 
 /* Возвращает первое поле попадающее под критерий выбора, либо nullptr.
  * Семантика type_or_filter указана в описании fptu_erase().
@@ -430,19 +432,19 @@ FPTU_API bool fptu_is_empty_rw(const fptu_rw *pt) noexcept;
  * Из C++ в namespace fptu доступно несколько перегруженных вариантов. */
 FPTU_API const fptu_field *
 fptu_lookup_ro(fptu_ro ro, unsigned column,
-               fptu_type_or_filter type_or_filter) noexcept;
+               fptu_type_or_filter type_or_filter) cxx11_noexcept;
 FPTU_API fptu_field *
 fptu_lookup_rw(fptu_rw *pt, unsigned column,
-               fptu_type_or_filter type_or_filter) noexcept;
+               fptu_type_or_filter type_or_filter) cxx11_noexcept;
 
 /* Возвращает "итераторы" по кортежу, в виде указателей.
  * Гарантируется что begin меньше, либо равно end.
  * В возвращаемом диапазоне могут буть удаленные поля,
  * для которых fptu_field_column() возвращает отрицательное значение. */
-FPTU_API const fptu_field *fptu_begin_ro(fptu_ro ro) noexcept;
-FPTU_API const fptu_field *fptu_end_ro(fptu_ro ro) noexcept;
-FPTU_API const fptu_field *fptu_begin_rw(const fptu_rw *pt) noexcept;
-FPTU_API const fptu_field *fptu_end_rw(const fptu_rw *pt) noexcept;
+FPTU_API const fptu_field *fptu_begin_ro(fptu_ro ro) cxx11_noexcept;
+FPTU_API const fptu_field *fptu_end_ro(fptu_ro ro) cxx11_noexcept;
+FPTU_API const fptu_field *fptu_begin_rw(const fptu_rw *pt) cxx11_noexcept;
+FPTU_API const fptu_field *fptu_end_rw(const fptu_rw *pt) cxx11_noexcept;
 
 /* Итерация полей кортежа с заданным условие отбора, при этом
  * удаленные поля пропускаются.
@@ -451,10 +453,10 @@ FPTU_API const fptu_field *fptu_end_rw(const fptu_rw *pt) noexcept;
  * Из C++ в namespace fptu доступно несколько перегруженных вариантов. */
 FPTU_API const fptu_field *
 fptu_first(const fptu_field *begin, const fptu_field *end, unsigned column,
-           fptu_type_or_filter type_or_filter) noexcept;
+           fptu_type_or_filter type_or_filter) cxx11_noexcept;
 FPTU_API const fptu_field *
 fptu_next(const fptu_field *from, const fptu_field *end, unsigned column,
-          fptu_type_or_filter type_or_filter) noexcept;
+          fptu_type_or_filter type_or_filter) cxx11_noexcept;
 
 /* Итерация полей кортежа с заданным внешним фильтром, при этом
  * удаленные поля пропускаются. */
@@ -463,11 +465,12 @@ typedef bool fptu_field_filter(const fptu_field *, void *context,
 FPTU_API const fptu_field *fptu_first_ex(const fptu_field *begin,
                                          const fptu_field *end,
                                          fptu_field_filter filter,
-                                         void *context, void *param) noexcept;
+                                         void *context,
+                                         void *param) cxx11_noexcept;
 FPTU_API const fptu_field *fptu_next_ex(const fptu_field *from,
                                         const fptu_field *end,
                                         fptu_field_filter filter, void *context,
-                                        void *param) noexcept;
+                                        void *param) cxx11_noexcept;
 
 /* Подсчет количества полей по заданному номеру колонки и типу,
  * либо маски типов.
@@ -476,87 +479,89 @@ FPTU_API const fptu_field *fptu_next_ex(const fptu_field *from,
  * Из C++ в namespace fptu доступно несколько перегруженных вариантов. */
 FPTU_API std::size_t
 fptu_field_count_ro(fptu_ro ro, unsigned column,
-                    fptu_type_or_filter type_or_filter) noexcept;
+                    fptu_type_or_filter type_or_filter) cxx11_noexcept;
 
 FPTU_API std::size_t
 fptu_field_count_rw(const fptu_rw *rw, unsigned column,
-                    fptu_type_or_filter type_or_filter) noexcept;
+                    fptu_type_or_filter type_or_filter) cxx11_noexcept;
 
 /* Подсчет количества полей задаваемой функцией-фильтром. */
 FPTU_API std::size_t fptu_field_count_rw_ex(const fptu_rw *rw,
                                             fptu_field_filter filter,
                                             void *context,
-                                            void *param) noexcept;
+                                            void *param) cxx11_noexcept;
 FPTU_API std::size_t fptu_field_count_ro_ex(fptu_ro ro,
                                             fptu_field_filter filter,
                                             void *context,
-                                            void *param) noexcept;
+                                            void *param) cxx11_noexcept;
 
-FPTU_API fptu_type fptu_field_type(const fptu_field *pf) noexcept;
-FPTU_API int fptu_field_column(const fptu_field *pf) noexcept;
-FPTU_API iovec fptu_field_as_iovec(const fptu_field *pf) noexcept;
-FPTU_API bool fptu_field_is_dead(const fptu_field *pf) noexcept;
+FPTU_API fptu_type fptu_field_type(const fptu_field *pf) cxx11_noexcept;
+FPTU_API int fptu_field_column(const fptu_field *pf) cxx11_noexcept;
+FPTU_API iovec fptu_field_as_iovec(const fptu_field *pf) cxx11_noexcept;
+FPTU_API bool fptu_field_is_dead(const fptu_field *pf) cxx11_noexcept;
 static __inline const void *fptu_field_payload(const fptu_field *pf) {
   return fptu_field_as_iovec(pf).iov_base;
 }
 
-FPTU_API uint_fast16_t fptu_field_uint16(const fptu_field *pf) noexcept;
-FPTU_API bool fptu_field_bool(const fptu_field *pf) noexcept;
-FPTU_API int_fast32_t fptu_field_int32(const fptu_field *pf) noexcept;
-FPTU_API uint_fast32_t fptu_field_uint32(const fptu_field *pf) noexcept;
-FPTU_API int_fast64_t fptu_field_int64(const fptu_field *pf) noexcept;
-FPTU_API uint_fast64_t fptu_field_uint64(const fptu_field *pf) noexcept;
-FPTU_API double_t fptu_field_fp64(const fptu_field *pf) noexcept;
-FPTU_API float_t fptu_field_fp32(const fptu_field *pf) noexcept;
+FPTU_API uint_fast16_t fptu_field_uint16(const fptu_field *pf) cxx11_noexcept;
+FPTU_API bool fptu_field_bool(const fptu_field *pf) cxx11_noexcept;
+FPTU_API int_fast32_t fptu_field_int32(const fptu_field *pf) cxx11_noexcept;
+FPTU_API uint_fast32_t fptu_field_uint32(const fptu_field *pf) cxx11_noexcept;
+FPTU_API int_fast64_t fptu_field_int64(const fptu_field *pf) cxx11_noexcept;
+FPTU_API uint_fast64_t fptu_field_uint64(const fptu_field *pf) cxx11_noexcept;
+FPTU_API double_t fptu_field_fp64(const fptu_field *pf) cxx11_noexcept;
+FPTU_API float_t fptu_field_fp32(const fptu_field *pf) cxx11_noexcept;
 FPTU_API union fptu_datetime_C
-fptu_field_datetime(const fptu_field *pf) noexcept;
-FPTU_API const uint8_t *fptu_field_96(const fptu_field *pf) noexcept;
-FPTU_API const uint8_t *fptu_field_128(const fptu_field *pf) noexcept;
-FPTU_API const uint8_t *fptu_field_160(const fptu_field *pf) noexcept;
-FPTU_API const uint8_t *fptu_field_256(const fptu_field *pf) noexcept;
-FPTU_API const char *fptu_field_cstr(const fptu_field *pf) noexcept;
-FPTU_API struct iovec fptu_field_opaque(const fptu_field *pf) noexcept;
-FPTU_API fptu_ro fptu_field_nested(const fptu_field *pf) noexcept;
+fptu_field_datetime(const fptu_field *pf) cxx11_noexcept;
+FPTU_API const uint8_t *fptu_field_96(const fptu_field *pf) cxx11_noexcept;
+FPTU_API const uint8_t *fptu_field_128(const fptu_field *pf) cxx11_noexcept;
+FPTU_API const uint8_t *fptu_field_160(const fptu_field *pf) cxx11_noexcept;
+FPTU_API const uint8_t *fptu_field_256(const fptu_field *pf) cxx11_noexcept;
+FPTU_API const char *fptu_field_cstr(const fptu_field *pf) cxx11_noexcept;
+FPTU_API struct iovec fptu_field_opaque(const fptu_field *pf) cxx11_noexcept;
+FPTU_API fptu_ro fptu_field_nested(const fptu_field *pf) cxx11_noexcept;
 
 FPTU_API uint_fast16_t fptu_get_uint16(fptu_ro ro, unsigned column,
-                                       int *error) noexcept;
-FPTU_API bool fptu_get_bool(fptu_ro ro, unsigned column, int *error) noexcept;
+                                       int *error) cxx11_noexcept;
+FPTU_API bool fptu_get_bool(fptu_ro ro, unsigned column,
+                            int *error) cxx11_noexcept;
 FPTU_API int_fast32_t fptu_get_int32(fptu_ro ro, unsigned column,
-                                     int *error) noexcept;
+                                     int *error) cxx11_noexcept;
 FPTU_API uint_fast32_t fptu_get_uint32(fptu_ro ro, unsigned column,
-                                       int *error) noexcept;
+                                       int *error) cxx11_noexcept;
 FPTU_API int_fast64_t fptu_get_int64(fptu_ro ro, unsigned column,
-                                     int *error) noexcept;
+                                     int *error) cxx11_noexcept;
 FPTU_API uint_fast64_t fptu_get_uint64(fptu_ro ro, unsigned column,
-                                       int *error) noexcept;
+                                       int *error) cxx11_noexcept;
 FPTU_API double_t fptu_get_fp64(fptu_ro ro, unsigned column,
-                                int *error) noexcept;
+                                int *error) cxx11_noexcept;
 FPTU_API float_t fptu_get_fp32(fptu_ro ro, unsigned column,
-                               int *error) noexcept;
+                               int *error) cxx11_noexcept;
 FPTU_API union fptu_datetime_C fptu_get_datetime(fptu_ro ro, unsigned column,
-                                                 int *error) noexcept;
+                                                 int *error) cxx11_noexcept;
 
 FPTU_API const uint8_t *fptu_get_96(fptu_ro ro, unsigned column,
-                                    int *error) noexcept;
+                                    int *error) cxx11_noexcept;
 FPTU_API const uint8_t *fptu_get_128(fptu_ro ro, unsigned column,
-                                     int *error) noexcept;
+                                     int *error) cxx11_noexcept;
 FPTU_API const uint8_t *fptu_get_160(fptu_ro ro, unsigned column,
-                                     int *error) noexcept;
+                                     int *error) cxx11_noexcept;
 FPTU_API const uint8_t *fptu_get_256(fptu_ro ro, unsigned column,
-                                     int *error) noexcept;
+                                     int *error) cxx11_noexcept;
 FPTU_API const char *fptu_get_cstr(fptu_ro ro, unsigned column,
-                                   int *error) noexcept;
+                                   int *error) cxx11_noexcept;
 FPTU_API struct iovec fptu_get_opaque(fptu_ro ro, unsigned column,
-                                      int *error) noexcept;
+                                      int *error) cxx11_noexcept;
 FPTU_API fptu_ro fptu_get_nested(fptu_ro ro, unsigned column,
-                                 int *error) noexcept;
+                                 int *error) cxx11_noexcept;
 
 /* TODO */
 FPTU_API int_fast64_t fptu_get_sint(fptu_ro ro, unsigned column,
-                                    int *error) noexcept;
+                                    int *error) cxx11_noexcept;
 FPTU_API uint_fast64_t fptu_get_uint(fptu_ro ro, unsigned column,
-                                     int *error) noexcept;
-FPTU_API double_t fptu_get_fp(fptu_ro ro, unsigned column, int *error) noexcept;
+                                     int *error) cxx11_noexcept;
+FPTU_API double_t fptu_get_fp(fptu_ro ro, unsigned column,
+                              int *error) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
@@ -567,38 +572,39 @@ FPTU_API double_t fptu_get_fp(fptu_ro ro, unsigned column, int *error) noexcept;
  * в общем случае физический порядок полей не определен, следует считать что
  * функция обновит произвольный экземпляр поля. Поэтому для манипулирования
  * коллекциями следует использовать fptu_erase() и/или fput_field_set_xyz(). */
-FPTU_API fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) noexcept;
+FPTU_API fptu_error fptu_upsert_null(fptu_rw *pt,
+                                     unsigned column) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_uint16(fptu_rw *pt, unsigned column,
-                                       uint16_t value) noexcept;
+                                       uint16_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_bool(fptu_rw *pt, unsigned column,
-                                     bool value) noexcept;
+                                     bool value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_int32(fptu_rw *pt, unsigned column,
-                                      int_fast32_t value) noexcept;
+                                      int_fast32_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_uint32(fptu_rw *pt, unsigned column,
-                                       uint_fast32_t value) noexcept;
+                                       uint_fast32_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_int64(fptu_rw *pt, unsigned column,
-                                      int_fast64_t value) noexcept;
+                                      int_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_uint64(fptu_rw *pt, unsigned column,
-                                       uint_fast64_t value) noexcept;
+                                       uint_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value) noexcept;
+                                     double_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value) noexcept;
+                                     float_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_datetime(fptu_rw *pt, unsigned column,
-                                         const fptu_datetime_t) noexcept;
+                                         const fptu_datetime_t) cxx11_noexcept;
 
 FPTU_API fptu_error fptu_upsert_96(fptu_rw *pt, unsigned column,
-                                   const void *data) noexcept;
+                                   const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_128(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_160(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_256(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 
 FPTU_API fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column,
                                        const char *text,
-                                       std::size_t length) noexcept;
+                                       std::size_t length) cxx11_noexcept;
 static __inline fptu_error fptu_upsert_cstr(fptu_rw *pt, unsigned column,
                                             const char *value) {
   return fptu_upsert_string(pt, column, value, value ? strlen(value) : 0);
@@ -606,46 +612,46 @@ static __inline fptu_error fptu_upsert_cstr(fptu_rw *pt, unsigned column,
 
 FPTU_API fptu_error fptu_upsert_opaque(fptu_rw *pt, unsigned column,
                                        const void *data,
-                                       std::size_t bytes) noexcept;
-FPTU_API fptu_error fptu_upsert_opaque_iov(fptu_rw *pt, unsigned column,
-                                           const struct iovec value) noexcept;
+                                       std::size_t bytes) cxx11_noexcept;
+FPTU_API fptu_error fptu_upsert_opaque_iov(
+    fptu_rw *pt, unsigned column, const struct iovec value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_nested(fptu_rw *pt, unsigned column,
-                                       fptu_ro ro) noexcept;
+                                       fptu_ro ro) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
 // Добавление ещё одного поля, для поддержки коллекций.
 FPTU_API fptu_error fptu_insert_uint16(fptu_rw *pt, unsigned column,
-                                       uint16_t value) noexcept;
+                                       uint16_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_bool(fptu_rw *pt, unsigned column,
-                                     bool value) noexcept;
+                                     bool value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_int32(fptu_rw *pt, unsigned column,
-                                      int_fast32_t value) noexcept;
+                                      int_fast32_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_uint32(fptu_rw *pt, unsigned column,
-                                       uint_fast32_t value) noexcept;
+                                       uint_fast32_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_int64(fptu_rw *pt, unsigned column,
-                                      int_fast64_t value) noexcept;
+                                      int_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_uint64(fptu_rw *pt, unsigned column,
-                                       uint_fast64_t value) noexcept;
+                                       uint_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value) noexcept;
+                                     double_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value) noexcept;
+                                     float_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_datetime(fptu_rw *pt, unsigned column,
-                                         const fptu_datetime_t) noexcept;
+                                         const fptu_datetime_t) cxx11_noexcept;
 
 FPTU_API fptu_error fptu_insert_96(fptu_rw *pt, unsigned column,
-                                   const void *data) noexcept;
+                                   const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_128(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_160(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_256(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 
 FPTU_API fptu_error fptu_insert_string(fptu_rw *pt, unsigned column,
                                        const char *text,
-                                       std::size_t length) noexcept;
+                                       std::size_t length) cxx11_noexcept;
 static __inline fptu_error fptu_insert_cstr(fptu_rw *pt, unsigned column,
                                             const char *value) {
   return fptu_insert_string(pt, column, value, value ? strlen(value) : 0);
@@ -653,46 +659,46 @@ static __inline fptu_error fptu_insert_cstr(fptu_rw *pt, unsigned column,
 
 FPTU_API fptu_error fptu_insert_opaque(fptu_rw *pt, unsigned column,
                                        const void *value,
-                                       std::size_t bytes) noexcept;
-FPTU_API fptu_error fptu_insert_opaque_iov(fptu_rw *pt, unsigned column,
-                                           const struct iovec value) noexcept;
+                                       std::size_t bytes) cxx11_noexcept;
+FPTU_API fptu_error fptu_insert_opaque_iov(
+    fptu_rw *pt, unsigned column, const struct iovec value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_nested(fptu_rw *pt, unsigned column,
-                                       fptu_ro ro) noexcept;
+                                       fptu_ro ro) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
 // Обновление существующего поля или первого найденного элемента коллекции.
 FPTU_API fptu_error fptu_update_uint16(fptu_rw *pt, unsigned column,
-                                       uint16_t value) noexcept;
+                                       uint16_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_bool(fptu_rw *pt, unsigned column,
-                                     bool value) noexcept;
+                                     bool value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_int32(fptu_rw *pt, unsigned column,
-                                      int_fast32_t value) noexcept;
+                                      int_fast32_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_uint32(fptu_rw *pt, unsigned column,
-                                       uint_fast32_t value) noexcept;
+                                       uint_fast32_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_int64(fptu_rw *pt, unsigned column,
-                                      int_fast64_t value) noexcept;
+                                      int_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_uint64(fptu_rw *pt, unsigned column,
-                                       uint_fast64_t value) noexcept;
+                                       uint_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value) noexcept;
+                                     double_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value) noexcept;
+                                     float_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_datetime(fptu_rw *pt, unsigned column,
-                                         const fptu_datetime_t) noexcept;
+                                         const fptu_datetime_t) cxx11_noexcept;
 
 FPTU_API fptu_error fptu_update_96(fptu_rw *pt, unsigned column,
-                                   const void *data) noexcept;
+                                   const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_128(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_160(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_256(fptu_rw *pt, unsigned column,
-                                    const void *data) noexcept;
+                                    const void *data) cxx11_noexcept;
 
 FPTU_API fptu_error fptu_update_string(fptu_rw *pt, unsigned column,
                                        const char *text,
-                                       std::size_t length) noexcept;
+                                       std::size_t length) cxx11_noexcept;
 static __inline fptu_error fptu_update_cstr(fptu_rw *pt, unsigned column,
                                             const char *value) {
   return fptu_update_string(pt, column, value, value ? strlen(value) : 0);
@@ -700,11 +706,11 @@ static __inline fptu_error fptu_update_cstr(fptu_rw *pt, unsigned column,
 
 FPTU_API fptu_error fptu_update_opaque(fptu_rw *pt, unsigned column,
                                        const void *value,
-                                       std::size_t bytes) noexcept;
-FPTU_API fptu_error fptu_update_opaque_iov(fptu_rw *pt, unsigned column,
-                                           const struct iovec value) noexcept;
+                                       std::size_t bytes) cxx11_noexcept;
+FPTU_API fptu_error fptu_update_opaque_iov(
+    fptu_rw *pt, unsigned column, const struct iovec value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_nested(fptu_rw *pt, unsigned column,
-                                       fptu_ro ro) noexcept;
+                                       fptu_ro ro) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 /* Определения и примитивы для сравнения. */
@@ -720,26 +726,26 @@ typedef enum fptu_lge {
 } fptu_lge;
 
 FPTU_API fptu_lge fptu_cmp_96(fptu_ro ro, unsigned column,
-                              const uint8_t *value) noexcept;
+                              const uint8_t *value) cxx11_noexcept;
 FPTU_API fptu_lge fptu_cmp_128(fptu_ro ro, unsigned column,
-                               const uint8_t *value) noexcept;
+                               const uint8_t *value) cxx11_noexcept;
 FPTU_API fptu_lge fptu_cmp_160(fptu_ro ro, unsigned column,
-                               const uint8_t *value) noexcept;
+                               const uint8_t *value) cxx11_noexcept;
 FPTU_API fptu_lge fptu_cmp_256(fptu_ro ro, unsigned column,
-                               const uint8_t *value) noexcept;
+                               const uint8_t *value) cxx11_noexcept;
 FPTU_API fptu_lge fptu_cmp_opaque(fptu_ro ro, unsigned column,
                                   const void *value,
-                                  std::size_t bytes) noexcept;
+                                  std::size_t bytes) cxx11_noexcept;
 FPTU_API fptu_lge fptu_cmp_opaque_iov(fptu_ro ro, unsigned column,
-                                      const struct iovec value) noexcept;
+                                      const struct iovec value) cxx11_noexcept;
 
 FPTU_API fptu_lge fptu_cmp_binary(const void *left_data, std::size_t left_len,
                                   const void *right_data,
-                                  std::size_t right_len) noexcept;
+                                  std::size_t right_len) cxx11_noexcept;
 
 FPTU_API fptu_lge fptu_cmp_fields(const fptu_field *left,
-                                  const fptu_field *right) noexcept;
-FPTU_API fptu_lge fptu_cmp_tuples(fptu_ro left, fptu_ro right) noexcept;
+                                  const fptu_field *right) cxx11_noexcept;
+FPTU_API fptu_lge fptu_cmp_tuples(fptu_ro left, fptu_ro right) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
@@ -762,12 +768,11 @@ FPTU_API fptu_lge fptu_cmp_tuples(fptu_ro left, fptu_ro right) noexcept;
  * использованы числовые идентификаторы.
  *
  * В случае успеха возвращает ноль, иначе код ошибки. */
-FPTU_API fptu_error fptu_tuple2json(fptu_ro tuple, fptu_emit_func output,
-                                    void *output_ctx, const char *indent,
-                                    unsigned depth, const void *schema_ctx,
-                                    fptu_tag2name_func tag2name,
-                                    fptu_value2enum_func value2enum,
-                                    const fptu_json_options options) noexcept;
+FPTU_API fptu_error
+fptu_tuple2json(fptu_ro tuple, fptu_emit_func output, void *output_ctx,
+                const char *indent, unsigned depth, const void *schema_ctx,
+                fptu_tag2name_func tag2name, fptu_value2enum_func value2enum,
+                const fptu_json_options options) cxx11_noexcept;
 
 /* Сериализует JSON-представление кортежа в FILE.
  *
@@ -779,18 +784,19 @@ FPTU_API fptu_error fptu_tuple2json(fptu_ro tuple, fptu_emit_func output,
 FPTU_API fptu_error fptu_tuple2json_FILE(
     fptu_ro tuple, FILE *file, const char *indent, unsigned depth,
     const void *schema_ctx, fptu_tag2name_func tag2name,
-    fptu_value2enum_func value2enum, const fptu_json_options options) noexcept;
+    fptu_value2enum_func value2enum,
+    const fptu_json_options options) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 /* Некоторые внутренние служебные функции.
  * Доступны для специальных случаев, в том числе для тестов. */
 
 FPTU_API bool fptu_is_ordered(const fptu_field *begin,
-                              const fptu_field *end) noexcept;
+                              const fptu_field *end) cxx11_noexcept;
 FPTU_API uint16_t *fptu_tags(uint16_t *const first, const fptu_field *begin,
-                             const fptu_field *end) noexcept;
-FPTU_API bool fptu_is_under_valgrind(void) noexcept;
-FPTU_API const char *fptu_type_name(const fptu_type) noexcept;
+                             const fptu_field *end) cxx11_noexcept;
+FPTU_API bool fptu_is_under_valgrind(void) cxx11_noexcept;
+FPTU_API const char *fptu_type_name(const fptu_type) cxx11_noexcept;
 
 #ifdef __cplusplus
 } /* extern "C" */

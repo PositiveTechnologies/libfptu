@@ -39,13 +39,13 @@ struct tag_static_ensure {
 };
 } // namespace
 
-template <typename T> static constexpr T thunk_31_hole(const T value) {
+template <typename T> static cxx11_constexpr T thunk_31_hole(const T value) {
   static_assert(genus::hole == 31, "WTF?");
   return value;
 }
 
 #ifndef _MSC_VER
-constexpr
+cxx11_constexpr_var
 #endif
     const uint8_t genus2looseunits_array[32] = {
         meta::genus_traits<genus(0)>::loose_units,
@@ -82,7 +82,7 @@ constexpr
         thunk_31_hole<uint8_t>(0)};
 
 #ifndef _MSC_VER
-constexpr
+cxx11_constexpr_var
 #endif
     const uint8_t genus2preplacedbytes_array[32] = {
         meta::genus_traits<genus(0)>::preplaced_bytes,
@@ -119,7 +119,7 @@ constexpr
         thunk_31_hole<uint8_t>(0)};
 
 #ifndef _MSC_VER
-constexpr
+cxx11_constexpr_var
 #endif
     const genus_mask_t trivially_convertible_from_array[32] = {
         meta::genus_traits<genus(0)>::trivially_convertible_from,
@@ -155,7 +155,7 @@ constexpr
         meta::genus_traits<genus(30)>::trivially_convertible_from,
         thunk_31_hole<genus_mask_t>(utils::bitset_mask<hole>::value)};
 
-bool field_preplaced::is_null(tag_t tag) const noexcept {
+bool field_preplaced::is_null(tag_t tag) const cxx11_noexcept {
   assert(is_preplaced(tag));
   switch (tag2genus(tag)) {
   default:

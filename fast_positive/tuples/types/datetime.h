@@ -92,32 +92,33 @@ class FPTU_API_TYPE datetime_t {
   union casting {
     fptu_datetime_C C_union;
     uint64_t u64;
-    constexpr casting(uint64_t u64) : u64(u64) {}
+    cxx11_constexpr casting(uint64_t u64) : u64(u64) {}
   };
 
-  static fptu_datetime_C constexpr cast(uint64_t u) {
+  static fptu_datetime_C cxx11_constexpr cast(uint64_t u) {
     return casting(u).C_union;
   }
 
-  static constexpr uint32_t ns_per_second = 1000000000u;
-  static constexpr uint32_t us_per_second = 1000000u;
-  static constexpr uint32_t ms_per_second = 1000u;
-  static constexpr uint32_t ns100_per_second = ns_per_second / 100;
-  static constexpr uint64_t Gregorian_UTC_offset_100ns =
+  static cxx11_constexpr_var uint32_t ns_per_second = 1000000000u;
+  static cxx11_constexpr_var uint32_t us_per_second = 1000000u;
+  static cxx11_constexpr_var uint32_t ms_per_second = 1000u;
+  static cxx11_constexpr_var uint32_t ns100_per_second = ns_per_second / 100;
+  static cxx11_constexpr_var uint64_t Gregorian_UTC_offset_100ns =
       UINT64_C(/* UTC offset from 1601-01-01 */ 116444736000000000);
 
-  static constexpr uint_fast32_t units2fractional(uint_fast32_t value,
-                                                  uint_fast32_t factor) {
+  static cxx11_constexpr uint_fast32_t units2fractional(uint_fast32_t value,
+                                                        uint_fast32_t factor) {
     constexpr_assert(value < factor);
     return (uint64_t(value) << 32) / factor;
   }
 
-  static constexpr uint64_t scale_in(uint64_t value, uint_fast32_t factor) {
+  static cxx11_constexpr uint64_t scale_in(uint64_t value,
+                                           uint_fast32_t factor) {
     return ((value / factor) << 32) | units2fractional(value % factor, factor);
   }
 
-  static constexpr uint_fast32_t fractional2units(uint_fast32_t value,
-                                                  uint_fast32_t factor) {
+  static cxx11_constexpr uint_fast32_t fractional2units(uint_fast32_t value,
+                                                        uint_fast32_t factor) {
     constexpr_assert(value <= UINT32_MAX);
     return (uint64_t(value) * factor) >> 32;
   }
@@ -129,25 +130,26 @@ class FPTU_API_TYPE datetime_t {
   }
 #endif
 
-  explicit constexpr datetime_t(uint64_t u) : value_(casting(u).C_union) {}
+  explicit cxx11_constexpr datetime_t(uint64_t u)
+      : value_(casting(u).C_union) {}
 
 public:
-  static constexpr uint_fast32_t ns2fractional(uint_fast32_t ns) {
+  static cxx11_constexpr uint_fast32_t ns2fractional(uint_fast32_t ns) {
     return units2fractional(ns, ns_per_second);
   }
-  static constexpr uint_fast32_t fractional2ns(uint_fast32_t fraction) {
+  static cxx11_constexpr uint_fast32_t fractional2ns(uint_fast32_t fraction) {
     return fractional2units(fraction, ns_per_second);
   }
-  static constexpr uint_fast32_t us2fractional(uint_fast32_t us) {
+  static cxx11_constexpr uint_fast32_t us2fractional(uint_fast32_t us) {
     return units2fractional(us, us_per_second);
   }
-  static constexpr uint_fast32_t fractional2us(uint_fast32_t fraction) {
+  static cxx11_constexpr uint_fast32_t fractional2us(uint_fast32_t fraction) {
     return fractional2units(fraction, us_per_second);
   }
-  static constexpr uint_fast32_t ms2fractional(uint_fast32_t ms) {
+  static cxx11_constexpr uint_fast32_t ms2fractional(uint_fast32_t ms) {
     return units2fractional(ms, ms_per_second);
   }
-  static constexpr uint_fast32_t fractional2ms(uint_fast32_t fraction) {
+  static cxx11_constexpr uint_fast32_t fractional2ms(uint_fast32_t fraction) {
     return fractional2units(fraction, ms_per_second);
   }
 
@@ -155,20 +157,22 @@ public:
     return std::ldexp(value_.fractional, -32);
   }
   double seconds() const { return fractional_seconds() + value_.utc; }
-  constexpr uint32_t utc_seconds() const { return value_.utc; }
-  constexpr uint32_t fractional() const { return value_.fractional; }
-  constexpr uint64_t fixedpoint_32dot32() const { return value_.fixedpoint; }
+  cxx11_constexpr uint32_t utc_seconds() const { return value_.utc; }
+  cxx11_constexpr uint32_t fractional() const { return value_.fractional; }
+  cxx11_constexpr uint64_t fixedpoint_32dot32() const {
+    return value_.fixedpoint;
+  }
 
   datetime_t() = default;
-  constexpr datetime_t(const datetime_t &) = default;
+  cxx11_constexpr datetime_t(const datetime_t &) = default;
   datetime_t &operator=(const datetime_t &) = default;
-  constexpr datetime_t(const union fptu_datetime_C &src) : value_(src) {}
+  cxx11_constexpr datetime_t(const union fptu_datetime_C &src) : value_(src) {}
   datetime_t &operator=(const union fptu_datetime_C &src) {
     value_ = src;
     return *this;
   }
 
-  constexpr datetime_t(uint64_t units, uint_fast32_t units_per_second)
+  cxx11_constexpr datetime_t(uint64_t units, uint_fast32_t units_per_second)
       : datetime_t(scale_in(units, units_per_second)) {}
 
   static datetime_t now_fine() { return datetime_t(fptu_now_fine()); }
@@ -177,60 +181,61 @@ public:
     return datetime_t(fptu_now(grain_ns));
   }
 
-  constexpr datetime_t(const time_t *utc) : datetime_t(uint64_t(*utc) << 32) {}
+  cxx11_constexpr datetime_t(const time_t *utc)
+      : datetime_t(uint64_t(*utc) << 32) {}
 
-  static constexpr datetime_t from_fixedpoint_32dot32(uint64_t u32dot32) {
+  static cxx11_constexpr datetime_t from_fixedpoint_32dot32(uint64_t u32dot32) {
     return datetime_t(u32dot32);
   }
 
-  static constexpr datetime_t from_seconds(unsigned utc) {
+  static cxx11_constexpr datetime_t from_seconds(unsigned utc) {
     return datetime_t(uint64_t(utc) << 32);
   }
 
-  static constexpr datetime_t from_milliseconds(uint64_t ms) {
+  static cxx11_constexpr datetime_t from_milliseconds(uint64_t ms) {
     return datetime_t(ms, ms_per_second);
   }
 
-  static constexpr datetime_t from_usec(uint64_t us) {
+  static cxx11_constexpr datetime_t from_usec(uint64_t us) {
     return datetime_t(us, us_per_second);
   }
 
-  static constexpr datetime_t from_nsec(uint64_t ns) {
+  static cxx11_constexpr datetime_t from_nsec(uint64_t ns) {
     return datetime_t(ns, ns_per_second);
   }
 
-  static constexpr datetime_t from_100ns(uint64_t ns100) {
+  static cxx11_constexpr datetime_t from_100ns(uint64_t ns100) {
     return datetime_t(ns100, ns100_per_second);
   }
 
 #ifdef HAVE_TIMESPEC_TV_NSEC
-  constexpr datetime_t(const struct timespec &ts)
+  cxx11_constexpr datetime_t(const struct timespec &ts)
       : datetime_t(uint64_t(ts.tv_sec) << 32 |
                    ns2fractional(uint_fast32_t(ts.tv_nsec))) {}
 
-  constexpr static datetime_t from_timespec(const struct timespec &ts) {
+  cxx11_constexpr static datetime_t from_timespec(const struct timespec &ts) {
     return datetime_t(ts);
   }
 #endif /* HAVE_TIMESPEC_TV_NSEC */
 
 #ifdef HAVE_TIMEVAL_TV_USEC
-  constexpr datetime_t(const struct timeval &tv)
+  cxx11_constexpr datetime_t(const struct timeval &tv)
       : datetime_t(uint64_t(tv.tv_sec) << 32 |
                    us2fractional(uint_fast32_t(tv.tv_usec))) {}
 
-  constexpr static datetime_t from_timeval(const struct timeval &tv) {
+  cxx11_constexpr static datetime_t from_timeval(const struct timeval &tv) {
     return datetime_t(tv);
   }
 #endif /* HAVE_TIMEVAL_TV_USEC */
 
 #ifdef _FILETIME_
-  constexpr datetime_t(const FILETIME &FileTime)
+  cxx11_constexpr datetime_t(const FILETIME &FileTime)
       : datetime_t(filetime_to_utc_100ns(FileTime), ns100_per_second) {}
 
-  constexpr static datetime_t from_filetime(const FILETIME &FileTime) {
+  cxx11_constexpr static datetime_t from_filetime(const FILETIME &FileTime) {
     return datetime_t(FileTime);
   }
-  constexpr static datetime_t from_filetime(const FILETIME *pFileTime) {
+  cxx11_constexpr static datetime_t from_filetime(const FILETIME *pFileTime) {
     return datetime_t(*pFileTime);
   }
 #endif /* _FILETIME_ */

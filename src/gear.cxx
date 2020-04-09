@@ -46,28 +46,29 @@ class gear : public tuple_rw {
 
   std::pair<field_loose *, field_loose *>
   lookup_adjacent_holes(const unit_t *chunk_begin,
-                        const unit_t *chunk_end) noexcept;
+                        const unit_t *chunk_end) cxx11_noexcept;
   std::pair<field_loose *, field_loose *>
-  lookup_adjacent_holes(const field_loose *hole) noexcept {
+  lookup_adjacent_holes(const field_loose *hole) cxx11_noexcept {
     assert(hole->hole_get_units() > 0);
     return lookup_adjacent_holes(hole->hole_begin(), hole->hole_end());
   }
 
-  void mark_unsorted() noexcept { /* TODO */
+  void mark_unsorted() cxx11_noexcept { /* TODO */
   }
 
-  void mark_sorted() noexcept { /* TODO */
+  void mark_sorted() cxx11_noexcept { /* TODO */
   }
 
-  inline void trim_hole(const field_loose *hole) noexcept;
+  inline void trim_hole(const field_loose *hole) cxx11_noexcept;
   inline unit_t *tail_alloc(unsigned units);
   inline field_loose *index_alloc(size_t notify_data_space);
   inline field_loose *merge_holes(field_loose *first,
-                                  field_loose *second) noexcept;
+                                  field_loose *second) cxx11_noexcept;
 
   enum class hole_search_mode { exactly_size, any_suitable, best_fit };
   template <hole_search_mode MODE>
-  inline __pure_function field_loose *lookup_hole(unsigned units) noexcept;
+  inline __pure_function field_loose *
+  lookup_hole(unsigned units) cxx11_noexcept;
 
   inline relative_payload *alloc_data(unsigned units, field_loose *const hole);
   relative_payload *alloc_data(unsigned units) {
@@ -93,8 +94,8 @@ class gear : public tuple_rw {
   inline bool sort(onstack_allocation_arena &onstack_arena);
 };
 
-static inline cxx14_constexpr field_loose *
-best_fit(unsigned units, field_loose *left, field_loose *right) {
+static cxx14_constexpr field_loose *best_fit(unsigned units, field_loose *left,
+                                             field_loose *right) {
   constexpr_assert(units > 0 && right != nullptr);
   if (left == nullptr)
     return right;
@@ -113,7 +114,7 @@ best_fit(unsigned units, field_loose *left, field_loose *right) {
 }
 
 template <gear::hole_search_mode MODE>
-__pure_function field_loose *gear::lookup_hole(unsigned units) noexcept {
+__pure_function field_loose *gear::lookup_hole(unsigned units) cxx11_noexcept {
   if (junk_.count < 1 || junk_.volume < units)
     return nullptr;
 
@@ -148,7 +149,7 @@ __pure_function field_loose *gear::lookup_hole(unsigned units) noexcept {
 
 std::pair<field_loose *, field_loose *>
 gear::lookup_adjacent_holes(const unit_t *chunk_begin,
-                            const unit_t *chunk_end) noexcept {
+                            const unit_t *chunk_end) cxx11_noexcept {
   assert(chunk_begin < chunk_end);
   std::size_t left_holes = junk_.count;
   field_loose *before = nullptr, *after = nullptr;
@@ -167,7 +168,7 @@ gear::lookup_adjacent_holes(const unit_t *chunk_begin,
   return std::make_pair(before, after);
 }
 
-void gear::trim_hole(const field_loose *hole) noexcept {
+void gear::trim_hole(const field_loose *hole) cxx11_noexcept {
   while (true) {
     assert(hole == begin_index() && hole->is_hole() && junk_.count > 0 &&
            head_ < pivot_);
@@ -305,7 +306,7 @@ field_loose *gear::alloc_loose(const tag_t tag, unsigned units) {
 }
 
 field_loose *gear::merge_holes(field_loose *first,
-                               field_loose *second) noexcept {
+                               field_loose *second) cxx11_noexcept {
   assert(first->hole_get_units() && second->hole_get_units());
   assert(first->hole_end() == second->hole_begin());
   const unsigned units = first->hole_get_units() + second->hole_get_units();
@@ -689,19 +690,20 @@ struct compact_item {
 
   cxx14_constexpr static uint16_t
   payload2offset(const unit_t *const basis,
-                 const relative_offset &relative) noexcept {
+                 const relative_offset &relative) cxx11_noexcept {
     const ptrdiff_t offset = relative.payload()->flat - basis;
     constexpr_assert(offset > 0 && offset <= UINT16_MAX);
     return static_cast<uint16_t>(offset);
   }
 
-  constexpr unit_t *payload(const unit_t *const basis) const noexcept {
+  cxx11_constexpr unit_t *
+  payload(const unit_t *const basis) const cxx11_noexcept {
     return const_cast<unit_t *>(basis + payload_offset);
   }
 
   cxx14_constexpr static uint32_t
   referrer2offset(const unit_t *const basis,
-                  const relative_offset *relative) noexcept {
+                  const relative_offset *relative) cxx11_noexcept {
     const ptrdiff_t offset =
         erthink::constexpr_pointer_cast<const char *>(relative) -
         erthink::constexpr_pointer_cast<const char *>(basis);
@@ -709,18 +711,18 @@ struct compact_item {
     return static_cast<uint32_t>(offset);
   }
 
-  constexpr relative_offset &referrer(const unit_t *const basis) const
-      noexcept {
+  cxx11_constexpr relative_offset &
+  referrer(const unit_t *const basis) const cxx11_noexcept {
     return *erthink::constexpr_pointer_cast<relative_offset *>(
         const_cast<char *>(
             erthink::constexpr_pointer_cast<const char *>(basis)) +
         referrer_offset);
   }
 
-  compact_item() noexcept = default;
+  compact_item() cxx11_noexcept = default;
 
   cxx14_constexpr compact_item(const unit_t *const basis,
-                               const field_loose *const field) noexcept
+                               const field_loose *const field) cxx11_noexcept
       : payload_offset(payload2offset(basis, field->relative)),
         length(uint16_t(is_fixed_size(field->type())
                             ? loose_units_dynamic(field->type())
@@ -735,8 +737,9 @@ struct compact_item {
     (void)length_units;
   }
 
-  cxx14_constexpr compact_item(const unit_t *const basis, const genus type,
-                               const field_preplaced *const field) noexcept
+  cxx14_constexpr
+  compact_item(const unit_t *const basis, const genus type,
+               const field_preplaced *const field) cxx11_noexcept
       : payload_offset(payload2offset(basis, field->relative)),
         length(
             uint16_t(field->relative.payload()->stretchy.brutto_units(type))),
@@ -880,25 +883,26 @@ struct sort_item {
 
   cxx14_constexpr static uint16_t
   payload2offset(const unit_t *const basis,
-                 const relative_offset &relative) noexcept {
+                 const relative_offset &relative) cxx11_noexcept {
     const ptrdiff_t offset = relative.payload()->flat - basis;
     constexpr_assert(offset > 0 && offset <= UINT16_MAX);
     return static_cast<uint16_t>(offset);
   }
 
-  constexpr unit_t *payload(const unit_t *const basis) const noexcept {
+  cxx11_constexpr unit_t *
+  payload(const unit_t *const basis) const cxx11_noexcept {
     return const_cast<unit_t *>(basis + inplaced_or_offset);
   }
 
-  sort_item() noexcept = default;
+  sort_item() cxx11_noexcept = default;
 
   cxx14_constexpr sort_item(const field_loose *const field,
-                            const unit_t *const basis) noexcept
+                            const unit_t *const basis) cxx11_noexcept
       : genus_and_id(field->genus_and_id),
-        inplaced_or_offset(
-            (is_inplaced(field->type()) || !field->relative.have_payload())
-                ? field->inplaced
-                : payload2offset(basis, field->relative)) {
+        inplaced_or_offset((is_inplaced(field->type()) ||
+                            !field->relative.have_payload())
+                               ? field->inplaced
+                               : payload2offset(basis, field->relative)) {
     if (!is_inplaced(field->type()) && !field->relative.have_payload())
       assert(inplaced_or_offset == 0);
   }

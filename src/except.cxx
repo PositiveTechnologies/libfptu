@@ -34,19 +34,19 @@ __cold void raise_bug(const bug_location &what_and_where) {
   throw bug(what_and_where);
 }
 
-__cold bug::bug(const bug_location &location) noexcept
+__cold bug::bug(const bug_location &location) cxx11_noexcept
     : std::runtime_error(format("fptu-bug: %s.%s at %s:%u",
                                 location.condition(), location.function(),
                                 location.filename(), location.line())),
       location_(location) {}
 
-__cold bug::~bug() noexcept {}
+__cold bug::~bug() cxx11_noexcept {}
 
 //------------------------------------------------------------------------------
 
 __cold bad_tuple::bad_tuple(const char *details) : base(details) {}
 __cold bad_tuple::bad_tuple(const std::string &details) : base(details) {}
-__cold bad_tuple::~bad_tuple() noexcept {}
+__cold bad_tuple::~bad_tuple() cxx11_noexcept {}
 
 __cold bad_tuple_ro::bad_tuple_ro(const fptu::schema *schema,
                                   const void *const ptr,
@@ -70,7 +70,7 @@ __cold bad_tuple_ro::bad_tuple_ro(const fptu::schema *schema,
                                   const details::tuple_ro *tuple)
     : bad_tuple_ro(schema, tuple,
                    details::tuple_ro::audit(tuple, schema, true)) {}
-__cold bad_tuple_ro::~bad_tuple_ro() noexcept {}
+__cold bad_tuple_ro::~bad_tuple_ro() cxx11_noexcept {}
 
 __cold bad_tuple_rw::bad_tuple_rw(const details::tuple_rw *tuple,
                                   const char *details)
@@ -83,18 +83,21 @@ __cold bad_tuple_rw::bad_tuple_rw(const details::tuple_rw *tuple,
     : bad_tuple_rw(tuple, details.c_str()) {}
 __cold bad_tuple_rw::bad_tuple_rw(const details::tuple_rw *tuple)
     : bad_tuple_rw(tuple, tuple->audit()) {}
-__cold bad_tuple_rw::~bad_tuple_rw() noexcept {}
+__cold bad_tuple_rw::~bad_tuple_rw() cxx11_noexcept {}
 
 //------------------------------------------------------------------------------
 
-__cold insufficient_space::insufficient_space(size_t index_space,
-                                              std::size_t data_space) noexcept
-    : std::bad_alloc(), index_space(index_space), data_space(data_space) {}
+__cold
+insufficient_space::insufficient_space(size_t index_space,
+                                       std::size_t data_space) cxx11_noexcept
+    : std::bad_alloc(),
+      index_space(index_space),
+      data_space(data_space) {}
 
-__cold const char *insufficient_space::what() const noexcept {
+__cold const char *insufficient_space::what() const cxx11_noexcept {
   return "insufficient space";
 }
-__cold insufficient_space::~insufficient_space() noexcept {}
+__cold insufficient_space::~insufficient_space() cxx11_noexcept {}
 
 __cold __noreturn void throw_insufficient_space(size_t index,
                                                 std::size_t data) {
@@ -106,10 +109,11 @@ __cold __noreturn void throw_tuple_overflow() { throw tuple_overflow(); }
 //------------------------------------------------------------------------------
 
 #define FPTU_DEFINE_EXCEPTION(NAME, MESSAGE)                                   \
-  __cold NAME::NAME() noexcept : base(MESSAGE) {}                              \
-  __cold NAME::NAME(const char *details) noexcept : base(details) {}           \
-  __cold NAME::NAME(const std::string &details) noexcept : base(details) {}    \
-  __cold NAME::~NAME() noexcept {}
+  __cold NAME::NAME() cxx11_noexcept : base(MESSAGE) {}                        \
+  __cold NAME::NAME(const char *details) cxx11_noexcept : base(details) {}     \
+  __cold NAME::NAME(const std::string &details) cxx11_noexcept                 \
+      : base(details) {}                                                       \
+  __cold NAME::~NAME() cxx11_noexcept {}
 
 FPTU_DEFINE_EXCEPTION(invalid_argument, "fptu: invalid argument")
 FPTU_DEFINE_EXCEPTION(invalid_allot,

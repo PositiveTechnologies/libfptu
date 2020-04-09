@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "fast_positive/erthink/erthink_dynamic_constexpr.h"
+#include "fast_positive/erthink/erthink_casting.h"
 #include "fast_positive/tuples/1Hippeus/actor.h"
 #include "fast_positive/tuples/1Hippeus/hipagut.h"
 #include "fast_positive/tuples/1Hippeus/utils.h"
@@ -143,17 +143,18 @@ struct FPTU_API_TYPE hippeus_buffer_tag_C {
     void *ptr;
     const void *const_ptr;
 #ifdef __cplusplus
-    constexpr casting(const casting &) noexcept = default;
-    constexpr casting(const void *ptr) noexcept : const_ptr(ptr) {}
-    constexpr casting(uintptr_t uint) noexcept : uint(uint) {}
+    cxx11_constexpr casting(const casting &) cxx11_noexcept = default;
+    cxx11_constexpr casting(const void *ptr) cxx11_noexcept : const_ptr(ptr) {}
+    cxx11_constexpr casting(uintptr_t uint) cxx11_noexcept : uint(uint) {}
 #endif /* __cplusplus */
   } opacity_;
 
 #ifdef __cplusplus
 protected:
-  constexpr hippeus_buffer_tag_C(uintptr_t uint) noexcept : opacity_(uint) {}
-  constexpr hippeus_buffer_tag_C(const hippeus_buffer_tag_C &) noexcept =
-      default;
+  cxx11_constexpr hippeus_buffer_tag_C(uintptr_t uint) cxx11_noexcept
+      : opacity_(uint) {}
+  cxx11_constexpr
+  hippeus_buffer_tag_C(const hippeus_buffer_tag_C &) cxx11_noexcept = default;
 #endif /* __cplusplus */
 };
 
@@ -185,29 +186,32 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
 
   using base = hippeus_buffer_tag_C;
 
-  static constexpr uintptr_t p2u(const void *ptr) noexcept {
-    return casting(ptr).uint;
+  static cxx11_constexpr uintptr_t p2u(const void *ptr) cxx11_noexcept {
+    return erthink::bit_cast<uintptr_t>(ptr);
   }
 
-  static constexpr void *u2p(uintptr_t u) noexcept { return casting(u).ptr; }
+  static cxx11_constexpr void *u2p(uintptr_t uint) cxx11_noexcept {
+    return erthink::bit_cast<void *>(uint);
+  }
 
-  constexpr buffer_tag() noexcept : base(0) {
+  cxx11_constexpr buffer_tag() cxx11_noexcept : base(0) {
     static_assert(sizeof(buffer_tag) == sizeof(hippeus_buffer_tag_C), "WTF?");
     static_assert(sizeof(uintptr_t) * CHAR_BIT == HIPPEUS_TAG_BITS, "WTF?");
   }
 
-  constexpr buffer_tag(const buffer_tag &) noexcept = default;
-  cxx14_constexpr buffer_tag &operator=(const buffer_tag &) noexcept = default;
+  cxx11_constexpr buffer_tag(const buffer_tag &) cxx11_noexcept = default;
+  cxx14_constexpr buffer_tag &
+  operator=(const buffer_tag &) cxx11_noexcept = default;
 
-  constexpr buffer_tag(const hippeus_allot_C *local_allot, bool readonly)
+  cxx11_constexpr buffer_tag(const hippeus_allot_C *local_allot, bool readonly)
       : base(p2u(local_allot) | (readonly ? HIPPEUS_LOCALWEAK | HIPPEUS_READONLY
                                           : HIPPEUS_LOCALWEAK)) {
-    constexpr_assert((reinterpret_cast<uintptr_t>(local_allot) &
+    constexpr_assert((erthink::bit_cast<uintptr_t>(local_allot) &
                       HIPPEUS_TAG_FLAGS_MASK) == 0);
   }
 
-  constexpr buffer_tag(unsigned allot_id, unsigned depot, unsigned crate,
-                       hippeus_buffer_flags flags) noexcept
+  cxx11_constexpr buffer_tag(unsigned allot_id, unsigned depot, unsigned crate,
+                             hippeus_buffer_flags flags) cxx11_noexcept
       : base(uintptr_t(flags) | uintptr_t(allot_id) << HIPPEUS_TAG_ALLOT_SHIFT |
              uintptr_t(depot) << HIPPEUS_TAG_DEPOT_SHIFT |
              uintptr_t(crate) << HIPPEUS_TAG_CRATE_SHIFT) {
@@ -221,11 +225,12 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
                      this->allot_crate() == crate);
   }
 
-  constexpr hippeus_buffer_flags flags() const noexcept {
+  cxx11_constexpr hippeus_buffer_flags flags() const cxx11_noexcept {
     return hippeus_buffer_flags(opacity_.uint & HIPPEUS_TAG_FLAGS_MASK);
   }
 
-  constexpr bool flags_test(hippeus_buffer_flags mask) const noexcept {
+  cxx11_constexpr bool
+  flags_test(hippeus_buffer_flags mask) const cxx11_noexcept {
     constexpr_assert(unsigned(mask) <= unsigned(HIPPEUS_TAG_FLAGS_MASK));
     return (mask & opacity_.uint) != 0;
   }
@@ -237,7 +242,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * Технически, это хендл объекта-аллокатора, укороченный из соображений
    * экономии, который позволяет через баиндер получить доступ к телу и
    * интерфейсу аллокатора. */
-  constexpr unsigned allot_id() const noexcept {
+  cxx11_constexpr unsigned allot_id() const cxx11_noexcept {
     constexpr_assert(!flags_test(HIPPEUS_LOCALWEAK));
     return (opacity_.uint >> HIPPEUS_TAG_ALLOT_SHIFT) & HIPPEUS_TAG_ALLOT_MASK;
   }
@@ -252,7 +257,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * Номера пулов уникальны в пределах региона.
    * Точная семантика может быть другой и определяется реализацией аллокатора.
    */
-  constexpr unsigned allot_depot() const noexcept {
+  cxx11_constexpr unsigned allot_depot() const cxx11_noexcept {
     constexpr_assert(!flags_test(HIPPEUS_LOCALWEAK));
     return (opacity_.uint >> HIPPEUS_TAG_DEPOT_SHIFT) & HIPPEUS_TAG_DEPOT_MASK;
   }
@@ -261,25 +266,28 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * Номера корзин уникальны в пределах пула.
    * Точная семантика может быть другой и определяется реализацией аллокатора.
    */
-  constexpr unsigned allot_crate() const noexcept {
+  cxx11_constexpr unsigned allot_crate() const cxx11_noexcept {
     constexpr_assert(!flags_test(HIPPEUS_LOCALWEAK));
     return (opacity_.uint >> HIPPEUS_TAG_CRATE_SHIFT) & HIPPEUS_TAG_CRATE_MASK;
   }
 
   /* Прямой указатель на локальный аллокатор. */
-  constexpr hippeus_allot_C *local_allot() const noexcept {
+  cxx11_constexpr hippeus_allot_C *local_allot() const cxx11_noexcept {
     constexpr_assert(flags_test(HIPPEUS_LOCALWEAK));
     return static_cast<hippeus_allot_C *>(
         u2p(opacity_.uint & ~uintptr_t(HIPPEUS_TAG_FLAGS_MASK)));
   }
 
-  constexpr uintptr_t raw() const noexcept { return opacity_.uint; }
+  cxx11_constexpr uintptr_t raw() const cxx11_noexcept { return opacity_.uint; }
 
-  constexpr bool operator==(const hippeus_buffer_tag_C &ditto) const noexcept {
+  cxx11_constexpr bool
+  operator==(const hippeus_buffer_tag_C &ditto) const cxx11_noexcept {
     return opacity_.uint == ditto.opacity_.uint;
   }
 
-  constexpr operator bool() const noexcept { return opacity_.uint != 0; }
+  cxx11_constexpr operator bool() const cxx11_noexcept {
+    return opacity_.uint != 0;
+  }
 };
 
 } // namespace hippeus
@@ -364,8 +372,8 @@ class FPTU_API_TYPE buffer : public hippeus_buffer_C {
   friend class buffer_weak;
 
   static const buffer *
-  add_reference(/* accepts nullptr */ const buffer *self) noexcept;
-  static void detach(/* accepts nullptr */ const buffer *self) noexcept;
+  add_reference(/* accepts nullptr */ const buffer *self) cxx11_noexcept;
+  static void detach(/* accepts nullptr */ const buffer *self) cxx11_noexcept;
 
 public:
   /* Основная функция для выделения буферов. Теоретически тут также стоит
@@ -380,57 +388,57 @@ public:
   static void *operator new[](std::size_t) = delete;
   static void operator delete[](void *ptr) = delete;
 
-  const buffer *add_reference(/* accepts nullptr */) const noexcept {
+  const buffer *add_reference(/* accepts nullptr */) const cxx11_noexcept {
     return add_reference(this);
   }
-  buffer *add_reference(/* accepts nullptr */) noexcept {
+  buffer *add_reference(/* accepts nullptr */) cxx11_noexcept {
     return const_cast<buffer *>(add_reference(this));
   }
 
-  void detach() const noexcept {
+  void detach() const cxx11_noexcept {
     /* follows naming convention from
      * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0468r0.html */
     detach(this);
   }
 
-  bool is_readonly() const noexcept {
+  bool is_readonly() const cxx11_noexcept {
     return (host.opacity_.uint & HIPPEUS_READONLY) != 0;
   }
-  bool is_localweak() const noexcept {
+  bool is_localweak() const cxx11_noexcept {
     return (host.opacity_.uint & HIPPEUS_LOCALWEAK) != 0;
   }
-  bool is_warpable() const noexcept {
+  bool is_warpable() const cxx11_noexcept {
     return (host.opacity_.uint & (HIPPEUS_LOCALWEAK | HIPPEUS_READONLY)) == 0;
   }
-  bool is_alterable() const noexcept {
+  bool is_alterable() const cxx11_noexcept {
     return ref_counter == 1 && !is_readonly();
   }
 
-  std::size_t size() const noexcept { return space; }
-  const void *data() const noexcept {
+  std::size_t size() const cxx11_noexcept { return space; }
+  const void *data() const cxx11_noexcept {
     return static_cast<const void *>(begin());
   }
-  void *data() noexcept { return static_cast<void *>(begin()); }
+  void *data() cxx11_noexcept { return static_cast<void *>(begin()); }
 
-  uint8_t *begin() noexcept {
+  uint8_t *begin() cxx11_noexcept {
     constexpr_assert(ensure());
     constexpr_assert(_data_offset);
     return erthink::constexpr_pointer_cast<uint8_t *>(this) + _data_offset;
   }
-  uint8_t *end() noexcept { return begin() + size(); }
+  uint8_t *end() cxx11_noexcept { return begin() + size(); }
 
-  const uint8_t *cbegin() const noexcept {
+  const uint8_t *cbegin() const cxx11_noexcept {
     constexpr_assert(ensure());
     constexpr_assert(_data_offset);
     return erthink::constexpr_pointer_cast<const uint8_t *>(this) +
            _data_offset;
   }
-  const uint8_t *cend() const noexcept { return begin() + size(); }
+  const uint8_t *cend() const cxx11_noexcept { return begin() + size(); }
 
-  const uint8_t *begin() const noexcept { return cbegin(); }
-  const uint8_t *end() const noexcept { return cend(); }
+  const uint8_t *begin() const cxx11_noexcept { return cbegin(); }
+  const uint8_t *end() const cxx11_noexcept { return cend(); }
 
-  bool is_solid() const noexcept {
+  bool is_solid() const cxx11_noexcept {
     return _data_offset == offsetof(buffer, _inplace);
   }
 
@@ -451,7 +459,7 @@ public:
 };
 
 /* glue for boost::intrusive_ptr */
-__always_inline void intrusive_ptr_add_ref(buffer *ptr) noexcept {
+__always_inline void intrusive_ptr_add_ref(buffer *ptr) cxx11_noexcept {
   ptr->add_reference();
 }
 __always_inline void intrusive_ptr_release(buffer *ptr) { ptr->detach(); }
@@ -471,7 +479,7 @@ __always_inline void intrusive_ptr_release(buffer *ptr) { ptr->detach(); }
  * утилитарный. */
 class FPTU_API_TYPE buffer_solid final : public buffer {
 public:
-  static constexpr std::size_t space_overhead() noexcept {
+  static cxx11_constexpr std::size_t space_overhead() cxx11_noexcept {
     return sizeof(buffer) + HIPAGUT_SPACE;
   }
   buffer_solid(buffer_tag host, std::size_t gross_bytes)

@@ -44,16 +44,16 @@ class auditor {
   std::size_t holes_count_, holes_volume_;
 
   struct map_less {
-    bool operator()(const interval &a, const interval &b) const noexcept {
+    bool operator()(const interval &a, const interval &b) const cxx11_noexcept {
       return a.first < b.first;
     }
-    bool operator()(const offset &a, const interval &b) const noexcept {
+    bool operator()(const offset &a, const interval &b) const cxx11_noexcept {
       return a < b.first;
     }
-    bool operator()(const interval &a, const offset &b) const noexcept {
+    bool operator()(const interval &a, const offset &b) const cxx11_noexcept {
       return a.first < b;
     }
-    bool operator()(const offset &a, const offset &b) const noexcept {
+    bool operator()(const offset &a, const offset &b) const cxx11_noexcept {
       return a < b;
     }
   };
@@ -351,7 +351,8 @@ __hot const char *audit_tuple(const fptu::schema *const schema,
 }
 
 __always_inline const char *
-tuple_ro::inline_lite_checkup(const void *ptr, std::size_t bytes) noexcept {
+tuple_ro::inline_lite_checkup(const void *ptr,
+                              std::size_t bytes) cxx11_noexcept {
   if (unlikely(ptr == nullptr))
     return AUDIT_FAILURE("hollow tuple (nullptr)");
 
@@ -377,7 +378,7 @@ tuple_ro::inline_lite_checkup(const void *ptr, std::size_t bytes) noexcept {
 }
 
 __hot const char *tuple_ro::lite_checkup(const void *ptr,
-                                         std::size_t bytes) noexcept {
+                                         std::size_t bytes) cxx11_noexcept {
   return inline_lite_checkup(ptr, bytes);
 }
 
@@ -400,7 +401,7 @@ __hot const char *tuple_ro::audit(const void *ptr, std::size_t bytes,
                      self->end_data_bytes(), flags, holes_info);
 }
 
-__hot const char *tuple_rw::audit(const tuple_rw *self) noexcept {
+__hot const char *tuple_rw::audit(const tuple_rw *self) cxx11_noexcept {
   if (!self)
     return AUDIT_FAILURE("hollow tuple (nullptr)");
 

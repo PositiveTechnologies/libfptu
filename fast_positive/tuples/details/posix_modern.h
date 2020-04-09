@@ -19,6 +19,7 @@
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 #else
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/stat.h>

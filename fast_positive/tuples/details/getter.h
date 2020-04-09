@@ -73,7 +73,7 @@ struct iovec_thunk : public iovec {
 template <genus GENUS, typename erthink::enable_if_t<
                            meta::genus_traits<GENUS>::physique !=
                            meta::physique_kind::stretchy> * = nullptr>
-inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
+cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
 get(const field_loose *loose, const bool is_discernible_null) {
   if (likely(loose)) {
     if (unlikely(loose->type() != GENUS))
@@ -88,7 +88,7 @@ get(const field_loose *loose, const bool is_discernible_null) {
 template <genus GENUS, typename erthink::enable_if_t<
                            meta::genus_traits<GENUS>::physique ==
                            meta::physique_kind::stretchy> * = nullptr>
-inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
+cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
 get(const field_loose *loose, const bool is_discernible_null) {
   if (likely(loose)) {
     if (unlikely(loose->type() != GENUS))
@@ -123,8 +123,7 @@ protected:
   template <genus GENUS, typename erthink::enable_if_t<
                              meta::genus_traits<GENUS>::physique !=
                              meta::physique_kind::stretchy> * = nullptr>
-  inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
-  get() const {
+  cxx14_constexpr typename meta::genus_traits<GENUS>::return_type get() const {
     if (unlikely(token_.type() != GENUS))
       throw_type_mismatch();
 
@@ -155,8 +154,7 @@ protected:
   template <genus GENUS, typename erthink::enable_if_t<
                              meta::genus_traits<GENUS>::physique ==
                              meta::physique_kind::stretchy> * = nullptr>
-  inline cxx14_constexpr typename meta::genus_traits<GENUS>::return_type
-  get() const {
+  cxx14_constexpr typename meta::genus_traits<GENUS>::return_type get() const {
     if (unlikely(token_.type() != GENUS))
       throw_type_mismatch();
 
@@ -181,7 +179,7 @@ protected:
   }
 
   // default constructor for empty/invalid value
-  constexpr accessor_ro() : field_((void *)(nullptr)), token_() {
+  cxx11_constexpr accessor_ro() : field_((void *)(nullptr)), token_() {
     static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                         ? sizeof(void *)
                                         : sizeof(void *) * 2),
@@ -189,136 +187,167 @@ protected:
   }
 
   // for preplaced fields
-  constexpr accessor_ro(const field_preplaced *target,
-                        const TOKEN token) noexcept
-      : field_(target), token_(token) {}
+  cxx11_constexpr accessor_ro(const field_preplaced *target,
+                              const TOKEN token) cxx11_noexcept
+      : field_(target),
+        token_(token) {}
 
   // for loose fields
   cxx14_constexpr accessor_ro(const field_loose *target,
-                              const TOKEN token) noexcept
-      : field_(target), token_(token) {}
+                              const TOKEN token) cxx11_noexcept
+      : field_(target),
+        token_(token) {}
 
 public:
-  constexpr accessor_ro(const accessor_ro &) noexcept = default;
+  cxx11_constexpr accessor_ro(const accessor_ro &) cxx11_noexcept = default;
   cxx14_constexpr accessor_ro &
-  operator=(const accessor_ro &) noexcept = default;
-  constexpr accessor_ro(accessor_ro &&) noexcept = default;
-  cxx14_constexpr accessor_ro &operator=(accessor_ro &&) noexcept = default;
-  constexpr const accessor_ro *operator->() const noexcept { return this; }
+  operator=(const accessor_ro &) cxx11_noexcept = default;
+  cxx11_constexpr accessor_ro(accessor_ro &&) cxx11_noexcept = default;
+  cxx14_constexpr accessor_ro &
+  operator=(accessor_ro &&) cxx11_noexcept = default;
+  cxx11_constexpr const accessor_ro *operator->() const cxx11_noexcept {
+    return this;
+  }
 
-  constexpr bool exist() const noexcept {
+  cxx11_constexpr bool exist() const cxx11_noexcept {
     return token_.is_preplaced()
                ? static_cast<const field_preplaced *>(field_)->is_null(
                      token_.tag())
                : field_ != nullptr;
   }
-  explicit constexpr operator bool() const noexcept { return exist(); }
+  explicit cxx11_constexpr operator bool() const cxx11_noexcept {
+    return exist();
+  }
 
-  constexpr genus type() const noexcept { return token_.type(); }
-  constexpr const TOKEN &token() const noexcept { return token_; }
-  constexpr operator TOKEN() const noexcept { return token_; }
+  cxx11_constexpr genus type() const cxx11_noexcept { return token_.type(); }
+  cxx11_constexpr const TOKEN &token() const cxx11_noexcept { return token_; }
+  cxx11_constexpr operator TOKEN() const cxx11_noexcept { return token_; }
 
-  constexpr bool is_saturated() const noexcept {
+  cxx11_constexpr bool is_saturated() const cxx11_noexcept {
     return token().is_saturated();
   }
-  constexpr bool is_rangechecking() const noexcept {
+  cxx11_constexpr bool is_rangechecking() const cxx11_noexcept {
     return token().is_rangechecking();
   }
-  constexpr bool is_discernible_null() const noexcept {
+  cxx11_constexpr bool is_discernible_null() const cxx11_noexcept {
     return token().is_discernible_null();
   }
-  constexpr bool is_preplaced() const noexcept {
+  cxx11_constexpr bool is_preplaced() const cxx11_noexcept {
     return token().is_preplaced();
   }
-  constexpr bool is_loose() const noexcept { return token().is_loose(); }
-  constexpr bool is_inlay() const noexcept { return token().is_inlay(); }
-  constexpr bool is_collection() const noexcept {
+  cxx11_constexpr bool is_loose() const cxx11_noexcept {
+    return token().is_loose();
+  }
+  cxx11_constexpr bool is_inlay() const cxx11_noexcept {
+    return token().is_inlay();
+  }
+  cxx11_constexpr bool is_collection() const cxx11_noexcept {
     return token().is_collection();
   }
 
-  constexpr bool is_stretchy() const noexcept { return token().is_stretchy(); }
-  constexpr bool is_bool() const noexcept { return token().is_bool(); }
-  constexpr bool is_enum() const noexcept { return token().is_enum(); }
-  constexpr bool is_text() const noexcept { return token().is_text(); }
-  constexpr bool is_number() const noexcept { return token().is_number(); }
-  constexpr bool is_integer() const noexcept { return token().is_integer(); }
-  constexpr bool is_signed() const noexcept { return token().is_signed(); }
-  constexpr bool is_unsigned() const noexcept { return token().is_unsigned(); }
-  constexpr bool is_float() const noexcept { return token().is_float(); }
-  constexpr bool is_decimal() const noexcept { return token().is_decimal(); }
+  cxx11_constexpr bool is_stretchy() const cxx11_noexcept {
+    return token().is_stretchy();
+  }
+  cxx11_constexpr bool is_bool() const cxx11_noexcept {
+    return token().is_bool();
+  }
+  cxx11_constexpr bool is_enum() const cxx11_noexcept {
+    return token().is_enum();
+  }
+  cxx11_constexpr bool is_text() const cxx11_noexcept {
+    return token().is_text();
+  }
+  cxx11_constexpr bool is_number() const cxx11_noexcept {
+    return token().is_number();
+  }
+  cxx11_constexpr bool is_integer() const cxx11_noexcept {
+    return token().is_integer();
+  }
+  cxx11_constexpr bool is_signed() const cxx11_noexcept {
+    return token().is_signed();
+  }
+  cxx11_constexpr bool is_unsigned() const cxx11_noexcept {
+    return token().is_unsigned();
+  }
+  cxx11_constexpr bool is_float() const cxx11_noexcept {
+    return token().is_float();
+  }
+  cxx11_constexpr bool is_decimal() const cxx11_noexcept {
+    return token().is_decimal();
+  }
 
-  constexpr string_view get_string() const { return get<text>(); }
-  constexpr string_view get_varbinary() const { return get<varbin>(); }
-  constexpr const tuple_ro *get_nested() const {
+  cxx11_constexpr string_view get_string() const { return get<text>(); }
+  cxx11_constexpr string_view get_varbinary() const { return get<varbin>(); }
+  cxx11_constexpr const tuple_ro *get_nested() const {
     return erthink::constexpr_pointer_cast<const tuple_ro *>(get<nested>());
   }
-  constexpr property_pair get_property() const { return get<property>(); }
-  constexpr bool get_bool() const { return get<boolean>() != 0; }
-  constexpr short get_enum() const { return get<enumeration>(); }
-  constexpr int8_t get_i8() const { return get<i8>(); }
-  constexpr uint8_t get_u8() const { return get<u8>(); }
-  constexpr int16_t get_i16() const { return get<i16>(); }
-  constexpr uint16_t get_u16() const { return get<u16>(); }
-  constexpr int32_t get_i32() const { return get<i32>(); }
-  constexpr uint32_t get_u32() const { return get<u32>(); }
-  constexpr int64_t get_i64() const { return get<i64>(); }
-  constexpr uint64_t get_u64() const { return get<u64>(); }
-  constexpr float get_f32() const { return get<f32>(); }
-  constexpr double get_f64() const { return get<f64>(); }
-  constexpr decimal64 get_decimal() const { return get<d64>(); }
-  constexpr datetime_t get_datetime() const {
+  cxx11_constexpr property_pair get_property() const { return get<property>(); }
+  cxx11_constexpr bool get_bool() const { return get<boolean>() != 0; }
+  cxx11_constexpr short get_enum() const { return get<enumeration>(); }
+  cxx11_constexpr int8_t get_i8() const { return get<i8>(); }
+  cxx11_constexpr uint8_t get_u8() const { return get<u8>(); }
+  cxx11_constexpr int16_t get_i16() const { return get<i16>(); }
+  cxx11_constexpr uint16_t get_u16() const { return get<u16>(); }
+  cxx11_constexpr int32_t get_i32() const { return get<i32>(); }
+  cxx11_constexpr uint32_t get_u32() const { return get<u32>(); }
+  cxx11_constexpr int64_t get_i64() const { return get<i64>(); }
+  cxx11_constexpr uint64_t get_u64() const { return get<u64>(); }
+  cxx11_constexpr float get_f32() const { return get<f32>(); }
+  cxx11_constexpr double get_f64() const { return get<f64>(); }
+  cxx11_constexpr decimal64 get_decimal() const { return get<d64>(); }
+  cxx11_constexpr datetime_t get_datetime() const {
     return unlikely(type() == genus::t32) ? datetime_t::from_seconds(get<t32>())
                                           : get<t64>();
   }
-  constexpr const uuid_t &get_uuid() const {
+  cxx11_constexpr const uuid_t &get_uuid() const {
     return *erthink::constexpr_pointer_cast<const uuid_t *>(&get<bin128>());
   }
 
-  constexpr const binary96_t &get_bin96() const {
+  cxx11_constexpr const binary96_t &get_bin96() const {
     return *erthink::constexpr_pointer_cast<const binary96_t *>(&get<bin96>());
   }
-  constexpr const binary128_t &get_bin128() const {
+  cxx11_constexpr const binary128_t &get_bin128() const {
     return *erthink::constexpr_pointer_cast<const binary128_t *>(
         &get<bin128>());
   }
-  constexpr const binary160_t &get_bin160() const {
+  cxx11_constexpr const binary160_t &get_bin160() const {
     return *erthink::constexpr_pointer_cast<const binary160_t *>(
         &get<bin160>());
   }
-  constexpr const binary192_t &get_bin192() const {
+  cxx11_constexpr const binary192_t &get_bin192() const {
     return *erthink::constexpr_pointer_cast<const binary192_t *>(
         &get<bin192>());
   }
-  constexpr const binary224_t &get_bin224() const {
+  cxx11_constexpr const binary224_t &get_bin224() const {
     return *erthink::constexpr_pointer_cast<const binary224_t *>(
         &get<bin224>());
   }
-  constexpr const binary256_t &get_bin256() const {
+  cxx11_constexpr const binary256_t &get_bin256() const {
     return *erthink::constexpr_pointer_cast<const binary256_t *>(
         &get<bin256>());
   }
-  constexpr const binary320_t &get_bin320() const {
+  cxx11_constexpr const binary320_t &get_bin320() const {
     return *erthink::constexpr_pointer_cast<const binary320_t *>(
         &get<bin320>());
   }
-  constexpr const binary384_t &get_bin384() const {
+  cxx11_constexpr const binary384_t &get_bin384() const {
     return *erthink::constexpr_pointer_cast<const binary384_t *>(
         &get<bin384>());
   }
-  constexpr const binary512_t &get_bin512() const {
+  cxx11_constexpr const binary512_t &get_bin512() const {
     return *erthink::constexpr_pointer_cast<const binary512_t *>(
         &get<bin512>());
   }
 
-  constexpr const ip_address_t &get_ip_address() const {
+  cxx11_constexpr const ip_address_t &get_ip_address() const {
     return *erthink::constexpr_pointer_cast<const ip_address_t *>(&get<ip>());
   }
-  constexpr mac_address_t get_mac_address() const { return get<mac>(); }
-  constexpr const ip_net_t &get_ip_net() const {
+  cxx11_constexpr mac_address_t get_mac_address() const { return get<mac>(); }
+  cxx11_constexpr const ip_net_t &get_ip_net() const {
     return *erthink::constexpr_pointer_cast<const ip_net_t *>(&get<ipnet>());
   }
 
-  constexpr double get_float() const {
+  cxx11_constexpr double get_float() const {
     return (type() == f32) ? get_f32() : get_f64();
   }
 
@@ -425,10 +454,11 @@ protected:
   friend class fptu::field_iterator_rw;
   using accessor = accessor_ro<TOKEN>;
 
-  explicit constexpr collection_iterator_ro(const field_loose *target,
-                                            const field_loose *detent,
-                                            const TOKEN token) noexcept
-      : accessor(target, token), detent_(detent) {
+  explicit cxx11_constexpr
+  collection_iterator_ro(const field_loose *target, const field_loose *detent,
+                         const TOKEN token) cxx11_noexcept
+      : accessor(target, token),
+        detent_(detent) {
     constexpr_assert(token.is_collection());
   }
 
@@ -441,44 +471,48 @@ public:
   using reference = value_type &;
 #endif
 
-  constexpr collection_iterator_ro() noexcept
+  cxx11_constexpr collection_iterator_ro() cxx11_noexcept
       : detent_(static_cast<const field_loose *>(accessor::field_)) {
     static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                         ? sizeof(void *) * 2
                                         : sizeof(void *) * 3),
                   "WTF?");
   }
-  constexpr collection_iterator_ro(const collection_iterator_ro &) noexcept =
-      default;
+  cxx11_constexpr collection_iterator_ro(const collection_iterator_ro &)
+      cxx11_noexcept = default;
   cxx14_constexpr collection_iterator_ro &
-  operator=(const collection_iterator_ro &) noexcept = default;
-  constexpr const TOKEN &token() const noexcept { return accessor::token(); }
+  operator=(const collection_iterator_ro &) cxx11_noexcept = default;
+  cxx11_constexpr const TOKEN &token() const cxx11_noexcept {
+    return accessor::token();
+  }
 
-  collection_iterator_ro &operator++() noexcept {
+  collection_iterator_ro &operator++() cxx11_noexcept {
     assert(static_cast<const field_loose *>(accessor::field_) < detent_);
     accessor::field_ = next(static_cast<const field_loose *>(accessor::field_),
                             detent_, accessor::token_.tag());
     return *this;
   }
-  collection_iterator_ro operator++(int) const noexcept {
+  collection_iterator_ro operator++(int) const cxx11_noexcept {
     collection_iterator_ro iterator(*this);
     ++iterator;
     return iterator;
   }
-  constexpr const accessor &operator*() const noexcept { return *this; }
+  cxx11_constexpr const accessor &operator*() const cxx11_noexcept {
+    return *this;
+  }
 
-  constexpr bool operator==(const accessor &other) const noexcept {
+  cxx11_constexpr bool operator==(const accessor &other) const cxx11_noexcept {
     return accessor::field_ == other.field_;
   }
-  constexpr bool operator!=(const accessor &other) const noexcept {
+  cxx11_constexpr bool operator!=(const accessor &other) const cxx11_noexcept {
     return accessor::field_ != other.field_;
   }
-  constexpr bool operator==(const collection_iterator_ro &other) const
-      noexcept {
+  cxx11_constexpr bool
+  operator==(const collection_iterator_ro &other) const cxx11_noexcept {
     return accessor::field_ == other.field_;
   }
-  constexpr bool operator!=(const collection_iterator_ro &other) const
-      noexcept {
+  cxx11_constexpr bool
+  operator!=(const collection_iterator_ro &other) const cxx11_noexcept {
     return accessor::field_ != other.field_;
   }
 };
@@ -489,23 +523,28 @@ template <typename TOKEN> class collection_ro {
 
   collection_iterator_ro<TOKEN> iterator_;
 
-  constexpr collection_ro(const field_loose *first, const field_loose *detent,
-                          const TOKEN token) noexcept
+  cxx11_constexpr collection_ro(const field_loose *first,
+                                const field_loose *detent,
+                                const TOKEN token) cxx11_noexcept
       : iterator_(first, detent, token) {
     constexpr_assert(token.is_collection());
   }
 
 public:
   using const_iterator = collection_iterator_ro<TOKEN>;
-  constexpr collection_ro(const collection_ro &) = default;
+  cxx11_constexpr collection_ro(const collection_ro &) = default;
   cxx14_constexpr collection_ro &operator=(const collection_ro &) = default;
-  constexpr const TOKEN &token() const noexcept { return iterator_.token(); }
+  cxx11_constexpr const TOKEN &token() const cxx11_noexcept {
+    return iterator_.token();
+  }
 
-  constexpr const const_iterator &begin() const noexcept { return iterator_; }
-  constexpr const_iterator end() const noexcept {
+  cxx11_constexpr const const_iterator &begin() const cxx11_noexcept {
+    return iterator_;
+  }
+  cxx11_constexpr const_iterator end() const cxx11_noexcept {
     return const_iterator(nullptr, iterator_.detent_, iterator_.token_);
   }
-  constexpr bool empty() const noexcept { return begin() == end(); }
+  cxx11_constexpr bool empty() const cxx11_noexcept { return begin() == end(); }
 };
 
 } // namespace details
@@ -519,7 +558,7 @@ namespace details {
 template <typename TUPLE> class crtp_getter {
   friend class tuple_rw;
 
-  constexpr const TUPLE &self() const {
+  cxx11_constexpr const TUPLE &self() const {
     return *static_cast<const TUPLE *>(this);
   }
 

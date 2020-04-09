@@ -83,8 +83,8 @@ enum validation_mode {
   enforce_skip_validation,
   enforce_validation
 };
-inline constexpr bool apply_validation_mode(validation_mode mode,
-                                            bool by_defaults) noexcept {
+cxx11_constexpr bool apply_validation_mode(validation_mode mode,
+                                           bool by_defaults) cxx11_noexcept {
   switch (mode) {
   default:
     return by_defaults;
@@ -95,8 +95,8 @@ inline constexpr bool apply_validation_mode(validation_mode mode,
   }
 }
 
-inline constexpr validation_mode
-combine_validation_mode(validation_mode mode, bool by_default) noexcept {
+cxx11_constexpr validation_mode
+combine_validation_mode(validation_mode mode, bool by_default) cxx11_noexcept {
   return (mode != default_validation)
              ? mode
              : by_default ? enforce_validation : enforce_skip_validation;
@@ -193,7 +193,7 @@ class tuple_rw_fixed;
 class tuple_rw_managed;
 
 /* аллокатор управляемых буферов по-умолчанию */
-static inline hippeus::buffer_tag default_buffer_allot() noexcept {
+static inline hippeus::buffer_tag default_buffer_allot() cxx11_noexcept {
   return defaults::allot_tag;
 }
 
@@ -234,12 +234,13 @@ class tuple_crtp_reader
    НЕ добавлять еще один уровень косвенности. */
 {
 private:
-  constexpr const TUPLE &self() const noexcept {
+  cxx11_constexpr const TUPLE &self() const cxx11_noexcept {
     return *static_cast<const TUPLE *>(this);
   }
 
 public:
-  __pure_function constexpr const details::tuple_ro *get_impl() const noexcept {
+  __pure_function cxx11_constexpr const details::tuple_ro *
+  get_impl() const cxx11_noexcept {
     return self().pimpl_;
   }
 
@@ -289,87 +290,95 @@ public:
   HERE_CRTP_MAKE(double, get_number_as_ieee754double)
 #undef HERE_CRTP_MAKE
 
-  __pure_function explicit constexpr operator bool() const noexcept {
+  __pure_function explicit cxx11_constexpr
+  operator bool() const cxx11_noexcept {
     return get_impl() != 0;
   }
-  __pure_function const char *validate(const fptu::schema *schema,
-                                       bool holes_are_not_allowed = false) const
-      noexcept {
+  __pure_function const char *
+  validate(const fptu::schema *schema,
+           bool holes_are_not_allowed = false) const cxx11_noexcept {
     return get_impl()->audit(schema, holes_are_not_allowed);
   }
   __pure_function static const char *
   validate(const void *ptr, std::size_t bytes, const fptu::schema *schema,
-           bool holes_are_not_allowed = false) noexcept {
+           bool holes_are_not_allowed = false) cxx11_noexcept {
     return TUPLE::impl::audit(ptr, bytes, schema, holes_are_not_allowed);
   }
-  __pure_function constexpr bool empty() const noexcept {
+  __pure_function cxx11_constexpr bool empty() const cxx11_noexcept {
     return get_impl()->empty();
   }
-  __pure_function constexpr std::size_t size() const noexcept {
+  __pure_function cxx11_constexpr std::size_t size() const cxx11_noexcept {
     return get_impl()->size();
   }
-  __pure_function constexpr const void *data() const noexcept {
+  __pure_function cxx11_constexpr const void *data() const cxx11_noexcept {
     return get_impl()->data();
   }
-  __pure_function cxx14_constexpr std::size_t payload_size() const noexcept {
+  __pure_function cxx14_constexpr std::size_t
+  payload_size() const cxx11_noexcept {
     return get_impl()->payload_size();
   }
-  __pure_function constexpr const void *payload() const noexcept {
+  __pure_function cxx11_constexpr const void *payload() const cxx11_noexcept {
     return get_impl()->payload();
   }
-  __pure_function constexpr std::size_t index_size() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  index_size() const cxx11_noexcept {
     return get_impl()->index_size();
   }
-  __pure_function constexpr bool is_sorted() const noexcept {
+  __pure_function cxx11_constexpr bool is_sorted() const cxx11_noexcept {
     return get_impl()->is_sorted();
   }
-  __pure_function constexpr bool have_preplaced() const noexcept {
+  __pure_function cxx11_constexpr bool have_preplaced() const cxx11_noexcept {
     return get_impl()->have_preplaced();
   }
-  __pure_function operator iovec() const noexcept {
+  __pure_function operator iovec() const cxx11_noexcept {
     return iovec(data(), size());
   }
 
   //----------------------------------------------------------------------------
 
-  __pure_function field_iterator_ro cbegin() const noexcept {
+  __pure_function field_iterator_ro cbegin() const cxx11_noexcept {
     return get_impl()->cbegin(defaults::schema.get());
   }
-  __pure_function field_iterator_ro cbegin(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  cbegin(const fptu::schema *schema) const cxx11_noexcept {
     return get_impl()->cbegin(schema);
   }
-  constexpr field_iterator_ro cend() const noexcept {
+  cxx11_constexpr field_iterator_ro cend() const cxx11_noexcept {
     return get_impl()->cend(defaults::schema.get());
   }
-  __pure_function field_iterator_ro cend(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  cend(const fptu::schema *schema) const cxx11_noexcept {
     return get_impl()->cend(schema);
   }
 
-  __pure_function field_iterator_ro begin() const noexcept { return cbegin(); }
-  constexpr field_iterator_ro end() const noexcept { return cend(); }
-  __pure_function field_iterator_ro begin(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro begin() const cxx11_noexcept {
+    return cbegin();
+  }
+  cxx11_constexpr field_iterator_ro end() const cxx11_noexcept {
+    return cend();
+  }
+  __pure_function field_iterator_ro
+  begin(const fptu::schema *schema) const cxx11_noexcept {
     return cbegin(schema);
   }
-  constexpr field_iterator_ro end(const fptu::schema *schema) const noexcept {
+  cxx11_constexpr field_iterator_ro
+  end(const fptu::schema *schema) const cxx11_noexcept {
     return cend(schema);
   }
 
   //----------------------------------------------------------------------------
 
-  constexpr loose_iterator_ro cbegin_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro cbegin_loose() const cxx11_noexcept {
     return get_impl()->cbegin_loose();
   }
-  constexpr loose_iterator_ro cend_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro cend_loose() const cxx11_noexcept {
     return get_impl()->cend_loose();
   }
 
-  constexpr loose_iterator_ro begin_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro begin_loose() const cxx11_noexcept {
     return cbegin_loose();
   }
-  constexpr loose_iterator_ro end_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro end_loose() const cxx11_noexcept {
     return cend_loose();
   }
 };
@@ -388,10 +397,11 @@ class FPTU_API_TYPE tuple_ro_weak : public tuple_crtp_reader<tuple_ro_weak>
 protected:
   using impl = details::tuple_ro;
   const impl *pimpl_;
-  explicit constexpr tuple_ro_weak(const impl *ptr) noexcept : pimpl_(ptr) {}
+  explicit cxx11_constexpr tuple_ro_weak(const impl *ptr) cxx11_noexcept
+      : pimpl_(ptr) {}
 
 public:
-  constexpr tuple_ro_weak() noexcept : tuple_ro_weak(nullptr) {}
+  cxx11_constexpr tuple_ro_weak() cxx11_noexcept : tuple_ro_weak(nullptr) {}
   tuple_ro_weak(const void *ptr, std::size_t bytes, const fptu::schema *schema,
                 validation_mode validation = default_validation)
       : pimpl_(impl::make_from_buffer(
@@ -404,16 +414,18 @@ public:
   inline tuple_ro_weak(const tuple_rw_fixed &);
   inline tuple_ro_weak(const tuple_rw_managed &);
 
-  constexpr tuple_ro_weak(const tuple_ro_weak &) noexcept = default;
-  tuple_ro_weak &operator=(const tuple_ro_weak &) noexcept = default;
+  cxx11_constexpr tuple_ro_weak(const tuple_ro_weak &) cxx11_noexcept = default;
+  tuple_ro_weak &operator=(const tuple_ro_weak &) cxx11_noexcept = default;
 
-  constexpr tuple_ro_weak(tuple_ro_weak &&src) noexcept = default;
-  cxx14_constexpr tuple_ro_weak &operator=(tuple_ro_weak &&src) noexcept {
+  cxx11_constexpr tuple_ro_weak(tuple_ro_weak &&src) cxx11_noexcept = default;
+  cxx14_constexpr tuple_ro_weak &operator=(tuple_ro_weak &&src) cxx11_noexcept {
     pimpl_ = src.pimpl_;
     src.pimpl_ = nullptr;
     return *this;
   }
-  void swap(tuple_ro_weak &ditto) noexcept { std::swap(pimpl_, ditto.pimpl_); }
+  void swap(tuple_ro_weak &ditto) cxx11_noexcept {
+    std::swap(pimpl_, ditto.pimpl_);
+  }
 
   template <typename TOKEN>
   __pure_function inline tuple_ro_weak
@@ -421,16 +433,18 @@ public:
     return tuple_ro_weak(get_impl()->get_nested(ident));
   }
 
-  constexpr bool operator==(const tuple_ro_weak &ditto) const noexcept {
+  cxx11_constexpr bool
+  operator==(const tuple_ro_weak &ditto) const cxx11_noexcept {
     return pimpl_ == ditto.pimpl_;
   }
-  constexpr bool operator!=(const tuple_ro_weak &ditto) const noexcept {
+  cxx11_constexpr bool
+  operator!=(const tuple_ro_weak &ditto) const cxx11_noexcept {
     return pimpl_ != ditto.pimpl_;
   }
-  inline bool operator==(const tuple_ro_managed &ditto) const noexcept;
-  inline bool operator!=(const tuple_ro_managed &ditto) const noexcept;
-  inline bool operator==(const tuple_rw_fixed &ditto) const noexcept;
-  inline bool operator!=(const tuple_rw_fixed &ditto) const noexcept;
+  inline bool operator==(const tuple_ro_managed &ditto) const cxx11_noexcept;
+  inline bool operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept;
+  inline bool operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept;
+  inline bool operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept;
 };
 
 class FPTU_API_TYPE tuple_ro_managed
@@ -472,11 +486,11 @@ protected:
   /* Возвращает указатель на опорную R/W-форму, если таковая была скрыто
    * порождена при создании экземпляра tuple_ro_managed посредством копирования
    * данных в собственный буфер. */
-  __pure_function const details::tuple_rw *peek_basis() const noexcept;
+  __pure_function const details::tuple_rw *peek_basis() const cxx11_noexcept;
 
 public:
-  const hippeus::buffer *get_buffer() const noexcept { return hb_; }
-  tuple_ro_managed() noexcept : pimpl_(nullptr), hb_(nullptr) {}
+  const hippeus::buffer *get_buffer() const cxx11_noexcept { return hb_; }
+  tuple_ro_managed() cxx11_noexcept : pimpl_(nullptr), hb_(nullptr) {}
   void purge() {
     hb_->detach(/* accepts nullptr */);
     pimpl_ = nullptr;
@@ -508,7 +522,7 @@ public:
   /* Возвращает указатель на схему из опорной R/W-формы, если таковая была
    * скрыто порождена при создании экземпляра tuple_ro_managed посредством
    * копирования данных в собственный буфер, и при этом была задана схема. */
-  __pure_function inline const fptu::schema *peek_schema() const noexcept;
+  __pure_function inline const fptu::schema *peek_schema() const cxx11_noexcept;
 
   static tuple_ro_managed
   clone(const tuple_ro_managed &src, const fptu::schema *schema = nullptr,
@@ -538,27 +552,29 @@ public:
 
   tuple_ro_managed &operator=(tuple_ro_managed &&src);
 
-  void swap(tuple_ro_managed &ditto) noexcept {
+  void swap(tuple_ro_managed &ditto) cxx11_noexcept {
     std::swap(pimpl_, ditto.pimpl_);
     std::swap(hb_, ditto.hb_);
   }
 
-  tuple_ro_weak take_weak() const noexcept { return tuple_ro_weak(pimpl_); }
+  tuple_ro_weak take_weak() const cxx11_noexcept {
+    return tuple_ro_weak(pimpl_);
+  }
 
-  bool operator==(const tuple_ro_weak &ditto) const noexcept {
+  bool operator==(const tuple_ro_weak &ditto) const cxx11_noexcept {
     return pimpl_ == ditto.pimpl_;
   }
-  bool operator!=(const tuple_ro_weak &ditto) const noexcept {
+  bool operator!=(const tuple_ro_weak &ditto) const cxx11_noexcept {
     return pimpl_ != ditto.pimpl_;
   }
-  bool operator==(const tuple_ro_managed &ditto) const noexcept {
+  bool operator==(const tuple_ro_managed &ditto) const cxx11_noexcept {
     return pimpl_ == ditto.pimpl_;
   }
-  bool operator!=(const tuple_ro_managed &ditto) const noexcept {
+  bool operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept {
     return pimpl_ != ditto.pimpl_;
   }
-  inline bool operator==(const tuple_rw_fixed &ditto) const noexcept;
-  inline bool operator!=(const tuple_rw_fixed &ditto) const noexcept;
+  inline bool operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept;
+  inline bool operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept;
 
   template <typename TOKEN>
   __pure_function inline tuple_ro_weak
@@ -577,18 +593,20 @@ public:
 
 template <typename TUPLE> class tuple_crtp_writer {
 private:
-  cxx14_constexpr const TUPLE &self() const noexcept {
+  cxx14_constexpr const TUPLE &self() const cxx11_noexcept {
     return *static_cast<const TUPLE *>(this);
   }
-  cxx14_constexpr TUPLE &self() noexcept { return *static_cast<TUPLE *>(this); }
+  cxx14_constexpr TUPLE &self() cxx11_noexcept {
+    return *static_cast<TUPLE *>(this);
+  }
 
 protected:
-  cxx14_constexpr details::tuple_rw *get_impl() noexcept {
+  cxx14_constexpr details::tuple_rw *get_impl() cxx11_noexcept {
     return self().pimpl_;
   }
 
 public:
-  cxx14_constexpr const details::tuple_rw *get_impl() const noexcept {
+  cxx14_constexpr const details::tuple_rw *get_impl() const cxx11_noexcept {
     return self().pimpl_;
   }
 
@@ -722,64 +740,77 @@ public:
     return get_impl()->insert_string(ident, fptu::string_view(value));
   }
 
-  __pure_function constexpr const hippeus::buffer *get_buffer() const noexcept {
+  __pure_function cxx11_constexpr const hippeus::buffer *
+  get_buffer() const cxx11_noexcept {
     return get_impl()->get_buffer();
   }
-  __pure_function constexpr const fptu::schema *schema() const noexcept {
+  __pure_function cxx11_constexpr const fptu::schema *
+  schema() const cxx11_noexcept {
     return get_impl()->schema();
   }
 
-  __pure_function explicit constexpr operator bool() const noexcept {
+  __pure_function explicit cxx11_constexpr
+  operator bool() const cxx11_noexcept {
     return get_impl() != 0;
   }
-  __pure_function const char *validate() const noexcept {
+  __pure_function const char *validate() const cxx11_noexcept {
     return get_impl()->audit();
   }
-  __pure_function constexpr std::size_t brutto_size() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  brutto_size() const cxx11_noexcept {
     return get_impl()->brutto_size();
   }
-  __pure_function constexpr std::size_t netto_size() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  netto_size() const cxx11_noexcept {
     return get_impl()->netto_size();
   }
-  __pure_function constexpr std::size_t index_size() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  index_size() const cxx11_noexcept {
     return get_impl()->index_size();
   }
-  __pure_function constexpr std::size_t payload_size_bytes() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  payload_size_bytes() const cxx11_noexcept {
     return get_impl()->payload_size_bytes();
   }
-  __pure_function constexpr std::size_t head_space() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  head_space() const cxx11_noexcept {
     return get_impl()->head_space();
   }
-  __pure_function constexpr std::size_t tail_space_units() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  tail_space_units() const cxx11_noexcept {
     return get_impl()->tail_space_units();
   }
-  __pure_function constexpr std::size_t tail_space_bytes() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  tail_space_bytes() const cxx11_noexcept {
     return get_impl()->tail_space_bytes();
   }
-  __pure_function constexpr std::size_t junk_units() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  junk_units() const cxx11_noexcept {
     return get_impl()->junk_units();
   }
-  __pure_function constexpr std::size_t junk_bytes() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  junk_bytes() const cxx11_noexcept {
     return get_impl()->junk_bytes();
   }
-  __pure_function constexpr bool empty() const noexcept {
+  __pure_function cxx11_constexpr bool empty() const cxx11_noexcept {
     return get_impl()->empty();
   }
-  __pure_function constexpr std::size_t capacity() const noexcept {
+  __pure_function cxx11_constexpr std::size_t capacity() const cxx11_noexcept {
     return get_impl()->capacity();
   }
-  __pure_function constexpr std::size_t loose_count() const noexcept {
+  __pure_function cxx11_constexpr std::size_t
+  loose_count() const cxx11_noexcept {
     return get_impl()->loose_count();
   }
-  __pure_function constexpr bool is_sorted() const noexcept {
+  __pure_function cxx11_constexpr bool is_sorted() const cxx11_noexcept {
     return get_impl()->is_sorted();
   }
-  __pure_function constexpr bool have_preplaced() const noexcept {
+  __pure_function cxx11_constexpr bool have_preplaced() const cxx11_noexcept {
     return get_impl()->have_preplaced();
   }
   void ensure() { get_impl()->ensure(); }
   void debug_check() { get_impl()->debug_check(); }
-  void reset() noexcept { return get_impl()->reset(); }
+  void reset() cxx11_noexcept { return get_impl()->reset(); }
   bool optimize(const details::tuple_rw::optimize_flags flags =
                     details::tuple_rw::optimize_flags::
                         all) /* returns true if iterators become invalid */ {
@@ -862,15 +893,14 @@ public:
                      false);
   }
 
-  __pure_function static constexpr size_t
-  estimate_required_space(size_t loose_items_limit, std::size_t data_size_limit,
-                          const fptu::schema *schema,
-                          bool dont_account_preplaced = false) {
+  __pure_function static cxx11_constexpr size_t estimate_required_space(
+      size_t loose_items_limit, std::size_t data_size_limit,
+      const fptu::schema *schema, bool dont_account_preplaced = false) {
     return details::tuple_rw::estimate_required_space(
         loose_items_limit, data_size_limit, schema, dont_account_preplaced);
   }
 
-  __pure_function static constexpr std::size_t
+  __pure_function static cxx11_constexpr std::size_t
   estimate_required_space(const tuple_ro_weak &ro, const std::size_t more_items,
                           const std::size_t more_payload,
                           const fptu::schema *schema) {
@@ -878,7 +908,7 @@ public:
                                                       more_payload, schema);
   }
 
-  __pure_function static constexpr std::size_t estimate_required_space(
+  __pure_function static cxx11_constexpr std::size_t estimate_required_space(
       const tuple_ro_managed &ro, const std::size_t more_items,
       const std::size_t more_payload, const fptu::schema *schema) {
     return details::tuple_rw::estimate_required_space(ro.get_impl(), more_items,
@@ -899,28 +929,32 @@ public:
     return get_impl()->operator[](ident);
   }
 
-  __pure_function field_iterator_ro cbegin() const noexcept {
+  __pure_function field_iterator_ro cbegin() const cxx11_noexcept {
     return get_impl()->cbegin(schema());
   }
-  constexpr field_iterator_ro cend() const noexcept {
+  cxx11_constexpr field_iterator_ro cend() const cxx11_noexcept {
     return get_impl()->cend(schema());
   }
-  __pure_function field_iterator_ro begin() const noexcept { return cbegin(); }
-  constexpr field_iterator_ro end() const noexcept { return cend(); }
+  __pure_function field_iterator_ro begin() const cxx11_noexcept {
+    return cbegin();
+  }
+  cxx11_constexpr field_iterator_ro end() const cxx11_noexcept {
+    return cend();
+  }
 
   //----------------------------------------------------------------------------
 
-  constexpr loose_iterator_ro cbegin_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro cbegin_loose() const cxx11_noexcept {
     return get_impl()->cbegin_loose();
   }
-  constexpr loose_iterator_ro cend_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro cend_loose() const cxx11_noexcept {
     return get_impl()->cend_loose();
   }
 
-  constexpr loose_iterator_ro begin_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro begin_loose() const cxx11_noexcept {
     return cbegin_loose();
   }
-  constexpr loose_iterator_ro end_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro end_loose() const cxx11_noexcept {
     return cend_loose();
   }
 };
@@ -961,8 +995,8 @@ class FPTU_API_TYPE tuple_rw_fixed : public tuple_crtp_writer<tuple_rw_fixed> {
 protected:
   using impl = details::tuple_rw;
   impl *pimpl_;
-  explicit constexpr tuple_rw_fixed(details::tuple_rw *tuple) noexcept
-      : pimpl_(tuple) {}
+  explicit cxx11_constexpr
+  tuple_rw_fixed(details::tuple_rw *tuple) cxx11_noexcept : pimpl_(tuple) {}
 
 public:
   void purge() {
@@ -974,9 +1008,11 @@ public:
   tuple_rw_fixed(const tuple_rw_fixed &) = delete;
   tuple_rw_fixed &operator=(const tuple_rw_fixed &) = delete;
 
-  void swap(tuple_rw_fixed &ditto) noexcept { std::swap(pimpl_, ditto.pimpl_); }
+  void swap(tuple_rw_fixed &ditto) cxx11_noexcept {
+    std::swap(pimpl_, ditto.pimpl_);
+  }
 
-  cxx14_constexpr tuple_rw_fixed(tuple_rw_fixed &&src) noexcept
+  cxx14_constexpr tuple_rw_fixed(tuple_rw_fixed &&src) cxx11_noexcept
       : pimpl_(src.pimpl_) {
     src.pimpl_ = nullptr;
   }
@@ -1093,22 +1129,22 @@ public:
     return estimate_required_space(*this, more_items, more_payload);
   }
 
-  bool operator==(const tuple_ro_weak &ditto) const noexcept {
+  bool operator==(const tuple_ro_weak &ditto) const cxx11_noexcept {
     return get_impl()->operator==(ditto.get_impl());
   }
-  bool operator!=(const tuple_ro_weak &ditto) const noexcept {
+  bool operator!=(const tuple_ro_weak &ditto) const cxx11_noexcept {
     return !get_impl()->operator==(ditto.get_impl());
   }
-  bool operator==(const tuple_ro_managed &ditto) const noexcept {
+  bool operator==(const tuple_ro_managed &ditto) const cxx11_noexcept {
     return get_impl()->operator==(ditto.get_impl());
   }
-  bool operator!=(const tuple_ro_managed &ditto) const noexcept {
+  bool operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept {
     return !get_impl()->operator==(ditto.get_impl());
   }
-  bool operator==(const tuple_rw_fixed &ditto) const noexcept {
+  bool operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
     return get_impl() == ditto.get_impl();
   }
-  bool operator!=(const tuple_rw_fixed &ditto) const noexcept {
+  bool operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
     return get_impl() != ditto.get_impl();
   }
 };
@@ -1134,14 +1170,15 @@ public:
   tuple_rw_managed(const tuple_rw_managed &) = delete;
   tuple_rw_managed &operator=(const tuple_rw_managed &) = delete;
 
-  tuple_rw_managed(tuple_ro_managed &&src) noexcept : base(std::move(src)) {}
+  tuple_rw_managed(tuple_ro_managed &&src) cxx11_noexcept
+      : base(std::move(src)) {}
 
   tuple_rw_managed &operator=(tuple_ro_managed &&src) {
     base::operator=(std::move(src));
     return *this;
   }
 
-  cxx14_constexpr tuple_rw_managed(tuple_rw_fixed &&src) noexcept
+  cxx14_constexpr tuple_rw_managed(tuple_rw_fixed &&src) cxx11_noexcept
       : base(std::move(src)) {}
 
   tuple_rw_managed &operator=(tuple_rw_fixed &&src) {
@@ -1149,7 +1186,7 @@ public:
     return *this;
   }
 
-  cxx14_constexpr tuple_rw_managed(tuple_rw_managed &&src) noexcept
+  cxx14_constexpr tuple_rw_managed(tuple_rw_managed &&src) cxx11_noexcept
       : base(std::move(src)) {}
 
   tuple_rw_managed &operator=(tuple_rw_managed &&src) {
@@ -1383,7 +1420,7 @@ inline tuple_ro_weak::tuple_ro_weak(const tuple_rw_managed &body)
     : tuple_ro_weak(body.take_weak_asis()) {}
 
 inline tuple_ro_weak /* preplaced_nested::value_type */
-preplaced_nested::value_nothrow() const noexcept {
+preplaced_nested::value_nothrow() const cxx11_noexcept {
   return unlikely(nil())
              ? tuple_ro_weak()
              : tuple_ro_weak(
@@ -1393,37 +1430,37 @@ preplaced_nested::value_nothrow() const noexcept {
 
 //------------------------------------------------------------------------------
 
-inline bool tuple_ro_weak::operator==(const tuple_ro_managed &ditto) const
-    noexcept {
+inline bool tuple_ro_weak::
+operator==(const tuple_ro_managed &ditto) const cxx11_noexcept {
   return ditto == *this;
 }
-inline bool tuple_ro_weak::operator!=(const tuple_ro_managed &ditto) const
-    noexcept {
+inline bool tuple_ro_weak::
+operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept {
   return ditto != *this;
 }
-inline bool tuple_ro_weak::operator==(const tuple_rw_fixed &ditto) const
-    noexcept {
+inline bool tuple_ro_weak::
+operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto.operator==(*this);
 }
-inline bool tuple_ro_weak::operator!=(const tuple_rw_fixed &ditto) const
-    noexcept {
+inline bool tuple_ro_weak::
+operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto.operator!=(*this);
 }
 
 //------------------------------------------------------------------------------
 
-__pure_function inline const fptu::schema *tuple_ro_managed::peek_schema() const
-    noexcept {
+__pure_function inline const fptu::schema *
+tuple_ro_managed::peek_schema() const cxx11_noexcept {
   const details::tuple_rw *basis = peek_basis();
   return likely(basis) ? basis->schema_ : nullptr;
 }
 
-inline bool tuple_ro_managed::operator==(const tuple_rw_fixed &ditto) const
-    noexcept {
+inline bool tuple_ro_managed::
+operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto == *this;
 }
-inline bool tuple_ro_managed::operator!=(const tuple_rw_fixed &ditto) const
-    noexcept {
+inline bool tuple_ro_managed::
+operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto != *this;
 }
 

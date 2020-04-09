@@ -152,7 +152,7 @@ field_iterator_ro &field_iterator_ro::operator--() {
 
 field_iterator_ro
 field_iterator_ro::begin(const void *pivot,
-                         const fptu::schema *schema) noexcept {
+                         const fptu::schema *schema) cxx11_noexcept {
   const auto last_loose = static_cast<const details::field_loose *>(pivot) - 1;
   if (schema && schema->number_of_preplaced()) {
     field_iterator_ro iter(static_cast<const details::field_preplaced *>(pivot),

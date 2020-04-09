@@ -29,7 +29,7 @@ typedef union FPTU_API_TYPE fptu_ip_address {
   uint64_t u64[2];
 #ifdef __cplusplus
   fptu_ip_address() = default;
-  explicit constexpr fptu_ip_address(uint32_t ipv4_be)
+  explicit cxx11_constexpr fptu_ip_address(uint32_t ipv4_be)
       : u32{0, 0, ipv4_be ? erthink::h2be<uint32_t>(0xffffu) : 0u, ipv4_be} {}
 #endif /* __cplusplus */
 } fptu_ip_address_t;
@@ -40,7 +40,7 @@ typedef struct FPTU_API_TYPE fptu_ip_net {
   uint8_t cidr;
 #ifdef __cplusplus
   fptu_ip_net() = default;
-  explicit constexpr fptu_ip_net(uint32_t ipv4_be)
+  explicit cxx11_constexpr fptu_ip_net(uint32_t ipv4_be)
       : address(ipv4_be), cidr(ipv4_be ? 128 : 0) {}
 #endif /* __cplusplus */
 } fptu_ip_net_t;

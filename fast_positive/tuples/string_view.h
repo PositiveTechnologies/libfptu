@@ -51,31 +51,31 @@ protected:
       ;
 
 public:
-  constexpr string_view() : str(nullptr), len(-1) {}
-  constexpr string_view(const string_view &v) = default;
+  cxx11_constexpr string_view() : str(nullptr), len(-1) {}
+  cxx11_constexpr string_view(const string_view &v) = default;
   cxx14_constexpr string_view &
-  operator=(const string_view &v) noexcept = default;
+  operator=(const string_view &v) cxx11_noexcept = default;
 
-  constexpr string_view(const char *str, std::size_t count)
+  cxx11_constexpr string_view(const char *str, std::size_t count)
       : str(str), len(str ? static_cast<intptr_t>(count) : -1) {
     constexpr_assert(len >= 0 || (len == -1 && !str));
   }
 
-  constexpr string_view(const char *begin, const char *end)
+  cxx11_constexpr string_view(const char *begin, const char *end)
       : str(begin), len(begin ? static_cast<intptr_t>(end - begin) : -1) {
     constexpr_assert(end >= begin);
     constexpr_assert(len >= 0 || (len == -1 && !begin));
   }
 
-  constexpr string_view(const char *ptr)
+  cxx11_constexpr string_view(const char *ptr)
       : str(ptr), len(ptr ? static_cast<intptr_t>(strlen(ptr)) : -1) {
     constexpr_assert(len >= 0 || (len == -1 && !str));
   }
   /* Конструктор из std::string ОБЯЗАН быть explicit для предотвращения
    * проблемы reference to temporary object из-за неявного создания string_view
    * из переданной по значению временного экземпляра std::string. */
-  explicit /* не может быть constexpr из-за std::string::size() */ string_view(
-      const std::string &s)
+  explicit /* не может быть cxx11_constexpr из-за std::string::size() */
+      string_view(const std::string &s)
       : str(s.data()), len(static_cast<intptr_t>(s.size())) {
     assert(s.size() < npos);
   }
@@ -88,27 +88,28 @@ public:
    *    reference to temporary object из-за неявного создания string_view
    *    из переданной по значению временного экземпляра std::string.
    *  - НЕ ДОЛЖЕН быть explicit для бесшовной интеграции с std::string_view. */
-  constexpr string_view(const std::string_view &v) noexcept
-      : str(v.data()), len(static_cast<intptr_t>(v.size())) {
+  cxx11_constexpr string_view(const std::string_view &v) cxx11_noexcept
+      : str(v.data()),
+        len(static_cast<intptr_t>(v.size())) {
     assert(v.size() < npos);
   }
-  constexpr operator std::string_view() const noexcept {
+  cxx11_constexpr operator std::string_view() const cxx11_noexcept {
     return std::string_view(data(), length());
   }
-  constexpr string_view &operator=(std::string_view &v) noexcept {
+  cxx11_constexpr string_view &operator=(std::string_view &v) cxx11_noexcept {
     assert(v.size() < npos);
     this->str = v.data();
     this->len = static_cast<intptr_t>(v.size());
     return *this;
   }
-  constexpr void swap(std::string_view &v) noexcept {
+  cxx11_constexpr void swap(std::string_view &v) cxx11_noexcept {
     const auto temp = *this;
     *this = v;
     v = temp;
   }
 #endif /* HAVE_cxx17_std_string_view */
 
-  cxx14_constexpr void swap(string_view &v) noexcept {
+  cxx14_constexpr void swap(string_view &v) cxx11_noexcept {
     const auto temp = *this;
     *this = v;
     v = temp;
@@ -121,24 +122,26 @@ public:
   typedef const char *pointer;
   typedef const char &const_reference;
   typedef const_reference reference;
-  constexpr const_reference operator[](size_type pos) const { return str[pos]; }
-  constexpr const_reference front() const {
+  cxx11_constexpr const_reference operator[](size_type pos) const {
+    return str[pos];
+  }
+  cxx11_constexpr const_reference front() const {
     constexpr_assert(len > 0);
     return str[0];
   }
-  constexpr const_reference back() const {
+  cxx11_constexpr const_reference back() const {
     constexpr_assert(len > 0);
     return str[len - 1];
   }
   const_reference at(size_type pos) const;
-  static constexpr size_type npos = size_type(INT_MAX);
+  static cxx11_constexpr_var size_type npos = size_type(INT_MAX);
 
   typedef const char *const_iterator;
-  constexpr const_iterator cbegin() const { return str; }
-  constexpr const_iterator cend() const { return str + length(); }
+  cxx11_constexpr const_iterator cbegin() const { return str; }
+  cxx11_constexpr const_iterator cend() const { return str + length(); }
   typedef const_iterator iterator;
-  constexpr iterator begin() const { return cbegin(); }
-  constexpr iterator end() const { return cend(); }
+  cxx11_constexpr iterator begin() const { return cbegin(); }
+  cxx11_constexpr iterator end() const { return cend(); }
 
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   const_reverse_iterator crbegin() const {
@@ -151,12 +154,14 @@ public:
   reverse_iterator rbegin() const { return crbegin(); }
   reverse_iterator rend() const { return crend(); }
 
-  constexpr const char *data() const { return str; }
-  constexpr std::size_t length() const { return (len >= 0) ? (size_t)len : 0u; }
-  constexpr bool empty() const { return len <= 0; }
-  constexpr bool nil() const { return len < 0; }
-  constexpr std::size_t size() const { return length(); }
-  constexpr size_type max_size() const { return 32767; }
+  cxx11_constexpr const char *data() const { return str; }
+  cxx11_constexpr std::size_t length() const {
+    return (len >= 0) ? (size_t)len : 0u;
+  }
+  cxx11_constexpr bool empty() const { return len <= 0; }
+  cxx11_constexpr bool nil() const { return len < 0; }
+  cxx11_constexpr std::size_t size() const { return length(); }
+  cxx11_constexpr size_type max_size() const { return 32767; }
 
   cxx14_constexpr std::size_t hash_value() const {
     /* TODO: replace by t1ha */
@@ -191,11 +196,11 @@ public:
     return compare(*this, v) != 0;
   }
 
-  static /* не может быть constexpr из-за std::string::size() */ intptr_t
+  static /* не может быть cxx11_constexpr из-за std::string::size() */ intptr_t
   compare(const std::string &a, const string_view &b) {
     return compare(string_view(a), b);
   }
-  static /* не может быть constexpr из-за std::string::size() */ intptr_t
+  static /* не может быть cxx11_constexpr из-за std::string::size() */ intptr_t
   compare(const string_view &a, const std::string &b) {
     return compare(a, string_view(b));
   }

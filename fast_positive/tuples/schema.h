@@ -182,7 +182,7 @@ public:
       const string_view &field_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const
-      noexcept = 0;
+      cxx11_noexcept = 0;
 
   __pure_function token get_token(
       const string_view &field_name,
@@ -201,48 +201,52 @@ public:
       const token &inlay_token, const string_view &inner_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const
-      noexcept = 0;
+      cxx11_noexcept = 0;
   __pure_function token get_token(
       const token &inlay_token, const string_view &inner_name,
       const boolean_option discernible_null = boolean_option::option_default,
       const boolean_option saturated = boolean_option::option_default) const;
 
   // Получение имён полей по токенам -------------------------------------------
-  __pure_function virtual string_view get_name_nothrow(const token &) const
-      noexcept = 0;
+  __pure_function virtual string_view
+  get_name_nothrow(const token &) const cxx11_noexcept = 0;
   __pure_function string_view get_name(const token &ident) const;
   string_view operator[](const token &token) const { return get_name(token); }
 
   // Собственные потребности libfptu -------------------------------------------
-  cxx14_constexpr const token_vector &tokens() const noexcept {
+  cxx14_constexpr const token_vector &tokens() const cxx11_noexcept {
     return sorted_tokens_;
   }
-  std::size_t preplaced_bytes() const noexcept {
+  std::size_t preplaced_bytes() const cxx11_noexcept {
     return preplaced_image_.size();
   }
-  std::size_t preplaced_units() const noexcept {
+  std::size_t preplaced_units() const cxx11_noexcept {
     return details::bytes2units(preplaced_bytes());
   }
-  const void *preplaced_init_image() const noexcept {
+  const void *preplaced_init_image() const cxx11_noexcept {
     return preplaced_image_.data();
   }
-  cxx14_constexpr std::size_t number_of_preplaced() const noexcept {
+  cxx14_constexpr std::size_t number_of_preplaced() const cxx11_noexcept {
     return number_of_preplaced_;
   }
-  cxx14_constexpr bool have_preplaced() const noexcept {
+  cxx14_constexpr bool have_preplaced() const cxx11_noexcept {
     return number_of_preplaced() > 0;
   }
-  cxx14_constexpr std::size_t number_of_stretchy_preplaced() const noexcept {
+  cxx14_constexpr std::size_t
+  number_of_stretchy_preplaced() const cxx11_noexcept {
     return number_of_stretchy_preplaced_;
   }
-  cxx14_constexpr bool have_stretchy_preplaced() const noexcept {
+  cxx14_constexpr bool have_stretchy_preplaced() const cxx11_noexcept {
     return number_of_stretchy_preplaced() > 0;
   }
 
-  __pure_function token by_loose(const details::field_loose *) const noexcept;
-  __pure_function token by_offset(const ptrdiff_t offset) const noexcept;
-  __pure_function token next_by_offset(const ptrdiff_t offset) const noexcept;
-  __pure_function token prev_by_offset(const ptrdiff_t offset) const noexcept;
+  __pure_function token
+  by_loose(const details::field_loose *) const cxx11_noexcept;
+  __pure_function token by_offset(const ptrdiff_t offset) const cxx11_noexcept;
+  __pure_function token
+  next_by_offset(const ptrdiff_t offset) const cxx11_noexcept;
+  __pure_function token
+  prev_by_offset(const ptrdiff_t offset) const cxx11_noexcept;
 
 protected:
   inline schema();
@@ -250,8 +254,8 @@ protected:
   std::string preplaced_image_;
   token_vector sorted_tokens_;
 
-  token_vector::const_iterator search_preplaced(const ptrdiff_t offset) const
-      noexcept;
+  token_vector::const_iterator
+  search_preplaced(const ptrdiff_t offset) const cxx11_noexcept;
 };
 
 } // namespace fptu

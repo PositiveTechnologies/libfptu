@@ -401,8 +401,8 @@ void json::value_uint64(const uint64_t &value) {
 }
 
 void json::value_fp32(const fptu_payload *payload) {
-  constexpr uint32_t exponent_mask = UINT32_C(0x7f800000);
-  constexpr uint32_t significand_mask = UINT32_C(0x007fffff);
+  cxx11_constexpr uint32_t exponent_mask = UINT32_C(0x7f800000);
+  cxx11_constexpr uint32_t significand_mask = UINT32_C(0x007fffff);
   if (likely((payload->u32 & exponent_mask) != exponent_mask)) {
     assert(!std::isnan(payload->fp32) && !std::isinf(payload->fp32));
     number(payload->fp32);
@@ -426,8 +426,8 @@ void json::value_fp32(const fptu_payload *payload) {
 }
 
 void json::value_fp64(const fptu_payload *payload) {
-  constexpr uint64_t exponent_mask = UINT64_C(0x7FF0000000000000);
-  constexpr uint64_t significand_mask = UINT64_C(0x000Fffffffffffff);
+  cxx11_constexpr uint64_t exponent_mask = UINT64_C(0x7FF0000000000000);
+  cxx11_constexpr uint64_t significand_mask = UINT64_C(0x000Fffffffffffff);
   if (likely((payload->u64 & exponent_mask) != exponent_mask)) {
     assert(!std::isnan(payload->fp64) && !std::isinf(payload->fp64));
     number(payload->fp64);

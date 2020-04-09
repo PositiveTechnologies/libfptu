@@ -23,7 +23,7 @@
                        deprecation, use _CRT_SECURE_NO_WARNINGS. */
 #endif                          /* _MSC_VER (warnings) */
 
-bool fptu_is_under_valgrind(void) noexcept {
+bool fptu_is_under_valgrind(void) cxx11_noexcept {
 #ifdef RUNNING_ON_VALGRIND
   if (RUNNING_ON_VALGRIND)
     return true;

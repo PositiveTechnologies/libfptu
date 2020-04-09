@@ -19,25 +19,25 @@
 
 //------------------------------------------------------------------------------
 
-bool fptu_field_is_dead(const fptu_field *pf) noexcept {
+bool fptu_field_is_dead(const fptu_field *pf) cxx11_noexcept {
   return !pf || pf->is_hole();
 }
 
-fptu_type fptu_field_type(const fptu_field *pf) noexcept {
+fptu_type fptu_field_type(const fptu_field *pf) cxx11_noexcept {
   return pf ? pf->legacy_type() : fptu_null;
 }
-int fptu_field_column(const fptu_field *pf) noexcept {
+int fptu_field_column(const fptu_field *pf) cxx11_noexcept {
   return pf ? pf->colnum() : -1;
 }
 
-void fptu_erase_field(fptu_rw *pt, fptu_field *pf) noexcept {
+void fptu_erase_field(fptu_rw *pt, fptu_field *pf) cxx11_noexcept {
   if (pf && !pf->is_hole())
     pt->erase(pf);
 }
 
 //------------------------------------------------------------------------------
 
-struct iovec fptu_field_as_iovec(const fptu_field *pf) noexcept {
+struct iovec fptu_field_as_iovec(const fptu_field *pf) cxx11_noexcept {
   if (likely(pf)) {
     const auto type = pf->type();
     if (fptu::details::is_inplaced(type))
@@ -55,7 +55,7 @@ struct iovec fptu_field_as_iovec(const fptu_field *pf) noexcept {
 }
 
 #define FPTU_GET_IMPL(LEGACY, NAME, GENUS, RETURN_TYPE, THUNK_TYPE, DENIL)     \
-  RETURN_TYPE fptu_field_##LEGACY(const fptu_field *pf) noexcept {             \
+  RETURN_TYPE fptu_field_##LEGACY(const fptu_field *pf) cxx11_noexcept {       \
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
       return THUNK_TYPE(fptu::details::get<fptu::genus::GENUS>(pf, true));     \
@@ -83,7 +83,7 @@ FPTU_GET_IMPL(nested, nested, nested, fptu_ro, fptu::details::iovec_thunk,
 #undef FPTU_GET_IMPL
 
 #define FPTU_GET_IMPL(BITS)                                                    \
-  const uint8_t *fptu_field_##BITS(const fptu_field *pf) noexcept {            \
+  const uint8_t *fptu_field_##BITS(const fptu_field *pf) cxx11_noexcept {      \
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
       return erthink::constexpr_pointer_cast<const uint8_t *>(                 \
@@ -102,7 +102,7 @@ FPTU_GET_IMPL(256)
 
 /* LY: crutch for returning legacy c-string */
 static const char *string_view_to_CAPI(const fptu::string_view &value,
-                                       const char *detend) noexcept {
+                                       const char *detend) cxx11_noexcept {
   static thread_local std::string holder;
   if (value.empty())
     return FPTU_DENIL_CSTR;
@@ -119,7 +119,7 @@ static const char *string_view_to_CAPI(const fptu::string_view &value,
   return holder.c_str();
 }
 
-const char *fptu_field_cstr(const fptu_field *pf) noexcept {
+const char *fptu_field_cstr(const fptu_field *pf) cxx11_noexcept {
   error_guard raii(nullptr);
   if (likely(pf)) {
     try {

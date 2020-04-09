@@ -20,7 +20,7 @@
 #include "shuffle6.hpp"
 
 static bool field_filter_any(const fptu_field *, void *context,
-                             void *param) noexcept {
+                             void *param) cxx11_noexcept {
   (void)context;
   (void)param;
   return true;

@@ -34,7 +34,7 @@ struct Foo {
 #pragma pack(pop)
 
 struct MyToken_FooBar_int : public FPTU_TOKEN(Foo, Bar) {
-  MyToken_FooBar_int() noexcept {
+  MyToken_FooBar_int() cxx11_noexcept {
     static_assert(static_offset == 1, "WTF?");
     static_assert(std::is_base_of<::fptu::details::token_static_tag,
                                   MyToken_FooBar_int>::value,
@@ -149,9 +149,10 @@ TEST(Smoke, autogrowth_with_preplaced) {
 }
 
 TEST(Smoke, trivia_managing) {
-  cxx14_constexpr fptu::token token_utc32(fptu::genus::datetime_utc, 0);
-  cxx14_constexpr fptu::token token_datetime64(fptu::genus::datetime_utc, 0);
-  cxx14_constexpr fptu::token token_i64(fptu::i64, 0);
+  cxx14_constexpr_var fptu::token token_utc32(fptu::genus::datetime_utc, 0);
+  cxx14_constexpr_var fptu::token token_datetime64(fptu::genus::datetime_utc,
+                                                   0);
+  cxx14_constexpr_var fptu::token token_i64(fptu::i64, 0);
   fptu::tuple_rw_fixed rw_fixed;
   rw_fixed.set_datetime(token_utc32, fptu::datetime_t::now());
   rw_fixed.set_datetime(token_utc32, fptu::datetime_t::now_coarse());

@@ -356,8 +356,8 @@ tuple_ro_managed tuple_ro_managed::clone(const tuple_ro_managed &src,
   return clone(src.take_weak(), schema, allot_tag);
 }
 
-__pure_function const details::tuple_rw *tuple_ro_managed::peek_basis() const
-    noexcept {
+__pure_function const details::tuple_rw *
+tuple_ro_managed::peek_basis() const cxx11_noexcept {
   if (unlikely(!pimpl_))
     return nullptr;
 

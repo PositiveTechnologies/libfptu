@@ -68,8 +68,8 @@ class bug_location {
 #endif
 
 public:
-  constexpr bug_location(unsigned line, const char *condition,
-                         const char *function, const char *filename)
+  cxx11_constexpr bug_location(unsigned line, const char *condition,
+                               const char *function, const char *filename)
       :
 #if BUG_PROVIDE_LINENO
         line_(line)
@@ -140,8 +140,8 @@ FPTU_API void raise_bug(const bug_location &what_and_where);
 
 #define FPTU_RAISE_BUG(line, condition, function, file)                        \
   do {                                                                         \
-    static constexpr ::fptu::bug_location bug(line, condition, function,       \
-                                              file);                           \
+    static cxx11_constexpr_var ::fptu::bug_location bug(line, condition,       \
+                                                        function, file);       \
     ::fptu::raise_bug(bug);                                                    \
   } while (0)
 

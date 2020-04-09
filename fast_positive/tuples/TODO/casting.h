@@ -31,10 +31,10 @@ template <genus FROM, genus TO> struct casting {
   using type_from = typename meta::genus_traits<FROM>::value_type;
   using type_to = typename meta::genus_traits<TO>::value_type;
 
-  constexpr casting() {
+  cxx11_constexpr casting() {
     throw std::invalid_argument("fptu: field type mismatch");
   }
-  constexpr const type_to &operator()(const type_from &value) {
+  cxx11_constexpr const type_to &operator()(const type_from &value) {
     (void)value;
     return meta::genus_traits<TO>::denil;
   }

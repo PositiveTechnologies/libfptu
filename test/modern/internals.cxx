@@ -128,7 +128,7 @@ typedef FPTU_TOKEN(Foo, NestedTuple) MyToken_FooNestedTuple;
 typedef FPTU_TOKEN(Foo, Property) MyToken_FooProperty;
 
 struct MyToken_FooBar_int : public FPTU_TOKEN(Foo, Bar) {
-  MyToken_FooBar_int() noexcept {
+  MyToken_FooBar_int() cxx11_noexcept {
     static_assert(static_offset == 1, "WTF?");
     static_assert(std::is_base_of<::fptu::details::token_static_tag,
                                   MyToken_FooBar_int>::value,

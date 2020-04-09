@@ -53,8 +53,8 @@ protected:
   const details::field_loose
       *field_ /* При итерировании изменяется в обратном направлении */;
 
-  explicit constexpr loose_iterator_ro(
-      const details::field_loose *field) noexcept
+  explicit cxx11_constexpr
+  loose_iterator_ro(const details::field_loose *field) cxx11_noexcept
       : field_(field) {}
 
 public:
@@ -66,18 +66,19 @@ public:
   using reference = value_type &;
 #endif
 
-  constexpr loose_iterator_ro() noexcept : field_(nullptr) {}
-  constexpr loose_iterator_ro(
-      const dynamic_collection_iterator_ro &iter) noexcept
+  cxx11_constexpr loose_iterator_ro() cxx11_noexcept : field_(nullptr) {}
+  cxx11_constexpr
+  loose_iterator_ro(const dynamic_collection_iterator_ro &iter) cxx11_noexcept
       : field_(static_cast<const details::field_loose *>(iter.field_)) {}
-  explicit operator bool() const noexcept { return field_ != nullptr; }
+  explicit operator bool() const cxx11_noexcept { return field_ != nullptr; }
 
-  constexpr loose_iterator_ro(const loose_iterator_ro &) noexcept = default;
+  cxx11_constexpr
+  loose_iterator_ro(const loose_iterator_ro &) cxx11_noexcept = default;
   cxx14_constexpr loose_iterator_ro &
-  operator=(const loose_iterator_ro &) noexcept = default;
+  operator=(const loose_iterator_ro &) cxx11_noexcept = default;
 
   cxx14_constexpr dynamic_accessor_ro
-  operator[](const difference_type index) const noexcept {
+  operator[](const difference_type index) const cxx11_noexcept {
     return dynamic_accessor_ro(
         field_ - index,
         /* При чтении можно обойтись без всех token-флажков:
@@ -88,16 +89,16 @@ public:
            - is_rangechecking/is_saturated: не нужен при чтении. */
         field_token(false, false, false));
   }
-  cxx14_constexpr dynamic_accessor_ro operator*() const noexcept {
+  cxx14_constexpr dynamic_accessor_ro operator*() const cxx11_noexcept {
     return operator[](0);
   }
-  cxx14_constexpr dynamic_accessor_ro operator->() const noexcept {
+  cxx14_constexpr dynamic_accessor_ro operator->() const cxx11_noexcept {
     return operator*();
   }
 
   __pure_function token field_token(const fptu::schema *schema) const;
-  __pure_function token field_token_nothow(const fptu::schema *schema) const
-      noexcept {
+  __pure_function token
+  field_token_nothow(const fptu::schema *schema) const cxx11_noexcept {
     return schema->by_loose(field_);
   }
   cxx14_constexpr token field_token(const bool collection,
@@ -113,111 +114,123 @@ public:
   }
 
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
-  constexpr bool operator==(const TOKEN &ident) const noexcept {
+  cxx11_constexpr bool operator==(const TOKEN &ident) const cxx11_noexcept {
     return ident.is_loose() && field_->genus_and_id == uint16_t(ident.tag());
   }
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
-  constexpr bool operator!=(const TOKEN &ident) const noexcept {
+  cxx11_constexpr bool operator!=(const TOKEN &ident) const cxx11_noexcept {
     return !operator==(ident);
   }
-  constexpr bool operator==(const token &ident) const noexcept {
+  cxx11_constexpr bool operator==(const token &ident) const cxx11_noexcept {
     return ident.is_loose() && field_->genus_and_id == uint16_t(ident.tag());
   }
-  constexpr bool operator!=(const token &ident) const noexcept {
+  cxx11_constexpr bool operator!=(const token &ident) const cxx11_noexcept {
     return !operator==(ident);
   }
 
-  constexpr bool operator==(const dynamic_collection_iterator_ro &iter) const
-      noexcept {
+  cxx11_constexpr bool
+  operator==(const dynamic_collection_iterator_ro &iter) const cxx11_noexcept {
     return field_ == iter.field_;
   }
-  constexpr bool operator!=(const dynamic_collection_iterator_ro &iter) const
-      noexcept {
+  cxx11_constexpr bool
+  operator!=(const dynamic_collection_iterator_ro &iter) const cxx11_noexcept {
     return field_ != iter.field_;
   }
-  friend constexpr bool operator==(const dynamic_collection_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator==(const dynamic_collection_iterator_ro &a,
+             const loose_iterator_ro &b) cxx11_noexcept {
     return b == a;
   }
-  friend constexpr bool operator!=(const dynamic_collection_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator!=(const dynamic_collection_iterator_ro &a,
+             const loose_iterator_ro &b) cxx11_noexcept {
     return b != a;
   }
 
-  friend constexpr bool operator<(const loose_iterator_ro &a,
-                                  const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator<(const loose_iterator_ro &a,
+            const loose_iterator_ro &b) cxx11_noexcept {
     return a.field_ > b.field_;
   }
-  friend constexpr bool operator<=(const loose_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator<=(const loose_iterator_ro &a,
+             const loose_iterator_ro &b) cxx11_noexcept {
     return a.field_ >= b.field_;
   }
-  friend constexpr bool operator==(const loose_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator==(const loose_iterator_ro &a,
+             const loose_iterator_ro &b) cxx11_noexcept {
     return a.field_ == b.field_;
   }
-  friend constexpr bool operator>=(const loose_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator>=(const loose_iterator_ro &a,
+             const loose_iterator_ro &b) cxx11_noexcept {
     return a.field_ <= b.field_;
   }
-  friend constexpr bool operator>(const loose_iterator_ro &a,
-                                  const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator>(const loose_iterator_ro &a,
+            const loose_iterator_ro &b) cxx11_noexcept {
     return a.field_ < b.field_;
   }
-  friend constexpr bool operator!=(const loose_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator!=(const loose_iterator_ro &a,
+             const loose_iterator_ro &b) cxx11_noexcept {
     return a.field_ != b.field_;
   }
 
-  loose_iterator_ro &operator++() noexcept {
+  loose_iterator_ro &operator++() cxx11_noexcept {
     --field_;
     return *this;
   }
-  loose_iterator_ro operator++(int) const noexcept {
+  loose_iterator_ro operator++(int) const cxx11_noexcept {
     loose_iterator_ro iterator(*this);
     return --iterator;
   }
-  loose_iterator_ro &operator--() noexcept {
+  loose_iterator_ro &operator--() cxx11_noexcept {
     ++field_;
     return *this;
   }
-  loose_iterator_ro operator--(int) const noexcept {
+  loose_iterator_ro operator--(int) const cxx11_noexcept {
     loose_iterator_ro iterator(*this);
     return ++iterator;
   }
-  loose_iterator_ro &operator+=(const difference_type shift) noexcept {
+  loose_iterator_ro &operator+=(const difference_type shift) cxx11_noexcept {
     field_ -= shift;
     return *this;
   }
-  loose_iterator_ro &operator-=(const difference_type shift) noexcept {
+  loose_iterator_ro &operator-=(const difference_type shift) cxx11_noexcept {
     field_ += shift;
     return *this;
   }
   friend difference_type operator-(const loose_iterator_ro &a,
-                                   const loose_iterator_ro &b) noexcept {
+                                   const loose_iterator_ro &b) cxx11_noexcept {
     return b.field_ - a.field_;
   }
 
-  friend loose_iterator_ro operator+(const loose_iterator_ro &iter,
-                                     const difference_type shift) noexcept {
+  friend loose_iterator_ro
+  operator+(const loose_iterator_ro &iter,
+            const difference_type shift) cxx11_noexcept {
     loose_iterator_ro copy(iter);
     copy += shift;
     return copy;
   }
-  friend loose_iterator_ro operator+(const difference_type shift,
-                                     const loose_iterator_ro &iter) noexcept {
+  friend loose_iterator_ro
+  operator+(const difference_type shift,
+            const loose_iterator_ro &iter) cxx11_noexcept {
     loose_iterator_ro copy(iter);
     copy += shift;
     return copy;
   }
-  friend loose_iterator_ro operator-(const loose_iterator_ro &iter,
-                                     const difference_type shift) noexcept {
+  friend loose_iterator_ro
+  operator-(const loose_iterator_ro &iter,
+            const difference_type shift) cxx11_noexcept {
     loose_iterator_ro copy(iter);
     copy -= shift;
     return copy;
   }
-  friend loose_iterator_ro operator-(const difference_type shift,
-                                     const loose_iterator_ro &iter) noexcept {
+  friend loose_iterator_ro
+  operator-(const difference_type shift,
+            const loose_iterator_ro &iter) cxx11_noexcept {
     loose_iterator_ro copy(iter);
     copy -= shift;
     return copy;
@@ -292,32 +305,36 @@ protected:
       ;
   const schema *schema_ /* Схема, требуется для итерирования preplaced-полей */;
 
-  explicit constexpr field_iterator_ro(const details::field_loose *field,
-                                       const void *pivot,
-                                       const fptu::schema *schema) noexcept
-      : field_(field), pivot_(pivot), schema_(schema) {
+  explicit cxx11_constexpr
+  field_iterator_ro(const details::field_loose *field, const void *pivot,
+                    const fptu::schema *schema) cxx11_noexcept
+      : field_(field),
+        pivot_(pivot),
+        schema_(schema) {
     constexpr_assert(!on_preplaced_field());
   }
 
-  explicit constexpr field_iterator_ro(const details::field_preplaced *field,
-                                       const void *pivot,
-                                       const fptu::schema *schema) noexcept
-      : field_(field), pivot_(pivot), schema_(schema) {
+  explicit cxx11_constexpr
+  field_iterator_ro(const details::field_preplaced *field, const void *pivot,
+                    const fptu::schema *schema) cxx11_noexcept
+      : field_(field),
+        pivot_(pivot),
+        schema_(schema) {
     constexpr_assert(schema != nullptr);
     constexpr_assert(on_preplaced_field());
   }
 
   __pure_function static field_iterator_ro
-  begin(const void *pivot, const fptu::schema *schema) noexcept;
-  constexpr static field_iterator_ro end(const details::field_loose *index,
-                                         const void *pivot,
-                                         const fptu::schema *schema) noexcept {
+  begin(const void *pivot, const fptu::schema *schema) cxx11_noexcept;
+  cxx11_constexpr static field_iterator_ro
+  end(const details::field_loose *index, const void *pivot,
+      const fptu::schema *schema) cxx11_noexcept {
     return field_iterator_ro(index - 1, pivot, schema);
   }
 
   using compare_result_t = ptrdiff_t /* c++20 std::strong_ordering */;
-  friend constexpr compare_result_t
-  compare(const field_iterator_ro &a, const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr compare_result_t compare(
+      const field_iterator_ro &a, const field_iterator_ro &b) cxx11_noexcept {
     constexpr_assert(a.pivot_ == b.pivot_);
     const char *const pivot = static_cast<const char *>(a.pivot_);
     const ptrdiff_t diff_a = static_cast<const char *>(a.field_) - pivot;
@@ -329,22 +346,23 @@ protected:
     return pos_a - pos_b;
   }
 
-  constexpr bool on_preplaced_field() const noexcept {
+  cxx11_constexpr bool on_preplaced_field() const cxx11_noexcept {
     return static_cast<const char *>(field_) >=
            static_cast<const char *>(pivot_);
   }
 
-  constexpr const details::field_loose *loose() const noexcept {
+  cxx11_constexpr const details::field_loose *loose() const cxx11_noexcept {
     constexpr_assert(!on_preplaced_field());
     return static_cast<const details::field_loose *>(field_);
   }
 
-  constexpr const details::field_preplaced *preplaced() const noexcept {
+  cxx11_constexpr const details::field_preplaced *
+  preplaced() const cxx11_noexcept {
     constexpr_assert(on_preplaced_field());
     return static_cast<const details::field_preplaced *>(field_);
   }
 
-  constexpr ptrdiff_t preplaced_offset() const noexcept {
+  cxx11_constexpr ptrdiff_t preplaced_offset() const cxx11_noexcept {
     return static_cast<const char *>(field_) -
            static_cast<const char *>(pivot_);
   }
@@ -360,12 +378,14 @@ public:
   using reference = value_type &;
 #endif
 
-  field_iterator_ro() noexcept
-      : field_(nullptr), pivot_(nullptr), schema_(nullptr) {}
-  explicit operator bool() const noexcept { return field_ != nullptr; }
-  constexpr field_iterator_ro(const field_iterator_ro &) noexcept = default;
+  field_iterator_ro() cxx11_noexcept : field_(nullptr),
+                                       pivot_(nullptr),
+                                       schema_(nullptr) {}
+  explicit operator bool() const cxx11_noexcept { return field_ != nullptr; }
+  cxx11_constexpr
+  field_iterator_ro(const field_iterator_ro &) cxx11_noexcept = default;
   cxx14_constexpr field_iterator_ro &
-  operator=(const field_iterator_ro &) noexcept = default;
+  operator=(const field_iterator_ro &) cxx11_noexcept = default;
 
   __pure_function dynamic_accessor_ro operator*() const {
     if (on_preplaced_field()) {
@@ -388,7 +408,7 @@ public:
 
   __pure_function dynamic_accessor_ro operator->() const { return operator*(); }
 
-  __pure_function token field_token_nothrow() const noexcept {
+  __pure_function token field_token_nothrow() const cxx11_noexcept {
     return on_preplaced_field() ? schema_->by_offset(preplaced_offset())
                                 : schema_->by_loose(loose());
   }
@@ -415,59 +435,71 @@ public:
     return !operator==(ident);
   }
 
-  constexpr bool operator==(const field_iterator_ro &other) const noexcept {
+  cxx11_constexpr bool
+  operator==(const field_iterator_ro &other) const cxx11_noexcept {
     return field_ == other.field_;
   }
-  constexpr bool operator!=(const field_iterator_ro &other) const noexcept {
+  cxx11_constexpr bool
+  operator!=(const field_iterator_ro &other) const cxx11_noexcept {
     return !operator==(other);
   }
 
-  friend constexpr bool operator<(const field_iterator_ro &a,
-                                  const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator<(const field_iterator_ro &a,
+            const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) < 0;
   }
-  friend constexpr bool operator<=(const field_iterator_ro &a,
-                                   const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator<=(const field_iterator_ro &a,
+             const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) <= 0;
   }
-  friend constexpr bool operator>=(const field_iterator_ro &a,
-                                   const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator>=(const field_iterator_ro &a,
+             const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) >= 0;
   }
-  friend constexpr bool operator>(const field_iterator_ro &a,
-                                  const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator>(const field_iterator_ro &a,
+            const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) > 0;
   }
 
-  constexpr bool operator==(const dynamic_collection_iterator_ro &iter) const
-      noexcept {
+  cxx11_constexpr bool
+  operator==(const dynamic_collection_iterator_ro &iter) const cxx11_noexcept {
     return field_ == iter.field_;
   }
-  constexpr bool operator!=(const dynamic_collection_iterator_ro &iter) const
-      noexcept {
+  cxx11_constexpr bool
+  operator!=(const dynamic_collection_iterator_ro &iter) const cxx11_noexcept {
     return field_ != iter.field_;
   }
-  friend constexpr bool operator==(const dynamic_collection_iterator_ro &a,
-                                   const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator==(const dynamic_collection_iterator_ro &a,
+             const field_iterator_ro &b) cxx11_noexcept {
     return b == a;
   }
-  friend constexpr bool operator!=(const dynamic_collection_iterator_ro &a,
-                                   const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator!=(const dynamic_collection_iterator_ro &a,
+             const field_iterator_ro &b) cxx11_noexcept {
     return b != a;
   }
 
-  constexpr bool operator==(const loose_iterator_ro &iter) const noexcept {
+  cxx11_constexpr bool
+  operator==(const loose_iterator_ro &iter) const cxx11_noexcept {
     return field_ == iter.field_;
   }
-  constexpr bool operator!=(const loose_iterator_ro &iter) const noexcept {
+  cxx11_constexpr bool
+  operator!=(const loose_iterator_ro &iter) const cxx11_noexcept {
     return field_ != iter.field_;
   }
-  friend constexpr bool operator==(const loose_iterator_ro &a,
-                                   const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator==(const loose_iterator_ro &a,
+             const field_iterator_ro &b) cxx11_noexcept {
     return b == a;
   }
-  friend constexpr bool operator!=(const loose_iterator_ro &a,
-                                   const field_iterator_ro &b) noexcept {
+  friend cxx11_constexpr bool
+  operator!=(const loose_iterator_ro &a,
+             const field_iterator_ro &b) cxx11_noexcept {
     return b != a;
   }
 
@@ -493,15 +525,16 @@ class FPTU_API_TYPE tuple_ro : private stretchy_value_tuple,
   friend class fptu::tuple_ro_managed /* mostly for assertions */;
   friend class fptu::loose_iterator_ro;
   friend class fptu::field_iterator_ro;
-  static inline const char *inline_lite_checkup(const void *ptr,
-                                                std::size_t bytes) noexcept;
+  static inline const char *
+  inline_lite_checkup(const void *ptr, std::size_t bytes) cxx11_noexcept;
 
   tuple_ro() = delete;
   ~tuple_ro() = delete;
   tuple_ro &operator=(const tuple_ro &) = delete;
 
 public:
-  static const char *lite_checkup(const void *ptr, std::size_t bytes) noexcept;
+  static const char *lite_checkup(const void *ptr,
+                                  std::size_t bytes) cxx11_noexcept;
   static const char *audit(const void *ptr, std::size_t bytes,
                            const fptu::schema *schema, audit_holes_info &);
   static const char *audit(const void *ptr, std::size_t bytes,
@@ -530,56 +563,56 @@ public:
                     bool holes_are_not_allowed) const {
     return audit(this, schema, holes_are_not_allowed);
   }
-  constexpr bool empty() const noexcept {
+  cxx11_constexpr bool empty() const cxx11_noexcept {
     return stretchy_value_tuple::brutto_units < 2;
   }
-  constexpr std::size_t size() const noexcept {
+  cxx11_constexpr std::size_t size() const cxx11_noexcept {
     return stretchy_value_tuple::length();
   }
-  constexpr const void *data() const noexcept { return this; }
-  cxx14_constexpr std::size_t payload_size() const noexcept {
+  cxx11_constexpr const void *data() const cxx11_noexcept { return this; }
+  cxx14_constexpr std::size_t payload_size() const cxx11_noexcept {
     return stretchy_value_tuple::payload_bytes();
   }
-  constexpr const void *payload() const noexcept {
+  cxx11_constexpr const void *payload() const cxx11_noexcept {
     return stretchy_value_tuple::begin_data_bytes();
   }
-  constexpr std::size_t index_size() const noexcept {
+  cxx11_constexpr std::size_t index_size() const cxx11_noexcept {
     return stretchy_value_tuple::index_size();
   }
-  constexpr bool is_sorted() const noexcept {
+  cxx11_constexpr bool is_sorted() const cxx11_noexcept {
     return stretchy_value_tuple::is_sorted();
   }
-  constexpr bool have_preplaced() const noexcept {
+  cxx11_constexpr bool have_preplaced() const cxx11_noexcept {
     return stretchy_value_tuple::have_preplaced();
   }
 
-  __pure_function field_iterator_ro cbegin(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  cbegin(const fptu::schema *schema) const cxx11_noexcept {
     return field_iterator_ro::begin(pivot(), schema);
   }
-  __pure_function field_iterator_ro cend(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  cend(const fptu::schema *schema) const cxx11_noexcept {
     return field_iterator_ro::end(begin_index(), pivot(), schema);
   }
-  __pure_function field_iterator_ro begin(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  begin(const fptu::schema *schema) const cxx11_noexcept {
     return cbegin(schema);
   }
-  __pure_function field_iterator_ro end(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  end(const fptu::schema *schema) const cxx11_noexcept {
     return cend(schema);
   }
 
-  constexpr loose_iterator_ro cbegin_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro cbegin_loose() const cxx11_noexcept {
     return loose_iterator_ro(end_index() - 1);
   }
-  constexpr loose_iterator_ro cend_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro cend_loose() const cxx11_noexcept {
     return loose_iterator_ro(begin_index() - 1);
   }
-  constexpr loose_iterator_ro begin_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro begin_loose() const cxx11_noexcept {
     return cbegin_loose();
   }
-  constexpr loose_iterator_ro end_loose() const noexcept {
+  cxx11_constexpr loose_iterator_ro end_loose() const cxx11_noexcept {
     return cend_loose();
   }
 };

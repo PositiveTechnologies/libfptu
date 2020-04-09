@@ -38,36 +38,44 @@ template <details::tag_t> struct token_static;
 namespace details {
 
 template <typename TOKEN> struct token_operations : public TOKEN {
-  constexpr token_operations() noexcept = default;
-  constexpr token_operations(const token_operations &) noexcept = default;
-  constexpr token_operations(const tag_t tag) noexcept : TOKEN(tag) {}
+  cxx11_constexpr token_operations() cxx11_noexcept = default;
+  cxx11_constexpr
+  token_operations(const token_operations &) cxx11_noexcept = default;
+  cxx11_constexpr token_operations(const tag_t tag) cxx11_noexcept
+      : TOKEN(tag) {}
 
-  constexpr tag_t tag() const noexcept { return TOKEN::tag(); }
-  constexpr tag_t normalized_tag() const noexcept {
+  cxx11_constexpr tag_t tag() const cxx11_noexcept { return TOKEN::tag(); }
+  cxx11_constexpr tag_t normalized_tag() const cxx11_noexcept {
     return details::normalize_tag(tag());
   }
-  constexpr genus type() const noexcept { return details::tag2genus(tag()); }
-  constexpr bool is_valid() const noexcept { return tag() != 0; }
-  constexpr unsigned id() const noexcept { return details::tag2id(tag()); }
+  cxx11_constexpr genus type() const cxx11_noexcept {
+    return details::tag2genus(tag());
+  }
+  cxx11_constexpr bool is_valid() const cxx11_noexcept { return tag() != 0; }
+  cxx11_constexpr unsigned id() const cxx11_noexcept {
+    return details::tag2id(tag());
+  }
 
-  constexpr ptrdiff_t preplaced_offset() const noexcept {
+  cxx11_constexpr ptrdiff_t preplaced_offset() const cxx11_noexcept {
     return details::tag2offset(tag());
   }
 
-  constexpr size_t preplaced_size() const noexcept {
+  cxx11_constexpr size_t preplaced_size() const cxx11_noexcept {
     return details::tag2indysize(tag());
   }
 
-  constexpr bool is_saturated() const noexcept {
+  cxx11_constexpr bool is_saturated() const cxx11_noexcept {
     return details::is_saturated(tag());
   }
-  constexpr bool is_rangechecking() const noexcept { return !is_saturated(); }
+  cxx11_constexpr bool is_rangechecking() const cxx11_noexcept {
+    return !is_saturated();
+  }
 
-  constexpr bool is_preplaced() const noexcept {
+  cxx11_constexpr bool is_preplaced() const cxx11_noexcept {
     return details::is_preplaced(tag());
   }
 
-  constexpr bool is_discernible_null() const noexcept {
+  cxx11_constexpr bool is_discernible_null() const cxx11_noexcept {
     /* Ради упрощения и максимальной ясности решено оставить один
      * флажок/параметр определяющий поведение для работы с NULL-значениями.
      *
@@ -124,39 +132,47 @@ template <typename TOKEN> struct token_operations : public TOKEN {
     return details::is_discernible_null(tag());
   }
 
-  constexpr bool is_loose() const noexcept { return details::is_loose(tag()); }
-  constexpr bool is_inlay() const noexcept {
+  cxx11_constexpr bool is_loose() const cxx11_noexcept {
+    return details::is_loose(tag());
+  }
+  cxx11_constexpr bool is_inlay() const cxx11_noexcept {
     return details::is_loose_inlay(tag());
   }
-  constexpr bool is_collection() const noexcept {
+  cxx11_constexpr bool is_collection() const cxx11_noexcept {
     return details::is_loose_collection(tag());
   }
 
   //----------------------------------------------------------------------------
 
-  constexpr bool is_stretchy() const noexcept {
+  cxx11_constexpr bool is_stretchy() const cxx11_noexcept {
     return !details::is_fixed_size(tag());
   }
 
-  constexpr bool is_bool() const noexcept { return type() == boolean; }
-  constexpr bool is_enum() const noexcept { return type() == enumeration; }
-  constexpr bool is_text() const noexcept { return type() == text; }
-  constexpr bool is_number() const noexcept {
+  cxx11_constexpr bool is_bool() const cxx11_noexcept {
+    return type() == boolean;
+  }
+  cxx11_constexpr bool is_enum() const cxx11_noexcept {
+    return type() == enumeration;
+  }
+  cxx11_constexpr bool is_text() const cxx11_noexcept { return type() == text; }
+  cxx11_constexpr bool is_number() const cxx11_noexcept {
     return utils::test_bit(mask_number, type());
   }
-  constexpr bool is_integer() const noexcept {
+  cxx11_constexpr bool is_integer() const cxx11_noexcept {
     return utils::test_bit(mask_integer, type());
   }
-  constexpr bool is_signed() const noexcept {
+  cxx11_constexpr bool is_signed() const cxx11_noexcept {
     return utils::test_bit(mask_signed, type());
   }
-  constexpr bool is_unsigned() const noexcept {
+  cxx11_constexpr bool is_unsigned() const cxx11_noexcept {
     return utils::test_bit(mask_unsigned, type());
   }
-  constexpr bool is_float() const noexcept {
+  cxx11_constexpr bool is_float() const cxx11_noexcept {
     return utils::test_bit(mask_float, type());
   }
-  constexpr bool is_decimal() const noexcept { return type() == d64; }
+  cxx11_constexpr bool is_decimal() const cxx11_noexcept {
+    return type() == d64;
+  }
 };
 
 struct token_static_tag {
@@ -167,19 +183,23 @@ class token_nonstatic_tag {
   tag_t tag_;
 
 protected:
-  constexpr token_nonstatic_tag(const tag_t tag) noexcept : tag_(tag) {}
+  cxx11_constexpr token_nonstatic_tag(const tag_t tag) cxx11_noexcept
+      : tag_(tag) {}
 
 public:
   using is_static_token = std::false_type;
-  static constexpr bool is_static_preplaced() noexcept { return false; }
-  constexpr tag_t tag() const noexcept { return tag_; }
-  constexpr tag_t normalized_tag() const noexcept {
+  static cxx11_constexpr bool is_static_preplaced() cxx11_noexcept {
+    return false;
+  }
+  cxx11_constexpr tag_t tag() const cxx11_noexcept { return tag_; }
+  cxx11_constexpr tag_t normalized_tag() const cxx11_noexcept {
     return details::normalize_tag(tag());
   }
-  constexpr token_nonstatic_tag() noexcept : tag_(0) {
+  cxx11_constexpr token_nonstatic_tag() cxx11_noexcept : tag_(0) {
     static_assert(sizeof(tag_) == 4, "WTF?");
   }
-  constexpr token_nonstatic_tag(const token_nonstatic_tag &) noexcept = default;
+  cxx11_constexpr
+  token_nonstatic_tag(const token_nonstatic_tag &) cxx11_noexcept = default;
 
   void enforce_discernible_null(bool value) {
     tag_ = value ? tag_ | tag_bits::discernible_null_flag
@@ -191,47 +211,55 @@ public:
                  : tag_ & ~tag_t(tag_bits::saturation_flag);
   }
 
-  friend constexpr bool operator==(const token_nonstatic_tag &a,
-                                   const token_nonstatic_tag &b) noexcept {
+  friend cxx11_constexpr bool
+  operator==(const token_nonstatic_tag &a,
+             const token_nonstatic_tag &b) cxx11_noexcept {
     return a.tag() == b.tag();
   }
-  friend constexpr bool operator!=(const token_nonstatic_tag &a,
-                                   const token_nonstatic_tag &b) noexcept {
+  friend cxx11_constexpr bool
+  operator!=(const token_nonstatic_tag &a,
+             const token_nonstatic_tag &b) cxx11_noexcept {
     return !(a == b);
   }
-  friend constexpr bool operator<(const token_nonstatic_tag &a,
-                                  const token_nonstatic_tag &b) noexcept {
+  friend cxx11_constexpr bool
+  operator<(const token_nonstatic_tag &a,
+            const token_nonstatic_tag &b) cxx11_noexcept {
     return details::tag_less(a.tag(), b.tag());
   }
-  friend constexpr bool operator>=(const token_nonstatic_tag &a,
-                                   const token_nonstatic_tag &b) noexcept {
+  friend cxx11_constexpr bool
+  operator>=(const token_nonstatic_tag &a,
+             const token_nonstatic_tag &b) cxx11_noexcept {
     return !(a < b);
   }
-  friend constexpr bool operator>(const token_nonstatic_tag &a,
-                                  const token_nonstatic_tag &b) noexcept {
+  friend cxx11_constexpr bool
+  operator>(const token_nonstatic_tag &a,
+            const token_nonstatic_tag &b) cxx11_noexcept {
     return b < a;
   }
-  friend constexpr bool operator<=(const token_nonstatic_tag &a,
-                                   const token_nonstatic_tag &b) noexcept {
+  friend cxx11_constexpr bool
+  operator<=(const token_nonstatic_tag &a,
+             const token_nonstatic_tag &b) cxx11_noexcept {
     return !(a > b);
   }
 
   struct hash {
-    constexpr std::size_t operator()(const token_nonstatic_tag &ident) const
-        noexcept {
+    cxx11_constexpr std::size_t
+    operator()(const token_nonstatic_tag &ident) const cxx11_noexcept {
       const auto m = ident.normalized_tag() * size_t(2709533891);
       return m ^ (m >> 19);
     }
   };
 
-  constexpr static bool is_same(const token_nonstatic_tag &a,
-                                const token_nonstatic_tag &b) noexcept {
+  cxx11_constexpr static bool
+  is_same(const token_nonstatic_tag &a,
+          const token_nonstatic_tag &b) cxx11_noexcept {
     return details::tag_same(a.tag(), b.tag());
   }
 
   struct same {
-    constexpr bool operator()(const token_nonstatic_tag &a,
-                              const token_nonstatic_tag &b) const noexcept {
+    cxx11_constexpr bool
+    operator()(const token_nonstatic_tag &a,
+               const token_nonstatic_tag &b) const cxx11_noexcept {
       return is_same(a, b);
     }
   };
@@ -241,32 +269,32 @@ public:
 
 template <details::tag_t TAG>
 struct token_static : public details::token_static_tag {
-  static constexpr details::tag_t static_tag = TAG;
-  static constexpr genus static_genus = details::tag2genus(TAG);
-  static constexpr bool is_static_preplaced() noexcept {
+  static cxx11_constexpr_var details::tag_t static_tag = TAG;
+  static cxx11_constexpr_var genus static_genus = details::tag2genus(TAG);
+  static cxx11_constexpr bool is_static_preplaced() cxx11_noexcept {
     return details::is_preplaced(TAG);
   }
-  static constexpr ptrdiff_t static_offset =
+  static cxx11_constexpr_var ptrdiff_t static_offset =
       details::is_preplaced(TAG) ? details::tag2offset(TAG) : PTRDIFF_MAX;
   using traits = meta::genus_traits<static_genus>;
-  constexpr details::tag_t tag() const noexcept { return TAG; }
-  constexpr details::tag_t normalized_tag() const noexcept {
+  cxx11_constexpr details::tag_t tag() const cxx11_noexcept { return TAG; }
+  cxx11_constexpr details::tag_t normalized_tag() const cxx11_noexcept {
     return details::normalize_tag(tag());
   }
 
 protected:
-  cxx14_constexpr token_static(const details::tag_t tag) noexcept {
+  cxx14_constexpr token_static(const details::tag_t tag) cxx11_noexcept {
     constexpr_assert(tag == TAG);
     (void)tag;
   }
-  constexpr token_static() noexcept = default;
+  cxx11_constexpr token_static() cxx11_noexcept = default;
 
-  constexpr bool operator==(const details::token_nonstatic_tag &ditto) const
-      noexcept {
+  cxx11_constexpr bool
+  operator==(const details::token_nonstatic_tag &ditto) const cxx11_noexcept {
     return tag() == ditto.tag();
   }
-  constexpr bool operator!=(const details::token_nonstatic_tag &ditto) const
-      noexcept {
+  cxx11_constexpr bool
+  operator!=(const details::token_nonstatic_tag &ditto) const cxx11_noexcept {
     return tag() != ditto.tag();
   }
 };
@@ -294,7 +322,7 @@ class token_native
           OFFSET, meta::type2genus<FIELD_TYPE>::value, sizeof(FIELD_TYPE),
           DISCERNIBLE_NULL, SATURATED)>> {
 public:
-  constexpr token_native() noexcept {
+  cxx11_constexpr token_native() cxx11_noexcept {
     static_assert(std::is_standard_layout<STRUCT_TYPE>::value,
                   "Constraint is violated");
     static_assert(std::is_pod<FIELD_TYPE>::value, "Constraint is violated");
@@ -315,7 +343,8 @@ public:
 class FPTU_API_TYPE token
     : public details::token_operations<details::token_nonstatic_tag> {
   using base = details::token_operations<details::token_nonstatic_tag>;
-  explicit constexpr token(const details::tag_t tag) noexcept : base(tag) {}
+  explicit cxx11_constexpr token(const details::tag_t tag) cxx11_noexcept
+      : base(tag) {}
 
   static cxx14_constexpr genus validate_loose_type(const genus type) {
     if (unlikely(type >= genus::hole))
@@ -357,7 +386,7 @@ class FPTU_API_TYPE token
                                collection, discernible_null, saturated)) {}
 
 public:
-  constexpr token() noexcept : base() {}
+  cxx11_constexpr token() cxx11_noexcept : base() {}
 
   cxx14_constexpr
   token(const genus type, const unsigned id, const bool collection = false,
@@ -371,12 +400,14 @@ public:
       : base(details::tag_from_offset(
             validate_preplaced_offset(offset), validate_preplaced_type(type),
             details::preplaced_bytes(type), discernible_null, saturated)) {}
-  constexpr token(const token &) noexcept = default;
-  constexpr token(const details::token_nonstatic_tag &other) noexcept
+  cxx11_constexpr token(const token &) cxx11_noexcept = default;
+  cxx11_constexpr
+  token(const details::token_nonstatic_tag &other) cxx11_noexcept
       : token(other.tag()) {}
 
   FPTU_TEMPLATE_FOR_STATIC_TOKEN
-  explicit constexpr token(const TOKEN &) noexcept : token(TOKEN::static_tag) {}
+  explicit cxx11_constexpr token(const TOKEN &) cxx11_noexcept
+      : token(TOKEN::static_tag) {}
 };
 
 template <genus TYPE, class TOKEN> class cast_typecheck : public TOKEN {
@@ -387,7 +418,7 @@ public:
     if (unlikely(token.type() != TYPE))
       throw_type_mismatch();
   }
-  constexpr genus type() const noexcept { return TYPE; }
+  cxx11_constexpr genus type() const cxx11_noexcept { return TYPE; }
 };
 
 template <class TOKEN> class cast_preplaced : public TOKEN {
@@ -398,10 +429,10 @@ public:
     if (unlikely(!token.is_preplaced()))
       throw_type_mismatch();
   }
-  constexpr bool is_preplaced() const noexcept { return true; }
-  constexpr bool is_loose() const noexcept { return false; }
-  constexpr bool is_inlay() const noexcept { return false; }
-  constexpr bool is_collection() const noexcept { return false; }
+  cxx11_constexpr bool is_preplaced() const cxx11_noexcept { return true; }
+  cxx11_constexpr bool is_loose() const cxx11_noexcept { return false; }
+  cxx11_constexpr bool is_inlay() const cxx11_noexcept { return false; }
+  cxx11_constexpr bool is_collection() const cxx11_noexcept { return false; }
 };
 
 template <class TOKEN> class cast_loose : public TOKEN {
@@ -412,8 +443,8 @@ public:
     if (unlikely(!token.is_loose()))
       throw_type_mismatch();
   }
-  constexpr bool is_preplaced() const noexcept { return false; }
-  constexpr bool is_loose() const noexcept { return true; }
+  cxx11_constexpr bool is_preplaced() const cxx11_noexcept { return false; }
+  cxx11_constexpr bool is_loose() const cxx11_noexcept { return true; }
 };
 
 using token_preplaced = cast_preplaced<token>;

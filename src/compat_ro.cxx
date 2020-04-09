@@ -17,18 +17,19 @@
 
 #include "fast_positive/tuples/details/legacy_compat.h"
 
-const char *fptu_check_ro_ex(fptu_ro ro, bool holes_are_not_allowed) noexcept {
+const char *fptu_check_ro_ex(fptu_ro ro,
+                             bool holes_are_not_allowed) cxx11_noexcept {
   return fptu::details::tuple_ro::audit(ro.sys.iov_base, ro.sys.iov_len,
                                         nullptr, holes_are_not_allowed);
 }
 
-static inline constexpr bool is_hollow(const fptu_ro &ro) noexcept {
+static cxx11_constexpr bool is_hollow(const fptu_ro &ro) cxx11_noexcept {
   return ro.sys.iov_len < sizeof(fptu::details::unit_t) ||
          static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base)
                  ->size() != ro.sys.iov_len;
 }
 
-bool fptu_is_empty_ro(fptu_ro ro) noexcept {
+bool fptu_is_empty_ro(fptu_ro ro) cxx11_noexcept {
   return is_hollow(ro)
              ? true
              : static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base)
@@ -41,7 +42,7 @@ static inline const fptu::details::tuple_ro *impl(const fptu_ro &ro) {
   return static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base);
 }
 
-const fptu_field *fptu_begin_ro(fptu_ro ro) noexcept {
+const fptu_field *fptu_begin_ro(fptu_ro ro) cxx11_noexcept {
   if (unlikely(is_hollow(ro)))
     return nullptr;
 
@@ -50,7 +51,7 @@ const fptu_field *fptu_begin_ro(fptu_ro ro) noexcept {
   return static_cast<const fptu_field *>(tuple->begin_index());
 }
 
-const fptu_field *fptu_end_ro(fptu_ro ro) noexcept {
+const fptu_field *fptu_end_ro(fptu_ro ro) cxx11_noexcept {
   if (unlikely(is_hollow(ro)))
     return nullptr;
 
@@ -59,8 +60,9 @@ const fptu_field *fptu_end_ro(fptu_ro ro) noexcept {
   return static_cast<const fptu_field *>(tuple->end_index());
 }
 
-const fptu_field *fptu_lookup_ro(fptu_ro ro, unsigned column,
-                                 fptu_type_or_filter type_or_filter) noexcept {
+const fptu_field *
+fptu_lookup_ro(fptu_ro ro, unsigned column,
+               fptu_type_or_filter type_or_filter) cxx11_noexcept {
   const auto begin = fptu_begin_ro(ro);
   const auto end = fptu_end_ro(ro);
   const auto pf =
@@ -71,8 +73,8 @@ const fptu_field *fptu_lookup_ro(fptu_ro ro, unsigned column,
 //------------------------------------------------------------------------------
 
 #define FPTU_GET_IMPL(LEGACY, NAME, GENUS, RETURN_TYPE, THUNK_TYPE, DENIL)     \
-  RETURN_TYPE fptu_get_##LEGACY(fptu_ro ro, unsigned column,                   \
-                                int *error) noexcept {                         \
+  RETURN_TYPE fptu_get_##LEGACY(fptu_ro ro, unsigned column, int *error)       \
+      cxx11_noexcept {                                                         \
     error_guard raii(error);                                                   \
     try {                                                                      \
       const fptu::token id(fptu::genus::GENUS, column, false);                 \
@@ -101,8 +103,8 @@ FPTU_GET_IMPL(nested, nested, nested, fptu_ro, fptu::details::iovec_thunk,
 #undef FPTU_GET_IMPL
 
 #define FPTU_GET_IMPL(BITS)                                                    \
-  const uint8_t *fptu_get_##BITS(fptu_ro ro, unsigned column,                  \
-                                 int *error) noexcept {                        \
+  const uint8_t *fptu_get_##BITS(fptu_ro ro, unsigned column, int *error)      \
+      cxx11_noexcept {                                                         \
     error_guard raii(error);                                                   \
     try {                                                                      \
       const fptu::token id(fptu::genus::bin##BITS, column, false);             \
@@ -120,7 +122,8 @@ FPTU_GET_IMPL(160)
 FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
-const char *fptu_get_cstr(fptu_ro ro, unsigned column, int *error) noexcept {
+const char *fptu_get_cstr(fptu_ro ro, unsigned column,
+                          int *error) cxx11_noexcept {
   const fptu_field *pf = fptu::lookup(ro, column, fptu_cstr);
   if (pf)
     return fptu_field_cstr(pf);
@@ -133,8 +136,8 @@ const char *fptu_get_cstr(fptu_ro ro, unsigned column, int *error) noexcept {
 //------------------------------------------------------------------------------
 
 #define FPTU_GET_IMPL(BITS)                                                    \
-  fptu_lge fptu_cmp_##BITS(fptu_ro ro, unsigned column,                        \
-                           const uint8_t *value) noexcept {                    \
+  fptu_lge fptu_cmp_##BITS(fptu_ro ro, unsigned column, const uint8_t *value)  \
+      cxx11_noexcept {                                                         \
     if (unlikely(value == nullptr))                                            \
       return fptu_ic;                                                          \
     const fptu_field *pf = fptu::lookup(ro, column, fptu_##BITS);              \
@@ -150,7 +153,7 @@ FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
 fptu_lge fptu_cmp_opaque(fptu_ro ro, unsigned column, const void *value,
-                         std::size_t bytes) noexcept {
+                         std::size_t bytes) cxx11_noexcept {
   const fptu_field *pf = fptu::lookup(ro, column, fptu_opaque);
   if (pf == nullptr)
     return bytes ? fptu_ic : fptu_eq;
@@ -160,6 +163,6 @@ fptu_lge fptu_cmp_opaque(fptu_ro ro, unsigned column, const void *value,
 }
 
 fptu_lge fptu_cmp_opaque_iov(fptu_ro ro, unsigned column,
-                             const struct iovec value) noexcept {
+                             const struct iovec value) cxx11_noexcept {
   return fptu_cmp_opaque(ro, column, value.iov_base, value.iov_len);
 }

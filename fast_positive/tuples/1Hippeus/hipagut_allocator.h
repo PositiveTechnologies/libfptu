@@ -50,11 +50,11 @@ struct allocator_traits<hippeus::hipagut_allocator<ALLOCATOR>>
   using reference = typename unchecked_base::reference;
   using const_reference = typename unchecked_base::const_reference; */
 
-  static constexpr size_type hipagut_gap() {
+  static cxx11_constexpr size_type hipagut_gap() {
     return (HIPAGUT_SPACE + sizeof(value_type) - 1) / sizeof(value_type);
   }
 
-  static size_type max_size(const allocator_type &a) noexcept {
+  static size_type max_size(const allocator_type &a) cxx11_noexcept {
     return unchecked_base::max_size(a) - hipagut_gap() * 2;
   }
 
@@ -89,14 +89,16 @@ public:
     typedef hipagut_allocator<other_unchecked> other;
   };
 
-  constexpr hipagut_allocator() noexcept {}
-  hipagut_allocator(unchecked_base &a) noexcept : unchecked_base(a) {}
-  constexpr hipagut_allocator(const unchecked_base &a) noexcept
+  cxx11_constexpr hipagut_allocator() cxx11_noexcept {}
+  hipagut_allocator(unchecked_base &a) cxx11_noexcept : unchecked_base(a) {}
+  cxx11_constexpr hipagut_allocator(const unchecked_base &a) cxx11_noexcept
       : unchecked_base(a) {}
   template <typename T>
-  hipagut_allocator(hipagut_allocator<T> &a) noexcept : unchecked_base(a) {}
+  hipagut_allocator(hipagut_allocator<T> &a) cxx11_noexcept
+      : unchecked_base(a) {}
   template <typename T>
-  constexpr hipagut_allocator(const hipagut_allocator<T> &a) noexcept
+  cxx11_constexpr
+  hipagut_allocator(const hipagut_allocator<T> &a) cxx11_noexcept
       : unchecked_base(a) {}
 
 #if __cplusplus < 201703L
@@ -167,14 +169,14 @@ public:
 
 template <class T, class U>
 bool operator==(hipagut_allocator<T> const &x,
-                hipagut_allocator<U> const &y) noexcept {
+                hipagut_allocator<U> const &y) cxx11_noexcept {
   return static_cast<typename hipagut_allocator<T>::unchecked_base>(x) ==
          static_cast<typename hipagut_allocator<U>::unchecked_base>(y);
 }
 
 template <class T, class U>
 bool operator!=(hipagut_allocator<T> const &x,
-                hipagut_allocator<U> const &y) noexcept {
+                hipagut_allocator<U> const &y) cxx11_noexcept {
   return !(x == y);
 }
 

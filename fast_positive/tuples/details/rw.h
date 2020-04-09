@@ -98,7 +98,7 @@ public:
                           schema_, allot_tag);
   }
 
-  const hippeus::buffer *get_buffer() const noexcept {
+  const hippeus::buffer *get_buffer() const cxx11_noexcept {
     return const_cast<tuple_rw *>(this)->get_buffer();
   }
 
@@ -131,7 +131,7 @@ protected:
   const fptu::schema *schema_;
 
   int buffer_offset_;
-  static int get_buffer_offset(const hippeus::buffer *buffer) noexcept {
+  static int get_buffer_offset(const hippeus::buffer *buffer) cxx11_noexcept {
     const ptrdiff_t full_offset =
         erthink::constexpr_pointer_cast<const char *>(buffer) -
         erthink::constexpr_pointer_cast<const char *>(buffer->data());
@@ -139,7 +139,7 @@ protected:
     assert(full_offset > INT_MIN && full_offset < INT_MAX);
     return int(full_offset);
   }
-  hippeus::buffer *get_buffer() noexcept {
+  hippeus::buffer *get_buffer() cxx11_noexcept {
     return buffer_offset_ ? erthink::constexpr_pointer_cast<hippeus::buffer *>(
                                 erthink::constexpr_pointer_cast<char *>(this) +
                                 buffer_offset_)
@@ -155,10 +155,10 @@ protected:
       uint16_t count, volume;
     };
     uint32_t both;
-    constexpr inline junk_counters() : both(0) {
+    cxx11_constexpr junk_counters() : both(0) {
       static_assert(sizeof(junk_counters) == 4, "WTF?");
     }
-    constexpr inline junk_counters(const struct audit_holes_info &holes_info)
+    cxx11_constexpr junk_counters(const struct audit_holes_info &holes_info)
         : count(uint16_t(holes_info.count)),
           volume(uint16_t(holes_info.volume)) {}
   };
@@ -177,35 +177,35 @@ protected:
   unit_t reserve_for_RO_header;
   unit_t area_[1];
 
-  __pure_function void *pivot() noexcept { return &area_[pivot_]; }
-  __pure_function const void *pivot() const noexcept {
+  __pure_function void *pivot() cxx11_noexcept { return &area_[pivot_]; }
+  __pure_function const void *pivot() const cxx11_noexcept {
     return const_cast<tuple_rw *>(this)->pivot();
   }
 
-  __pure_function field_loose *begin_index() noexcept {
+  __pure_function field_loose *begin_index() cxx11_noexcept {
     return erthink::constexpr_pointer_cast<field_loose *>(&area_[head_]);
   }
-  __pure_function field_loose *end_index() noexcept {
+  __pure_function field_loose *end_index() cxx11_noexcept {
     return static_cast<field_loose *>(pivot());
   }
 
-  __pure_function const field_loose *begin_index() const noexcept {
+  __pure_function const field_loose *begin_index() const cxx11_noexcept {
     return const_cast<tuple_rw *>(this)->begin_index();
   }
-  __pure_function const field_loose *end_index() const noexcept {
+  __pure_function const field_loose *end_index() const cxx11_noexcept {
     return const_cast<tuple_rw *>(this)->end_index();
   }
 
-  __pure_function const unit_t *begin_data_units() const noexcept {
+  __pure_function const unit_t *begin_data_units() const cxx11_noexcept {
     return static_cast<const unit_t *>(pivot());
   }
-  __pure_function const unit_t *end_data_units() const noexcept {
+  __pure_function const unit_t *end_data_units() const cxx11_noexcept {
     return &area_[tail_];
   }
-  __pure_function const char *begin_data_bytes() const noexcept {
+  __pure_function const char *begin_data_bytes() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const char *>(begin_data_units());
   }
-  __pure_function const char *end_data_bytes() const noexcept {
+  __pure_function const char *end_data_bytes() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const char *>(end_data_units());
   }
 
@@ -215,7 +215,7 @@ protected:
   void release_loose(field_loose *loose, const std::size_t units);
   relative_payload *realloc_data(relative_offset &ref, const std::size_t have,
                                  const std::size_t needed);
-  __pure_function static const char *audit(const tuple_rw *self) noexcept;
+  __pure_function static const char *audit(const tuple_rw *self) cxx11_noexcept;
 
   //----------------------------------------------------------------------------
 
@@ -293,32 +293,38 @@ public:
 
     inline void remove();
 
-    constexpr accessor_rw() : base(), tuple_(nullptr) {
+    cxx11_constexpr accessor_rw() : base(), tuple_(nullptr) {
       static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                           ? sizeof(void *) * 2
                                           : sizeof(void *) * 3),
                     "WTF?");
     }
 
-    constexpr accessor_rw(tuple_rw *tuple, field_preplaced *target,
-                          const TOKEN token) noexcept
-        : base(target, token), tuple_(tuple) {}
+    cxx11_constexpr accessor_rw(tuple_rw *tuple, field_preplaced *target,
+                                const TOKEN token) cxx11_noexcept
+        : base(target, token),
+          tuple_(tuple) {}
 
-    constexpr accessor_rw(tuple_rw *tuple, field_loose *target,
-                          const TOKEN token) noexcept
-        : base(target, token), tuple_(tuple) {}
+    cxx11_constexpr accessor_rw(tuple_rw *tuple, field_loose *target,
+                                const TOKEN token) cxx11_noexcept
+        : base(target, token),
+          tuple_(tuple) {}
 
-    constexpr accessor_rw(tuple_rw *tuple, const base &accessor) noexcept
-        : base(accessor), tuple_(tuple) {}
+    cxx11_constexpr accessor_rw(tuple_rw *tuple,
+                                const base &accessor) cxx11_noexcept
+        : base(accessor),
+          tuple_(tuple) {}
 
   public:
-    constexpr accessor_rw(const accessor_rw &) noexcept = default;
+    cxx11_constexpr accessor_rw(const accessor_rw &) cxx11_noexcept = default;
     cxx14_constexpr accessor_rw &
-    operator=(const accessor_rw &) noexcept = default;
-    constexpr accessor_rw(accessor_rw &&) noexcept = default;
-    constexpr accessor_rw *operator->() const noexcept { return this; }
+    operator=(const accessor_rw &) cxx11_noexcept = default;
+    cxx11_constexpr accessor_rw(accessor_rw &&) cxx11_noexcept = default;
+    cxx11_constexpr accessor_rw *operator->() const cxx11_noexcept {
+      return this;
+    }
 
-    constexpr tuple_rw *tuple() const noexcept { return tuple_; }
+    cxx11_constexpr tuple_rw *tuple() const cxx11_noexcept { return tuple_; }
 
     //--------------------------------------------------------------------------
 
@@ -795,9 +801,9 @@ public:
     friend class fptu::loose_iterator_rw;
     using accessor = accessor_rw<TOKEN>;
 
-    explicit constexpr collection_iterator_rw(tuple_rw *tuple,
-                                              field_loose *target,
-                                              const TOKEN token) noexcept
+    explicit cxx11_constexpr
+    collection_iterator_rw(tuple_rw *tuple, field_loose *target,
+                           const TOKEN token) cxx11_noexcept
         : accessor(tuple, target, token) {
       constexpr_assert(token.is_collection());
     }
@@ -811,19 +817,21 @@ public:
     using reference = value_type &;
 #endif
 
-    constexpr collection_iterator_rw() noexcept : accessor() {
+    cxx11_constexpr collection_iterator_rw() cxx11_noexcept : accessor() {
       static_assert(sizeof(*this) <= (TOKEN::is_static_token::value
                                           ? sizeof(void *) * 2
                                           : sizeof(void *) * 3),
                     "WTF?");
     }
-    constexpr collection_iterator_rw(const collection_iterator_rw &) noexcept =
-        default;
+    cxx11_constexpr collection_iterator_rw(const collection_iterator_rw &)
+        cxx11_noexcept = default;
     cxx14_constexpr collection_iterator_rw &
-    operator=(const collection_iterator_rw &) noexcept = default;
-    constexpr const TOKEN &token() const noexcept { return accessor::token(); }
+    operator=(const collection_iterator_rw &) cxx11_noexcept = default;
+    cxx11_constexpr const TOKEN &token() const cxx11_noexcept {
+      return accessor::token();
+    }
 
-    collection_iterator_rw &operator++() noexcept {
+    collection_iterator_rw &operator++() cxx11_noexcept {
       assert(static_cast<const field_loose *>(accessor::field_) <
              accessor::tuple_->end_index());
       accessor::field_ =
@@ -831,42 +839,44 @@ public:
                accessor::tuple_->end_index(), accessor::token_.tag());
       return *this;
     }
-    collection_iterator_rw operator++(int) const noexcept {
+    collection_iterator_rw operator++(int) const cxx11_noexcept {
       collection_iterator_rw iterator(*this);
       ++iterator;
       return iterator;
     }
-    cxx14_constexpr accessor operator*() const noexcept {
+    cxx14_constexpr accessor operator*() const cxx11_noexcept {
       return accessor(*this);
     }
-    cxx14_constexpr accessor &operator*() noexcept { return *this; }
+    cxx14_constexpr accessor &operator*() cxx11_noexcept { return *this; }
 
-    constexpr bool operator==(const accessor &other) const noexcept {
+    cxx11_constexpr bool
+    operator==(const accessor &other) const cxx11_noexcept {
       return accessor::field_ == other.field_;
     }
-    constexpr bool operator!=(const accessor &other) const noexcept {
+    cxx11_constexpr bool
+    operator!=(const accessor &other) const cxx11_noexcept {
       return accessor::field_ != other.field_;
     }
-    constexpr bool operator==(const collection_iterator_rw &other) const
-        noexcept {
+    cxx11_constexpr bool
+    operator==(const collection_iterator_rw &other) const cxx11_noexcept {
       return accessor::field_ == other.field_;
     }
-    constexpr bool operator!=(const collection_iterator_rw &other) const
-        noexcept {
+    cxx11_constexpr bool
+    operator!=(const collection_iterator_rw &other) const cxx11_noexcept {
       return accessor::field_ != other.field_;
     }
 
-    operator collection_iterator_ro<TOKEN>() const noexcept {
+    operator collection_iterator_ro<TOKEN>() const cxx11_noexcept {
       return collection_iterator_ro<TOKEN>(accessor::field_.const_loose,
                                            accessor::tuple_->end_index(),
                                            accessor::token_);
     }
-    constexpr bool operator==(const collection_iterator_ro<TOKEN> &other) const
-        noexcept {
+    cxx11_constexpr bool operator==(
+        const collection_iterator_ro<TOKEN> &other) const cxx11_noexcept {
       return accessor::field_ == other.field_;
     }
-    constexpr bool operator!=(const collection_iterator_ro<TOKEN> &other) const
-        noexcept {
+    cxx11_constexpr bool operator!=(
+        const collection_iterator_ro<TOKEN> &other) const cxx11_noexcept {
       return accessor::field_ != other.field_;
     }
   };
@@ -876,8 +886,8 @@ public:
     template <typename> friend class crtp_getter;
     friend class tuple_rw;
 
-    constexpr collection_rw(tuple_rw *tuple, field_loose *first,
-                            const TOKEN token) noexcept
+    cxx11_constexpr collection_rw(tuple_rw *tuple, field_loose *first,
+                                  const TOKEN token) cxx11_noexcept
         : collection_iterator_rw<TOKEN>(tuple, first, token) {
       constexpr_assert(token.is_collection());
     }
@@ -886,30 +896,34 @@ public:
     using const_iterator = collection_iterator_ro<TOKEN>;
     using const_range = collection_ro<TOKEN>;
     using iterator = collection_iterator_rw<TOKEN>;
-    constexpr collection_rw(const collection_rw &) = default;
+    cxx11_constexpr collection_rw(const collection_rw &) = default;
     cxx14_constexpr collection_rw &operator=(const collection_rw &) = default;
-    constexpr const TOKEN &token() const noexcept { return iterator::token(); }
+    cxx11_constexpr const TOKEN &token() const cxx11_noexcept {
+      return iterator::token();
+    }
 
-    constexpr operator const_range() const noexcept {
+    cxx11_constexpr operator const_range() const cxx11_noexcept {
       return const_range(iterator::field_.const_loose,
                          iterator::tuple_->end_index(), iterator::token_);
     }
 
-    cxx14_constexpr const const_iterator begin() const noexcept {
+    cxx14_constexpr const const_iterator begin() const cxx11_noexcept {
       return const_iterator(iterator::field_.const_loose,
                             iterator::tuple_->end_index(), iterator::token_);
     }
-    cxx14_constexpr const_iterator end() const noexcept {
+    cxx14_constexpr const_iterator end() const cxx11_noexcept {
       return const_iterator(nullptr, iterator::tuple_->end_index(),
                             iterator::token_);
     }
 
-    cxx14_constexpr const iterator &begin() noexcept { return *this; }
-    cxx14_constexpr iterator end() noexcept {
+    cxx14_constexpr const iterator &begin() cxx11_noexcept { return *this; }
+    cxx14_constexpr iterator end() cxx11_noexcept {
       return iterator(iterator::tuple_, nullptr, iterator::token_);
     }
 
-    constexpr bool empty() const noexcept { return begin() == end(); }
+    cxx11_constexpr bool empty() const cxx11_noexcept {
+      return begin() == end();
+    }
   };
 
 private:
@@ -954,7 +968,7 @@ public: //----------------------------------------------------------------------
 #endif
   }
   void reset();
-  const fptu::schema *schema() const noexcept { return schema_; }
+  const fptu::schema *schema() const cxx11_noexcept { return schema_; }
 
   enum class optimize_flags {
     none = 0,
@@ -987,59 +1001,63 @@ public: //----------------------------------------------------------------------
                                           : erase(collection(ident)) > 0;
   }
   bool erase(const token &ident);
-  __pure_function const char *audit() const noexcept { return audit(this); }
+  __pure_function const char *audit() const cxx11_noexcept {
+    return audit(this);
+  }
 
-  __pure_function std::size_t head_space() const noexcept { return head_; }
-  __pure_function std::size_t tail_space_units() const noexcept {
+  __pure_function std::size_t head_space() const cxx11_noexcept {
+    return head_;
+  }
+  __pure_function std::size_t tail_space_units() const cxx11_noexcept {
     assert(end_ >= tail_);
     return end_ - tail_;
   }
-  __pure_function std::size_t tail_space_bytes() const noexcept {
+  __pure_function std::size_t tail_space_bytes() const cxx11_noexcept {
     return units2bytes(tail_space_units());
   }
-  __pure_function std::size_t junk_units() const noexcept {
+  __pure_function std::size_t junk_units() const cxx11_noexcept {
     return junk_.volume + junk_.count;
   }
-  __pure_function std::size_t junk_bytes() const noexcept {
+  __pure_function std::size_t junk_bytes() const cxx11_noexcept {
     return units2bytes(junk_units());
   }
-  __pure_function bool empty() const noexcept {
+  __pure_function bool empty() const cxx11_noexcept {
     return head_ + junk_.count == tail_;
   }
-  __pure_function std::size_t index_size() const noexcept {
+  __pure_function std::size_t index_size() const cxx11_noexcept {
     assert(pivot_ >= head_);
     return pivot_ - head_;
   }
-  __pure_function std::size_t payload_size_units() const noexcept {
+  __pure_function std::size_t payload_size_units() const cxx11_noexcept {
     assert(tail_ >= pivot_);
     return tail_ - pivot_;
   }
-  __pure_function std::size_t payload_size_bytes() const noexcept {
+  __pure_function std::size_t payload_size_bytes() const cxx11_noexcept {
     return units2bytes(payload_size_units());
   }
-  __pure_function std::size_t loose_count() const noexcept {
+  __pure_function std::size_t loose_count() const cxx11_noexcept {
     assert(index_size() >= junk_.count);
     return index_size() - junk_.count;
   }
-  __pure_function std::size_t brutto_size() const noexcept {
+  __pure_function std::size_t brutto_size() const cxx11_noexcept {
     return units2bytes(tail_ - head_ + /* header */ 1);
   }
-  __pure_function std::size_t netto_size() const noexcept {
+  __pure_function std::size_t netto_size() const cxx11_noexcept {
     return brutto_size() - junk_units();
   }
-  __pure_function std::size_t capacity() const noexcept {
+  __pure_function std::size_t capacity() const cxx11_noexcept {
     return units2bytes(end_);
   }
 
-  __pure_function bool have_preplaced() const noexcept {
+  __pure_function bool have_preplaced() const cxx11_noexcept {
     return schema_ && schema_->preplaced_bytes() > 0;
   }
-  bool is_sorted() const noexcept {
+  bool is_sorted() const cxx11_noexcept {
     /* TODO */
     return false;
   }
 
-  static constexpr std::size_t pure_tuple_size() {
+  static cxx11_constexpr std::size_t pure_tuple_size() {
     return sizeof(tuple_rw) - sizeof(tuple_rw::area_);
   }
 
@@ -1092,10 +1110,12 @@ public: //----------------------------------------------------------------------
                                    true);
   }
 
-  __pure_function bool operator==(const tuple_ro *ro) const noexcept {
+  __pure_function bool operator==(const tuple_ro *ro) const cxx11_noexcept {
     return ro->flat == &area_[head_ - 1];
   }
-  bool operator!=(const tuple_ro *ro) const noexcept { return !(*this == ro); }
+  bool operator!=(const tuple_ro *ro) const cxx11_noexcept {
+    return !(*this == ro);
+  }
 
   const tuple_ro *take_asis() const;
   std::pair<const tuple_ro *, bool> take_optimized();
@@ -1178,33 +1198,33 @@ public: //----------------------------------------------------------------------
     return crtp_getter::is_present(ident);
   }
 
-  __pure_function field_iterator_ro cbegin(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  cbegin(const fptu::schema *schema) const cxx11_noexcept {
     return field_iterator_ro::begin(pivot(), schema);
   }
-  __pure_function field_iterator_ro cend(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  cend(const fptu::schema *schema) const cxx11_noexcept {
     return field_iterator_ro::end(begin_index(), pivot(), schema);
   }
-  __pure_function field_iterator_ro begin(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  begin(const fptu::schema *schema) const cxx11_noexcept {
     return cbegin(schema);
   }
-  __pure_function field_iterator_ro end(const fptu::schema *schema) const
-      noexcept {
+  __pure_function field_iterator_ro
+  end(const fptu::schema *schema) const cxx11_noexcept {
     return cend(schema);
   }
 
-  __pure_function loose_iterator_ro cbegin_loose() const noexcept {
+  __pure_function loose_iterator_ro cbegin_loose() const cxx11_noexcept {
     return loose_iterator_ro(end_index() - 1);
   }
-  __pure_function loose_iterator_ro cend_loose() const noexcept {
+  __pure_function loose_iterator_ro cend_loose() const cxx11_noexcept {
     return loose_iterator_ro(begin_index() - 1);
   }
-  __pure_function loose_iterator_ro begin_loose() const noexcept {
+  __pure_function loose_iterator_ro begin_loose() const cxx11_noexcept {
     return cbegin_loose();
   }
-  __pure_function loose_iterator_ro end_loose() const noexcept {
+  __pure_function loose_iterator_ro end_loose() const cxx11_noexcept {
     return cend_loose();
   }
 };

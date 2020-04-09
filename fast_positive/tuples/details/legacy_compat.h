@@ -20,7 +20,7 @@
 #include "fast_positive/tuples/internal.h"
 #include "fast_positive/tuples/legacy.h"
 
-inline constexpr fptu_type genus2legacy(fptu::genus type, unsigned colnum = 0) {
+cxx11_constexpr fptu_type genus2legacy(fptu::genus type, unsigned colnum = 0) {
   return fptu_type(fptu::details::make_tag(type, colnum, true, true, false));
 }
 
@@ -29,8 +29,10 @@ struct FPTU_API_TYPE fptu_field : public fptu::details::field_loose {
   fptu_field() = delete;
   ~fptu_field() = delete;
 
-  unsigned constexpr colnum() const { return base::id(); }
-  fptu_type constexpr legacy_type() const { return genus2legacy(base::type()); }
+  unsigned cxx11_constexpr colnum() const { return base::id(); }
+  fptu_type cxx11_constexpr legacy_type() const {
+    return genus2legacy(base::type());
+  }
 };
 
 struct FPTU_API_TYPE fptu_rw : public fptu::details::tuple_rw {
@@ -40,11 +42,11 @@ struct FPTU_API_TYPE fptu_rw : public fptu::details::tuple_rw {
   FRIEND_TEST(Remove, Base);
 #endif
   using base = fptu::details::tuple_rw;
-  const fptu_field *begin_index() const noexcept {
+  const fptu_field *begin_index() const cxx11_noexcept {
     const auto begin = base::begin_index();
     return static_cast<const fptu_field *>(begin);
   }
-  const fptu_field *end_index() const noexcept {
+  const fptu_field *end_index() const cxx11_noexcept {
     const auto end = base::end_index();
     return static_cast<const fptu_field *>(end);
   }

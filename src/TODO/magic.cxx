@@ -66,7 +66,7 @@ class magic_pointer : tagged_pointer_base {
   };
 
 protected:
-  static constexpr unsigned make_pointer_tag(kind_pointer kind,
+  static cxx11_constexpr unsigned make_pointer_tag(kind_pointer kind,
                                              value_genus type) {
     static_assert(TAG_BITS <= tagged_pointer_base::bits, "WTF?");
     constexpr_assert(kind <= unsigned(KIND_MASK));
@@ -74,7 +74,7 @@ protected:
     return unsigned(kind) << KIND_SHIFT | unsigned(type) << TYPE_SHIFT;
   }
 
-  static constexpr unsigned make_pointer_tag(kind_pointer kind,
+  static cxx11_constexpr unsigned make_pointer_tag(kind_pointer kind,
                                              unsigned field_id) {
     static_assert(TAG_BITS <= tagged_pointer_base::bits, "WTF?");
     constexpr_assert(kind <= unsigned(KIND_MASK));
@@ -116,10 +116,10 @@ public:
     return likely(has_builtin_ident()) ? builtin_ident() : outsource_ident();
   }
 
-  //  constexpr tagged_pointer(T *ptr, field_pointer_kind kind,
+  //  cxx11_constexpr tagged_pointer(T *ptr, field_pointer_kind kind,
   //                           value_genus type)
   //      : basis(ptr, tag) {}
-  //  constexpr tagged_pointer() : basis() {}
+  //  cxx11_constexpr tagged_pointer() : basis() {}
 
   //  void set(T *ptr, unsigned tag) { basis::set(ptr, tag); }
   //  void set_ptr(void *ptr) { basis::set_ptr(ptr); }

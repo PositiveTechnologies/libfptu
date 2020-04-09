@@ -79,7 +79,7 @@ ERTHINK_DECLARE_IFUNC(FPTU_API, const field_loose *, fptu_scan,
 
 static __pure_function inline const field_loose *
 lookup(bool sorted, const field_loose *begin, const field_loose *end,
-       const tag_t tag) noexcept {
+       const tag_t tag) cxx11_noexcept {
   assert(is_loose(tag));
   static_assert(sizeof(field_loose) == 4 && sizeof(unit_t) == 4, "WTF?");
   (void)/* TODO: use search() for sorted tuples */ sorted;
@@ -88,7 +88,7 @@ lookup(bool sorted, const field_loose *begin, const field_loose *end,
 
 static __pure_function inline const field_loose *
 next(const field_loose *current, const field_loose *end,
-     const tag_t tag) noexcept {
+     const tag_t tag) cxx11_noexcept {
   assert(is_loose(tag));
   static_assert(sizeof(field_loose) == 4 && sizeof(unit_t) == 4, "WTF?");
   return current ? fptu_scan(current + 1, end, uint16_t(tag)) : current;

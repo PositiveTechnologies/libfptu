@@ -34,11 +34,11 @@
 #ifdef __cplusplus
 namespace hippeus {
 
-static constexpr uint64_t linear_congruential(uint64_t value) {
+static cxx11_constexpr uint64_t linear_congruential(uint64_t value) {
   return value * 6364136223846793005ull + 1442695040888963407ull;
 }
 
-static constexpr uint32_t linear_congruential(uint32_t value) {
+static cxx11_constexpr uint32_t linear_congruential(uint32_t value) {
   return value * 1664525u + 1013904223u;
 }
 

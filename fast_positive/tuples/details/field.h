@@ -16,7 +16,7 @@
  */
 
 #pragma once
-#include "fast_positive/erthink/erthink_dynamic_constexpr.h"
+#include "fast_positive/erthink/erthink_casting.h"
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/details/exceptions.h"
 #include "fast_positive/tuples/details/utils.h"
@@ -50,17 +50,17 @@ union stretchy_value_string {
   uint32_t pool_tag;
   unit_t flat[1];
 
-  constexpr bool is_pool_tag() const noexcept {
+  cxx11_constexpr bool is_pool_tag() const cxx11_noexcept {
     return tiny.length == 0 && unlikely(pool_tag > 0);
   }
-  constexpr bool is_tiny() const noexcept {
+  cxx11_constexpr bool is_tiny() const cxx11_noexcept {
     return tiny.length < tiny_threshold;
   }
-  constexpr std::size_t length() const noexcept {
+  cxx11_constexpr std::size_t length() const cxx11_noexcept {
     return likely(is_tiny()) ? tiny.length
                              : large.length_prefix + large.length_suffix * 2u;
   }
-  constexpr std::size_t brutto_units() const noexcept {
+  cxx11_constexpr std::size_t brutto_units() const cxx11_noexcept {
     return bytes2units((is_tiny()) ? 1u + tiny.length
                                    : 3u + large.length_prefix +
                                          large.length_suffix * 2u);
@@ -98,11 +98,13 @@ union stretchy_value_string {
            begin()[string_length] == '\0');
   }
 
-  constexpr const char *begin() const noexcept {
+  cxx11_constexpr const char *begin() const cxx11_noexcept {
     static_assert(sizeof(*this) == sizeof(unit_t), "Oops");
     return likely(is_tiny()) ? tiny.chars : large.chars;
   }
-  constexpr const char *end() const noexcept { return begin() + length(); }
+  cxx11_constexpr const char *end() const cxx11_noexcept {
+    return begin() + length();
+  }
 
   stretchy_value_string() = delete;
   ~stretchy_value_string() = delete;
@@ -115,7 +117,7 @@ union stretchy_value_varbin {
   };
   unit_t flat[1];
 
-  cxx14_constexpr std::size_t length() const noexcept {
+  cxx14_constexpr std::size_t length() const cxx11_noexcept {
     static_assert(8 - genus_bitness == 3, "Oops");
     const std::size_t tailbytes = reserved14_tailbytes & 3;
     constexpr_assert(brutto_units > 1 || tailbytes == 0);
@@ -144,11 +146,11 @@ union stretchy_value_varbin {
     assert(brutto_units == estimate_space(value));
   }
 
-  constexpr const void *begin() const noexcept {
+  cxx11_constexpr const void *begin() const cxx11_noexcept {
     static_assert(sizeof(*this) == sizeof(unit_t), "Oops");
     return erthink::constexpr_pointer_cast<const char *>(this) + sizeof(*this);
   }
-  cxx14_constexpr const void *end() const noexcept {
+  cxx14_constexpr const void *end() const cxx11_noexcept {
     return static_cast<const char *>(begin()) + length();
   }
 
@@ -173,7 +175,7 @@ struct stretchy_value_tuple {
     reserved_flag = 4
   };
 
-  constexpr std::size_t length() const noexcept {
+  cxx11_constexpr std::size_t length() const cxx11_noexcept {
     return units2bytes(brutto_units);
   }
   void set_index_size_and_flags(ptrdiff_t count, unsigned flags) {
@@ -181,16 +183,16 @@ struct stretchy_value_tuple {
     assert(flags < (1u << flags_bits));
     looseitems_flags = uint16_t((count << flags_bits) + flags);
   }
-  constexpr std::size_t index_size() const noexcept {
+  cxx11_constexpr std::size_t index_size() const cxx11_noexcept {
     static_assert(int(fundamentals::tuple_flags_bits) == int(flags_bits),
                   "WTF?");
     static_assert(sizeof(*this) == sizeof(unit_t), "Oops");
     return looseitems_flags >> flags_bits;
   }
-  constexpr bool is_sorted() const noexcept {
+  cxx11_constexpr bool is_sorted() const cxx11_noexcept {
     return (looseitems_flags & sorted_flag) != 0;
   }
-  constexpr bool have_preplaced() const noexcept {
+  cxx11_constexpr bool have_preplaced() const cxx11_noexcept {
     return (looseitems_flags & preplaced_flag) != 0;
   }
 
@@ -209,35 +211,37 @@ struct stretchy_value_tuple {
     }
   }
 
-  constexpr bool is_hollow() const noexcept { return brutto_units < 1; }
-  inline constexpr const void *pivot() const noexcept;
+  cxx11_constexpr bool is_hollow() const cxx11_noexcept {
+    return brutto_units < 1;
+  }
+  cxx11_constexpr const void *pivot() const cxx11_noexcept;
 
-  constexpr const field_loose *begin_index() const noexcept {
+  cxx11_constexpr const field_loose *begin_index() const cxx11_noexcept {
     static_assert(sizeof(*this) == sizeof(unit_t), "Oops");
     return erthink::constexpr_pointer_cast<const field_loose *>(this + 1);
   }
-  constexpr const field_loose *end_index() const noexcept {
+  cxx11_constexpr const field_loose *end_index() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const field_loose *>(pivot());
   }
-  constexpr const unit_t *begin_data_units() const noexcept {
+  cxx11_constexpr const unit_t *begin_data_units() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const unit_t *>(pivot());
   }
-  constexpr const unit_t *end_data_units() const noexcept {
+  cxx11_constexpr const unit_t *end_data_units() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const unit_t *>(this) + brutto_units;
   }
-  cxx14_constexpr std::size_t payload_units() const noexcept {
+  cxx14_constexpr std::size_t payload_units() const cxx11_noexcept {
     const ptrdiff_t result = brutto_units - 1 - index_size();
     constexpr_assert(result >= 0 &&
                      result == end_data_units() - begin_data_units());
     return result;
   }
-  constexpr const char *begin_data_bytes() const noexcept {
+  cxx11_constexpr const char *begin_data_bytes() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const char *>(begin_data_units());
   }
-  constexpr const char *end_data_bytes() const noexcept {
+  cxx11_constexpr const char *end_data_bytes() const cxx11_noexcept {
     return erthink::constexpr_pointer_cast<const char *>(end_data_units());
   }
-  cxx14_constexpr std::size_t payload_bytes() const noexcept {
+  cxx14_constexpr std::size_t payload_bytes() const cxx11_noexcept {
     const ptrdiff_t result = end_data_bytes() - begin_data_bytes();
     constexpr_assert(result >= 0 &&
                      size_t(result) == units2bytes(payload_units()));
@@ -256,11 +260,11 @@ union stretchy_value_property {
   };
   unit_t flat[1];
 
-  constexpr std::size_t whole_length() const noexcept {
+  cxx11_constexpr std::size_t whole_length() const cxx11_noexcept {
     return 2 + data_length;
   }
 
-  constexpr std::size_t brutto_units() const noexcept {
+  cxx11_constexpr std::size_t brutto_units() const cxx11_noexcept {
     static_assert(sizeof(*this) == sizeof(unit_t), "Oops");
     return bytes2units(whole_length());
   }
@@ -351,37 +355,39 @@ union relative_payload {
 struct relative_offset {
   uint16_t offset_uint16;
 
-  cxx14_constexpr void add_delta(const ptrdiff_t delta) noexcept {
+  cxx14_constexpr void add_delta(const ptrdiff_t delta) cxx11_noexcept {
     constexpr_assert(delta >= -UINT16_MAX && delta <= UINT16_MAX);
     const ptrdiff_t full_offset = offset_uint16 + delta;
     constexpr_assert(full_offset > 0 && full_offset <= UINT16_MAX);
     offset_uint16 = static_cast<uint16_t>(full_offset);
   }
-  cxx14_constexpr void sub_delta(const ptrdiff_t delta) noexcept {
+  cxx14_constexpr void sub_delta(const ptrdiff_t delta) cxx11_noexcept {
     add_delta(-delta);
   }
-  constexpr bool have_payload() const noexcept { return offset_uint16 > 0; }
-  cxx14_constexpr unit_t *base() noexcept {
+  cxx11_constexpr bool have_payload() const cxx11_noexcept {
+    return offset_uint16 > 0;
+  }
+  cxx14_constexpr unit_t *base() cxx11_noexcept {
     return erthink::constexpr_pointer_cast<unit_t *>(this);
   }
 
-  cxx14_constexpr relative_payload *payload() noexcept {
+  cxx14_constexpr relative_payload *payload() cxx11_noexcept {
     constexpr_assert(have_payload());
     return erthink::constexpr_pointer_cast<relative_payload *>(base() +
                                                                offset_uint16);
   }
-  cxx14_constexpr const relative_payload *payload() const noexcept {
+  cxx14_constexpr const relative_payload *payload() const cxx11_noexcept {
     return const_cast<relative_offset *>(this)->payload();
   }
 
-  cxx14_constexpr void set_payload(const void *payload) noexcept {
+  cxx14_constexpr void set_payload(const void *payload) cxx11_noexcept {
     constexpr_assert(payload != nullptr);
     const ptrdiff_t ptrdiff =
         erthink::constexpr_pointer_cast<const unit_t *>(payload) - base();
     constexpr_assert(ptrdiff > 0 && ptrdiff <= UINT16_MAX);
     offset_uint16 = static_cast<uint16_t>(ptrdiff);
   }
-  cxx14_constexpr void reset_payload() noexcept { offset_uint16 = 0; }
+  cxx14_constexpr void reset_payload() cxx11_noexcept { offset_uint16 = 0; }
 
   relative_offset() = delete;
   relative_offset(const relative_offset &) = delete;
@@ -392,7 +398,7 @@ union field_preplaced {
   char bytes[1];
   relative_offset relative;
 
-  FPTU_API bool is_null(tag_t tag) const noexcept;
+  FPTU_API bool is_null(tag_t tag) const cxx11_noexcept;
   field_preplaced() = delete;
   ~field_preplaced() = delete;
 };
@@ -410,13 +416,13 @@ struct field_loose {
     uint32_t loose_header;
   };
 
-  constexpr genus type() const { return descriptor2genus(genus_and_id); }
-  constexpr bool is_hole() const { return type() == hole; }
-  constexpr unsigned id() const {
+  cxx11_constexpr genus type() const { return descriptor2genus(genus_and_id); }
+  cxx11_constexpr bool is_hole() const { return type() == hole; }
+  cxx11_constexpr unsigned id() const {
     constexpr_assert(!is_hole());
     return descriptor2id(genus_and_id);
   }
-  constexpr unsigned hole_get_units() const {
+  cxx11_constexpr unsigned hole_get_units() const {
     constexpr_assert(is_hole());
     return descriptor2id(genus_and_id);
   }
@@ -428,7 +434,7 @@ struct field_loose {
     return relative.payload()->flat;
   }
   const unit_t *hole_end() const { return hole_begin() + hole_get_units(); }
-  constexpr std::size_t stretchy_units() const noexcept {
+  cxx11_constexpr std::size_t stretchy_units() const cxx11_noexcept {
     return relative.have_payload()
                ? relative.payload()->stretchy.brutto_units(type())
                : 0;
@@ -446,14 +452,14 @@ struct field_loose {
   ~field_loose() = delete;
 };
 
-inline constexpr const void *stretchy_value_tuple::pivot() const noexcept {
+cxx11_constexpr const void *stretchy_value_tuple::pivot() const cxx11_noexcept {
   static_assert(sizeof(tag_t) == sizeof(field_loose), "WTF?");
   return begin_index() + index_size();
 }
 
 class preplaced_stretchy_value : protected relative_offset {
 public:
-  constexpr bool nil() const noexcept {
+  cxx11_constexpr bool nil() const cxx11_noexcept {
     return !relative_offset::have_payload();
   }
 };

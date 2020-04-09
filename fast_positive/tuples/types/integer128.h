@@ -40,11 +40,11 @@ struct FPTU_API_TYPE fptu_uint128 {
 #ifdef __cplusplus
   fptu_uint128() = default;
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-  constexpr fptu_uint128(uint64_t u) : l(u), h(0) {}
+  cxx11_constexpr fptu_uint128(uint64_t u) : l(u), h(0) {}
 #else
-  constexpr fptu_uint128(uint64_t u) : h(0), l(u) {}
+  cxx11_constexpr fptu_uint128(uint64_t u) : h(0), l(u) {}
 #endif
-  constexpr operator uint64_t() const { return l; }
+  cxx11_constexpr operator uint64_t() const { return l; }
 #endif /* __cplusplus */
 };
 
@@ -58,13 +58,13 @@ struct FPTU_API_TYPE fptu_int128 {
 #ifdef __cplusplus
   fptu_int128() = default;
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-  constexpr fptu_int128(int64_t i) : l(i), h(i >> 63) {}
-  constexpr fptu_int128(uint64_t i) : l(i), h(0) {}
+  cxx11_constexpr fptu_int128(int64_t i) : l(i), h(i >> 63) {}
+  cxx11_constexpr fptu_int128(uint64_t i) : l(i), h(0) {}
 #else
-  constexpr fptu_int128(int64_t i) : h(i >> 63), l(i) {}
-  constexpr fptu_int128(uint64_t i) : h(0), l(i) {}
+  cxx11_constexpr fptu_int128(int64_t i) : h(i >> 63), l(i) {}
+  cxx11_constexpr fptu_int128(uint64_t i) : h(0), l(i) {}
 #endif
-  constexpr operator int64_t() const { return l; }
+  cxx11_constexpr operator int64_t() const { return l; }
 #endif /* __cplusplus */
 };
 

@@ -110,7 +110,7 @@ __hot __flatten bool buffer::ensure(bool deep_checking) const {
   return true;
 }
 
-static inline void drown(buffer *buf) noexcept {
+static inline void drown(buffer *buf) cxx11_noexcept {
   buf->ref_counter = -1;
   HIPAGUT_DROWN(buf->guard_head);
   HIPAGUT_DROWN(buf->guard_under);
@@ -149,7 +149,7 @@ __hot __flatten void buffer::init(buffer *self, buffer_tag host, void *payload,
 }
 
 __hot __flatten const buffer *
-buffer::add_reference(const buffer *self) noexcept {
+buffer::add_reference(const buffer *self) cxx11_noexcept {
   if (likely(self)) {
     int before_increment =
 #ifdef _MSC_VER
@@ -164,7 +164,7 @@ buffer::add_reference(const buffer *self) noexcept {
   return self;
 }
 
-__hot __flatten void buffer::detach(const buffer *self) noexcept {
+__hot __flatten void buffer::detach(const buffer *self) cxx11_noexcept {
   if (unlikely(self == nullptr))
     return;
 

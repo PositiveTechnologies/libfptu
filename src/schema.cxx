@@ -33,10 +33,10 @@ schema::~schema() {}
 namespace {
 struct schema_impl : public schema {
   struct hash_name {
-    bool operator()(const string_view &name) const noexcept {
+    bool operator()(const string_view &name) const cxx11_noexcept {
       return name.hash_value();
     }
-    bool operator()(const std::string &name) const noexcept {
+    bool operator()(const std::string &name) const cxx11_noexcept {
       return operator()(string_view(name));
     }
   };
@@ -49,7 +49,7 @@ struct schema_impl : public schema {
   map_name2token name2token_;
   map_token2name token2name_;
 
-  void purge() noexcept {
+  void purge() cxx11_noexcept {
     sorted_tokens_.clear();
     number_of_preplaced_ = number_of_stretchy_preplaced_ = 0;
     preplaced_image_.clear();
@@ -76,16 +76,15 @@ struct schema_impl : public schema {
                           const void *initial_value,
                           const bool renominate) override;
 
-  token get_token_nothrow(const string_view &field_name,
-                          const boolean_option discernible_null,
-                          const boolean_option saturated) const
-      noexcept override;
-  token get_token_nothrow(const token &inlay_token,
-                          const string_view &inner_name,
-                          const boolean_option discernible_null,
-                          const boolean_option saturated) const
-      noexcept override;
-  string_view get_name_nothrow(const token &ident) const noexcept override;
+  token get_token_nothrow(
+      const string_view &field_name, const boolean_option discernible_null,
+      const boolean_option saturated) const cxx11_noexcept override;
+  token get_token_nothrow(
+      const token &inlay_token, const string_view &inner_name,
+      const boolean_option discernible_null,
+      const boolean_option saturated) const cxx11_noexcept override;
+  string_view
+  get_name_nothrow(const token &ident) const cxx11_noexcept override;
 };
 
 static bool is_inside(const std::ptrdiff_t point, const token &ident) {
@@ -287,10 +286,9 @@ token schema_impl::import_definition(std::string &&name, const token &ident,
   }
 }
 
-token schema_impl::get_token_nothrow(const string_view &name,
-                                     const boolean_option discernible_null,
-                                     const boolean_option saturated) const
-    noexcept {
+token schema_impl::get_token_nothrow(
+    const string_view &name, const boolean_option discernible_null,
+    const boolean_option saturated) const cxx11_noexcept {
   const auto it = name2token_.find(name);
   if (it == name2token_.end())
     return token();
@@ -305,11 +303,10 @@ token schema_impl::get_token_nothrow(const string_view &name,
   return ident;
 }
 
-token schema_impl::get_token_nothrow(const token &inlay_token,
-                                     const string_view &inner_name,
-                                     const boolean_option discernible_null,
-                                     const boolean_option saturated) const
-    noexcept {
+token schema_impl::get_token_nothrow(
+    const token &inlay_token, const string_view &inner_name,
+    const boolean_option discernible_null,
+    const boolean_option saturated) const cxx11_noexcept {
   (void)inlay_token;
   (void)inner_name;
   (void)discernible_null;
@@ -318,7 +315,8 @@ token schema_impl::get_token_nothrow(const token &inlay_token,
   return token();
 }
 
-string_view schema_impl::get_name_nothrow(const token &ident) const noexcept {
+string_view
+schema_impl::get_name_nothrow(const token &ident) const cxx11_noexcept {
   const auto it = token2name_.find(ident);
   if (it == token2name_.end()) {
     assert(string_view().nil());
@@ -335,7 +333,7 @@ std::unique_ptr<schema> schema::create() {
 }
 
 __hot schema::token_vector::const_iterator
-schema::search_preplaced(const ptrdiff_t offset) const noexcept {
+schema::search_preplaced(const ptrdiff_t offset) const cxx11_noexcept {
   assert(offset >= 0 && size_t(offset) <= preplaced_bytes());
 
   size_t span = number_of_preplaced();
@@ -387,7 +385,8 @@ schema::search_preplaced(const ptrdiff_t offset) const noexcept {
   return iter;
 }
 
-__hot token schema::by_loose(const details::field_loose *field) const noexcept {
+__hot token
+schema::by_loose(const details::field_loose *field) const cxx11_noexcept {
   size_t span = sorted_tokens_.size() - number_of_preplaced();
   if (likely(span)) {
     auto iter = sorted_tokens_.begin() + number_of_preplaced();
@@ -443,7 +442,7 @@ __hot token schema::by_loose(const details::field_loose *field) const noexcept {
   return token();
 }
 
-token schema::by_offset(const ptrdiff_t offset) const noexcept {
+token schema::by_offset(const ptrdiff_t offset) const cxx11_noexcept {
   if (likely(offset >= 0 && offset < ptrdiff_t(preplaced_bytes()))) {
     const auto iter = search_preplaced(offset);
     const auto detent = tokens().begin() + number_of_preplaced();
@@ -456,7 +455,7 @@ token schema::by_offset(const ptrdiff_t offset) const noexcept {
   return token();
 }
 
-token schema::next_by_offset(const ptrdiff_t offset) const noexcept {
+token schema::next_by_offset(const ptrdiff_t offset) const cxx11_noexcept {
   if (likely(offset >= 0 && offset < ptrdiff_t(preplaced_bytes()))) {
     auto iter = search_preplaced(offset);
     const auto detent = tokens().begin() + number_of_preplaced();
@@ -473,7 +472,7 @@ token schema::next_by_offset(const ptrdiff_t offset) const noexcept {
   return token();
 }
 
-token schema::prev_by_offset(const ptrdiff_t offset) const noexcept {
+token schema::prev_by_offset(const ptrdiff_t offset) const cxx11_noexcept {
   if (likely(offset > 0 && offset <= ptrdiff_t(preplaced_bytes()))) {
     auto iter = search_preplaced(offset);
     assert(iter >= tokens().begin() &&

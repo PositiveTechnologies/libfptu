@@ -77,8 +77,7 @@ union FPTU_API_TYPE hippeus_hipagut {
 };
 
 #ifdef __cplusplus
-inline cxx14_constexpr uint32_t operator"" _hipagut(const char *str,
-                                                    std::size_t len) {
+cxx14_constexpr uint32_t operator"" _hipagut(const char *str, std::size_t len) {
   uint32_t h = __LINE__;
   for (std::size_t i = 0; i < len; ++i)
     h = str[i] ^ (h * UINT32_C(1664525) + UINT32_C(1013904223));

@@ -83,9 +83,9 @@ class FPTU_API_TYPE bug : public std::runtime_error {
   const bug_location &location_;
 
 public:
-  bug(const bug_location &) noexcept;
-  const bug_location &location() const noexcept { return location_; }
-  virtual ~bug() noexcept;
+  bug(const bug_location &) cxx11_noexcept;
+  const bug_location &location() const cxx11_noexcept { return location_; }
+  virtual ~bug() cxx11_noexcept;
 };
 
 class FPTU_API_TYPE bad_tuple : public std::runtime_error {
@@ -94,7 +94,7 @@ class FPTU_API_TYPE bad_tuple : public std::runtime_error {
 public:
   bad_tuple(const char *details);
   bad_tuple(const std::string &details);
-  virtual ~bad_tuple() noexcept;
+  virtual ~bad_tuple() cxx11_noexcept;
 };
 
 class FPTU_API_TYPE bad_tuple_ro : public bad_tuple {
@@ -110,10 +110,10 @@ public:
   bad_tuple_ro(const fptu::schema *schema, const details::tuple_ro *tuple,
                const std::string &details);
   bad_tuple_ro(const fptu::schema *schema, const details::tuple_ro *tuple);
-  const fptu::schema *schema() const noexcept { return schema_; }
-  const void *ptr() const noexcept { return ptr_; }
-  std::size_t bytes() const noexcept { return bytes_; }
-  virtual ~bad_tuple_ro() noexcept;
+  const fptu::schema *schema() const cxx11_noexcept { return schema_; }
+  const void *ptr() const cxx11_noexcept { return ptr_; }
+  std::size_t bytes() const cxx11_noexcept { return bytes_; }
+  virtual ~bad_tuple_ro() cxx11_noexcept;
 };
 
 class FPTU_API_TYPE bad_tuple_rw : public bad_tuple {
@@ -123,8 +123,8 @@ public:
   bad_tuple_rw(const details::tuple_rw *tuple, const char *details);
   bad_tuple_rw(const details::tuple_rw *tuple, const std::string &details);
   bad_tuple_rw(const details::tuple_rw *tuple);
-  const details::tuple_rw *tuple() const noexcept { return tuple_; }
-  virtual ~bad_tuple_rw() noexcept;
+  const details::tuple_rw *tuple() const cxx11_noexcept { return tuple_; }
+  virtual ~bad_tuple_rw() cxx11_noexcept;
 };
 
 //------------------------------------------------------------------------------
@@ -132,9 +132,9 @@ public:
 class FPTU_API_TYPE insufficient_space : public std::bad_alloc {
 public:
   const std::size_t index_space, data_space;
-  insufficient_space(size_t index_space, std::size_t data_space) noexcept;
-  virtual ~insufficient_space() noexcept;
-  virtual const char *what() const noexcept;
+  insufficient_space(size_t index_space, std::size_t data_space) cxx11_noexcept;
+  virtual ~insufficient_space() cxx11_noexcept;
+  virtual const char *what() const cxx11_noexcept;
 };
 
 #define FPTU_DECLARE_EXCEPTION(NAME, BASE)                                     \
@@ -142,10 +142,10 @@ public:
     using base = BASE;                                                         \
                                                                                \
   public:                                                                      \
-    NAME() noexcept;                                                           \
-    NAME(const char *details) noexcept;                                        \
-    NAME(const std::string &details) noexcept;                                 \
-    virtual ~NAME() noexcept;                                                  \
+    NAME() cxx11_noexcept;                                                     \
+    NAME(const char *details) cxx11_noexcept;                                  \
+    NAME(const std::string &details) cxx11_noexcept;                           \
+    virtual ~NAME() cxx11_noexcept;                                            \
   }
 
 FPTU_DECLARE_EXCEPTION(invalid_argument, std::invalid_argument);

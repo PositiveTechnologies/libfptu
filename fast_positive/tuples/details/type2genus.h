@@ -33,7 +33,7 @@ template <typename TYPE> struct type2genus;
 // Helper struct for SFINAE-poisoning type2genus.
 template <typename TYPE, bool validator> struct __type2genus_poison {
 private:
-  genus static inline constexpr static_assert_helper() {
+  genus static cxx11_constexpr static_assert_helper() {
     static_assert(validator, "should be known or fundamental/native type");
     return genus::hole;
   }
@@ -42,7 +42,7 @@ private:
   ~__type2genus_poison();
 
 public:
-  static constexpr genus value = static_assert_helper();
+  static cxx11_constexpr_var genus value = static_assert_helper();
 };
 
 //------------------------------------------------------------------------------
@@ -59,13 +59,13 @@ private:
 // Helper struct for enum types.
 template <typename TYPE> struct __type2genus_enum<TYPE, true> {
 private:
-  genus static inline constexpr static_assert_helper() {
+  genus static cxx11_constexpr static_assert_helper() {
     static_assert(std::is_enum<TYPE>::value, "must be enum type");
     return genus::enumeration;
   }
 
 public:
-  static constexpr genus value = static_assert_helper();
+  static cxx11_constexpr_var genus value = static_assert_helper();
 };
 
 // Primary template for enum types only, Use with non-enum types still SFINAES.
@@ -74,7 +74,9 @@ template <typename TYPE> struct type2genus : __type2genus_enum<TYPE> {};
 //------------------------------------------------------------------------------
 
 #define FPTU_DECLARE_TYPE2GENUS(type, tag)                                     \
-  template <> struct type2genus<type> { static constexpr genus value = tag; }
+  template <> struct type2genus<type> {                                        \
+    static cxx11_constexpr_var genus value = tag;                              \
+  }
 
 FPTU_DECLARE_TYPE2GENUS(bool, genus::boolean);
 FPTU_DECLARE_TYPE2GENUS(int8_t, genus::i8);

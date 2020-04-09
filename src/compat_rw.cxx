@@ -17,14 +17,14 @@
 
 #include "fast_positive/tuples/details/legacy_compat.h"
 
-size_t fptu_space(size_t items, std::size_t data_bytes) noexcept {
+size_t fptu_space(size_t items, std::size_t data_bytes) cxx11_noexcept {
   return fptu::details::tuple_rw::estimate_required_space(
       std::min(items, size_t(fptu::max_fields)),
       std::min(data_bytes, size_t(fptu::max_tuple_bytes_netto)), nullptr);
 }
 
 fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
-                   std::size_t items_limit) noexcept {
+                   std::size_t items_limit) cxx11_noexcept {
   if (unlikely(buffer_space == nullptr))
     return nullptr;
 
@@ -38,7 +38,7 @@ fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
   }
 }
 
-fptu_rw *fptu_alloc(size_t items_limit, std::size_t data_bytes) noexcept {
+fptu_rw *fptu_alloc(size_t items_limit, std::size_t data_bytes) cxx11_noexcept {
   if (unlikely(items_limit > fptu::max_fields ||
                data_bytes > fptu::max_tuple_bytes_netto))
     return nullptr;
@@ -47,12 +47,12 @@ fptu_rw *fptu_alloc(size_t items_limit, std::size_t data_bytes) noexcept {
   return fptu_init(::malloc(bytes), bytes, items_limit);
 }
 
-void fptu_destroy(fptu_rw *pt) noexcept {
+void fptu_destroy(fptu_rw *pt) cxx11_noexcept {
   if (pt)
     pt->~fptu_rw();
 }
 
-fptu_error fptu_clear(fptu_rw *pt) noexcept {
+fptu_error fptu_clear(fptu_rw *pt) cxx11_noexcept {
   if (unlikely(pt == nullptr))
     return FPTU_EINVAL;
 
@@ -64,17 +64,23 @@ fptu_error fptu_clear(fptu_rw *pt) noexcept {
   return FPTU_OK;
 }
 
-size_t fptu_space4items(const fptu_rw *pt) noexcept { return pt->head_space(); }
+size_t fptu_space4items(const fptu_rw *pt) cxx11_noexcept {
+  return pt->head_space();
+}
 
-size_t fptu_space4data(const fptu_rw *pt) noexcept {
+size_t fptu_space4data(const fptu_rw *pt) cxx11_noexcept {
   return pt->tail_space_bytes();
 }
 
-size_t fptu_junkspace(const fptu_rw *pt) noexcept { return pt->junk_bytes(); }
+size_t fptu_junkspace(const fptu_rw *pt) cxx11_noexcept {
+  return pt->junk_bytes();
+}
 
-const char *fptu_check_rw(const fptu_rw *pt) noexcept { return pt->audit(); }
+const char *fptu_check_rw(const fptu_rw *pt) cxx11_noexcept {
+  return pt->audit();
+}
 
-fptu_ro fptu_take_noshrink(const fptu_rw *pt) noexcept {
+fptu_ro fptu_take_noshrink(const fptu_rw *pt) cxx11_noexcept {
   const fptu::details::tuple_ro *ro = pt->take_asis();
   fptu_ro envelope;
   envelope.sys.iov_base = (void *)ro;
@@ -82,7 +88,7 @@ fptu_ro fptu_take_noshrink(const fptu_rw *pt) noexcept {
   return envelope;
 }
 
-bool fptu_shrink(fptu_rw *pt) noexcept {
+bool fptu_shrink(fptu_rw *pt) cxx11_noexcept {
   try {
     return pt->optimize();
   } catch (const std::exception &e) {
@@ -93,7 +99,7 @@ bool fptu_shrink(fptu_rw *pt) noexcept {
 
 size_t fptu_check_and_get_buffer_size(fptu_ro ro, unsigned more_items,
                                       unsigned more_payload,
-                                      const char **error) noexcept {
+                                      const char **error) cxx11_noexcept {
   if (unlikely(error == nullptr))
     return ~size_t(0);
 
@@ -113,7 +119,7 @@ size_t fptu_check_and_get_buffer_size(fptu_ro ro, unsigned more_items,
 }
 
 fptu_rw *fptu_fetch(fptu_ro ro, void *buffer_space, std::size_t buffer_bytes,
-                    unsigned more_items) noexcept {
+                    unsigned more_items) cxx11_noexcept {
   if (unlikely(buffer_space == nullptr)) {
     fptu_set_error(FPTU_EINVAL, "invalid buffer (NULL)");
     return nullptr;
@@ -152,7 +158,7 @@ fptu_rw *fptu_fetch(fptu_ro ro, void *buffer_space, std::size_t buffer_bytes,
 }
 
 size_t fptu_get_buffer_size(fptu_ro ro, unsigned more_items,
-                            unsigned more_payload) noexcept {
+                            unsigned more_payload) cxx11_noexcept {
   const fptu::details::tuple_ro *tuple_ro =
       static_cast<const fptu::details::tuple_ro *>(ro.sys.iov_base);
   return fptu::details::tuple_rw::estimate_required_space(
@@ -163,7 +169,7 @@ static const char cbfs_ok_sign[] = "FPTU_SUCCESS";
 
 fptu_rw *fptu_fetch_ex(fptu_ro ro, void *buffer_space, std::size_t buffer_bytes,
                        unsigned more_items,
-                       struct fptu_cbfs_result *cbfs) noexcept {
+                       struct fptu_cbfs_result *cbfs) cxx11_noexcept {
 
   if (unlikely(cbfs == nullptr || cbfs->err || cbfs->err_msg != cbfs_ok_sign)) {
     fptu_set_error(FPTU_EINVAL, "invalid cbfs");
@@ -189,10 +195,9 @@ fptu_rw *fptu_fetch_ex(fptu_ro ro, void *buffer_space, std::size_t buffer_bytes,
   }
 }
 
-size_t
-fptu_check_and_get_buffer_size_ex(fptu_ro ro, unsigned more_items,
-                                  unsigned more_payload,
-                                  struct fptu_cbfs_result *cbfs) noexcept {
+size_t fptu_check_and_get_buffer_size_ex(
+    fptu_ro ro, unsigned more_items, unsigned more_payload,
+    struct fptu_cbfs_result *cbfs) cxx11_noexcept {
   if (unlikely(cbfs == nullptr))
     return ~size_t(0);
 
@@ -224,16 +229,16 @@ fptu_check_and_get_buffer_size_ex(fptu_ro ro, unsigned more_items,
   }
 }
 
-const fptu_field *fptu_begin_rw(const fptu_rw *pt) noexcept {
+const fptu_field *fptu_begin_rw(const fptu_rw *pt) cxx11_noexcept {
   return pt->begin_index();
 }
-const fptu_field *fptu_end_rw(const fptu_rw *pt) noexcept {
+const fptu_field *fptu_end_rw(const fptu_rw *pt) cxx11_noexcept {
   return pt->end_index();
 }
-bool fptu_is_empty_rw(const fptu_rw *pt) noexcept { return pt->empty(); }
+bool fptu_is_empty_rw(const fptu_rw *pt) cxx11_noexcept { return pt->empty(); }
 
 fptu_field *fptu_lookup_rw(fptu_rw *pt, unsigned column,
-                           fptu_type_or_filter type_or_filter) noexcept {
+                           fptu_type_or_filter type_or_filter) cxx11_noexcept {
   const auto begin = pt->begin_index();
   const auto end = pt->end_index();
   const auto pf =
@@ -245,7 +250,7 @@ fptu_field *fptu_lookup_rw(fptu_rw *pt, unsigned column,
 
 #define FPTU_UPSERT_IMPL(LEGACY, NAME, GENUS, VALUE_TYPE)                      \
   fptu_error fptu_upsert_##LEGACY(fptu_rw *pt, unsigned column,                \
-                                  VALUE_TYPE value) noexcept {                 \
+                                  VALUE_TYPE value) cxx11_noexcept {           \
     try {                                                                      \
       const fptu::token id(fptu::genus::GENUS, column, false, true, false);    \
       pt->set_##NAME(id, value);                                               \
@@ -266,7 +271,7 @@ FPTU_UPSERT_IMPL(fp32, f32, f32, float_t)
 FPTU_UPSERT_IMPL(datetime, datetime, t64, fptu_datetime_t)
 #undef FPTU_UPSERT_IMPL
 
-fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) noexcept {
+fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::enumeration, column, false, false, false);
     pt->set_enum(
@@ -279,7 +284,7 @@ fptu_error fptu_upsert_null(fptu_rw *pt, unsigned column) noexcept {
 
 #define FPTU_GET_IMPL(BITS)                                                    \
   fptu_error fptu_upsert_##BITS(fptu_rw *pt, unsigned column,                  \
-                                const void *data) noexcept {                   \
+                                const void *data) cxx11_noexcept {             \
     try {                                                                      \
       const fptu::token id(fptu::genus::bin##BITS, column, false, true,        \
                            false);                                             \
@@ -300,7 +305,7 @@ FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
 fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column, const char *text,
-                              std::size_t length) noexcept {
+                              std::size_t length) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::text, column, false, true, false);
     pt->set_string(id, fptu::string_view(text, length));
@@ -311,7 +316,7 @@ fptu_error fptu_upsert_string(fptu_rw *pt, unsigned column, const char *text,
 }
 
 fptu_error fptu_upsert_opaque(fptu_rw *pt, unsigned column, const void *data,
-                              std::size_t length) noexcept {
+                              std::size_t length) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::varbin, column, false, true, false);
     pt->set_varbinary(
@@ -323,12 +328,12 @@ fptu_error fptu_upsert_opaque(fptu_rw *pt, unsigned column, const void *data,
 }
 
 fptu_error fptu_upsert_opaque_iov(fptu_rw *pt, unsigned column,
-                                  const struct iovec value) noexcept {
+                                  const struct iovec value) cxx11_noexcept {
   return fptu_upsert_opaque(pt, column, value.iov_base, value.iov_len);
 }
 
 fptu_error fptu_upsert_nested(fptu_rw *pt, unsigned column,
-                              fptu_ro ro) noexcept {
+                              fptu_ro ro) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::varbin, column, false, true, false);
     pt->set_nested(id, fptu::details::tuple_ro::make_from_buffer(
@@ -343,7 +348,7 @@ fptu_error fptu_upsert_nested(fptu_rw *pt, unsigned column,
 
 #define FPTU_INSERT_IMPL(LEGACY, NAME, GENUS, VALUE_TYPE)                      \
   fptu_error fptu_insert_##LEGACY(fptu_rw *pt, unsigned column,                \
-                                  VALUE_TYPE value) noexcept {                 \
+                                  VALUE_TYPE value) cxx11_noexcept {           \
     try {                                                                      \
       const fptu::token id(fptu::genus::GENUS, column, true, true, false);     \
       pt->insert_##NAME(id, value);                                            \
@@ -366,7 +371,7 @@ FPTU_INSERT_IMPL(datetime, datetime, t64, fptu_datetime_t)
 
 #define FPTU_GET_IMPL(BITS)                                                    \
   fptu_error fptu_insert_##BITS(fptu_rw *pt, unsigned column,                  \
-                                const void *data) noexcept {                   \
+                                const void *data) cxx11_noexcept {             \
     try {                                                                      \
       const fptu::token id(fptu::genus::bin##BITS, column, true);              \
       pt->insert_bin##BITS(                                                    \
@@ -386,7 +391,7 @@ FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
 fptu_error fptu_insert_string(fptu_rw *pt, unsigned column, const char *text,
-                              std::size_t length) noexcept {
+                              std::size_t length) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::text, column, true, true, false);
     pt->insert_string(id, fptu::string_view(text, length));
@@ -397,7 +402,7 @@ fptu_error fptu_insert_string(fptu_rw *pt, unsigned column, const char *text,
 }
 
 fptu_error fptu_insert_opaque(fptu_rw *pt, unsigned column, const void *data,
-                              std::size_t length) noexcept {
+                              std::size_t length) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::varbin, column, true, true, false);
     pt->insert_varbinary(
@@ -409,12 +414,12 @@ fptu_error fptu_insert_opaque(fptu_rw *pt, unsigned column, const void *data,
 }
 
 fptu_error fptu_insert_opaque_iov(fptu_rw *pt, unsigned column,
-                                  const struct iovec value) noexcept {
+                                  const struct iovec value) cxx11_noexcept {
   return fptu_insert_opaque(pt, column, value.iov_base, value.iov_len);
 }
 
 fptu_error fptu_insert_nested(fptu_rw *pt, unsigned column,
-                              fptu_ro ro) noexcept {
+                              fptu_ro ro) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::nested, column, true, true, false);
     pt->insert_nested(id, fptu::details::tuple_ro::make_from_buffer(
@@ -429,7 +434,7 @@ fptu_error fptu_insert_nested(fptu_rw *pt, unsigned column,
 
 #define FPTU_UPDATE_IMPL(LEGACY, NAME, GENUS, VALUE_TYPE)                      \
   fptu_error fptu_update_##LEGACY(fptu_rw *pt, unsigned column,                \
-                                  VALUE_TYPE value) noexcept {                 \
+                                  VALUE_TYPE value) cxx11_noexcept {           \
     try {                                                                      \
       const fptu::token id(fptu::genus::GENUS, column, true, true, false);     \
       pt->legacy_update_##NAME(id, value);                                     \
@@ -452,7 +457,7 @@ FPTU_UPDATE_IMPL(datetime, datetime, t64, fptu_datetime_t)
 
 #define FPTU_GET_IMPL(BITS)                                                    \
   fptu_error fptu_update_##BITS(fptu_rw *pt, unsigned column,                  \
-                                const void *data) noexcept {                   \
+                                const void *data) cxx11_noexcept {             \
     try {                                                                      \
       const fptu::token id(fptu::genus::bin##BITS, column, true, true, false); \
       pt->legacy_update_bin##BITS(                                             \
@@ -472,7 +477,7 @@ FPTU_GET_IMPL(256)
 #undef FPTU_GET_IMPL
 
 fptu_error fptu_update_string(fptu_rw *pt, unsigned column, const char *text,
-                              std::size_t length) noexcept {
+                              std::size_t length) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::text, column, true, true, false);
     pt->legacy_update_string(id, fptu::string_view(text, length));
@@ -483,7 +488,7 @@ fptu_error fptu_update_string(fptu_rw *pt, unsigned column, const char *text,
 }
 
 fptu_error fptu_update_opaque(fptu_rw *pt, unsigned column, const void *data,
-                              std::size_t length) noexcept {
+                              std::size_t length) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::varbin, column, true, true, false);
     pt->legacy_update_varbinary(
@@ -495,12 +500,12 @@ fptu_error fptu_update_opaque(fptu_rw *pt, unsigned column, const void *data,
 }
 
 fptu_error fptu_update_opaque_iov(fptu_rw *pt, unsigned column,
-                                  const struct iovec value) noexcept {
+                                  const struct iovec value) cxx11_noexcept {
   return fptu_update_opaque(pt, column, value.iov_base, value.iov_len);
 }
 
 fptu_error fptu_update_nested(fptu_rw *pt, unsigned column,
-                              fptu_ro ro) noexcept {
+                              fptu_ro ro) cxx11_noexcept {
   try {
     const fptu::token id(fptu::genus::nested, column, true, true, false);
     pt->legacy_update_nested(
