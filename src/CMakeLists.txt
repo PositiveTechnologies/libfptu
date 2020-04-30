@@ -45,7 +45,7 @@ endif()
 #
 # Get version
 if(HAVE_FPTU_VERSIONINFO)
-  fetch_version(FPTU "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION")
+  fetch_version(FPTU "${CMAKE_CURRENT_SOURCE_DIR}/.." TRUE)
   message(STATUS "libfptu version is ${FPTU_VERSION}")
 else()
   set(FPTU_VERSION "unversioned")
