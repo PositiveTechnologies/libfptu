@@ -202,7 +202,6 @@ endif()
 
 set_target_properties(${fptu_target} PROPERTIES
   PROJECT_LABEL "Fast Positive Tuples"
-  FRAMEWORK TRUE
   VERSION "${FPTU_VERSION}"
   PUBLIC_HEADER "${LIBFPTU_CONFIG_H}"
 #  PRIVATE_HEADER "${LIBFPTU_PRIVATE_INCLUDES}"
@@ -238,13 +237,26 @@ if(LIBFPTU_TYPE STREQUAL "SHARED")
   target_compile_definitions(${fptu_target} PRIVATE "fptu_EXPORTS" INTERFACE "fptu_IMPORTS")
 endif()
 
-install(TARGETS fptu
-  LIBRARY DESTINATION lib COMPONENT runtime
-  RUNTIME DESTINATION lib COMPONENT runtime
-  ARCHIVE DESTINATION lib/static COMPONENT devel
-  PUBLIC_HEADER DESTINATION include/fast_positive/tuples INCLUDES DESTINATION include COMPONENT devel
-#  PRIVATE_HEADER DESTINATION include/fast_positive/ INCLUDES DESTINATION include COMPONENT devel
-  )
+if(CMAKE_VERSION VERSION_LESS 3.12)
+  install(TARGETS fptu EXPORT fptu
+    RUNTIME DESTINATION bin COMPONENT runtime
+    LIBRARY DESTINATION bin COMPONENT runtime
+    OBJECTS DESTINATION lib COMPONENT devel
+    ARCHIVE DESTINATION lib COMPONENT devel
+    PUBLIC_HEADER DESTINATION include/fast_positive/tuples INCLUDES DESTINATION include COMPONENT devel
+  #  PRIVATE_HEADER DESTINATION include/fast_positive/ INCLUDES DESTINATION include COMPONENT devel
+    INCLUDES DESTINATION include/fast_positive/tuples COMPONENT devel)
+else()
+  install(TARGETS fptu EXPORT fptu
+    RUNTIME DESTINATION bin COMPONENT runtime
+    LIBRARY DESTINATION bin COMPONENT runtime
+    NAMELINK_COMPONENT devel
+    OBJECTS DESTINATION lib COMPONENT devel
+    ARCHIVE DESTINATION lib COMPONENT devel
+    PUBLIC_HEADER DESTINATION include/fast_positive/tuples INCLUDES DESTINATION include COMPONENT devel
+  #  PRIVATE_HEADER DESTINATION include/fast_positive/ INCLUDES DESTINATION include COMPONENT devel
+    INCLUDES DESTINATION include/fast_positive/tuples COMPONENT devel)
+endif()
 
 foreach(file ${LIBFPTU_HEADERS} erthink/LICENSE erthink/AUTHORS)
   get_filename_component(dir ${file} DIRECTORY)
