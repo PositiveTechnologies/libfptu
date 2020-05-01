@@ -246,15 +246,28 @@ template <unsigned N, typename TYPE = uint32_t[N]> struct unit_n {
       std::memset(preplaced->bytes + sizeof(value_type), 0,
                   preplaced_bytes - sizeof(value_type));
   }
+
+#if defined(__GNUC__) && __GNUC__ == 10
+  /* This is workaround for GCC 10 false-positive warnings
+   * like "writing 16 bytes into a region of size 2 [-Wstringop-overflow=]".
+   * Unfortunately this crutch has no effect if LTO enabled. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
   static void write(details::field_loose *loose,
                     return_type value) cxx11_noexcept {
     static_assert(sizeof(value_type) <= preplaced_bytes, "WTF?");
-    const auto ptr = loose->relative.payload();
-    std::memcpy(ptr, &value, preplaced_bytes);
+    details::relative_payload *const ptr = loose->relative.payload();
+    static_assert(sizeof(ptr->fixed) >= preplaced_bytes, "WTF?");
+    std::memcpy(&ptr->fixed.words, &value, preplaced_bytes);
     if (preplaced_bytes != sizeof(value_type))
       std::memset(ptr->fixed.bytes + sizeof(value_type), 0,
                   preplaced_bytes - sizeof(value_type));
   }
+#if defined(__GNUC__) && __GNUC__ == 10
+#pragma GCC diagnostic pop
+#endif /* workaround for GCC 10 false-positive warning */
+
   static void erase(details::field_preplaced *preplaced,
                     const bool distinct_null) {
     (void)distinct_null;

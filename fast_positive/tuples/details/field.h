@@ -343,7 +343,7 @@ union relative_payload {
     int64_t unaligned_i64;
     double unaligned_f64;
     char bytes[8];
-    uint32_t fixed[16];
+    uint32_t words[16];
   } fixed;
 
   unit_t flat[1];
