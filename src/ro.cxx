@@ -258,8 +258,8 @@ crtp_getter<tuple_ro>::collection(const token &ident) const {
 }
 
 template <>
-FPTU_API __pure_function dynamic_accessor_ro crtp_getter<tuple_ro>::
-operator[](const token &ident) const {
+FPTU_API __pure_function dynamic_accessor_ro
+crtp_getter<tuple_ro>::operator[](const token &ident) const {
   return at(self(), ident);
 }
 

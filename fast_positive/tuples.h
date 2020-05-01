@@ -1430,20 +1430,20 @@ preplaced_nested::value_nothrow() const cxx11_noexcept {
 
 //------------------------------------------------------------------------------
 
-inline bool tuple_ro_weak::
-operator==(const tuple_ro_managed &ditto) const cxx11_noexcept {
+inline bool
+tuple_ro_weak::operator==(const tuple_ro_managed &ditto) const cxx11_noexcept {
   return ditto == *this;
 }
-inline bool tuple_ro_weak::
-operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept {
+inline bool
+tuple_ro_weak::operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept {
   return ditto != *this;
 }
-inline bool tuple_ro_weak::
-operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
+inline bool
+tuple_ro_weak::operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto.operator==(*this);
 }
-inline bool tuple_ro_weak::
-operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
+inline bool
+tuple_ro_weak::operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto.operator!=(*this);
 }
 
@@ -1455,12 +1455,12 @@ tuple_ro_managed::peek_schema() const cxx11_noexcept {
   return likely(basis) ? basis->schema_ : nullptr;
 }
 
-inline bool tuple_ro_managed::
-operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
+inline bool
+tuple_ro_managed::operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto == *this;
 }
-inline bool tuple_ro_managed::
-operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
+inline bool
+tuple_ro_managed::operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
   return ditto != *this;
 }
 

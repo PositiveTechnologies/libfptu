@@ -77,7 +77,7 @@ FPTU_API __noreturn void throw_schema_definition_error(const char *details);
                                    for dll-interface class */
 #endif
 
-namespace fptu __dll_visibility_default {
+namespace fptu /* __dll_visibility_default */ {
 
 class FPTU_API_TYPE bug : public std::runtime_error {
   const bug_location &location_;
@@ -169,7 +169,7 @@ FPTU_DECLARE_EXCEPTION(schema_definition_error, std::logic_error);
 FPTU_DECLARE_EXCEPTION(schema_no_such_field, std::logic_error);
 #undef FPTU_DECLARE_EXCEPTION
 
-} // namespace fptu__dll_visibility_default
+} // namespace fptu
 
 #ifdef _MSC_VER
 #pragma warning(pop)

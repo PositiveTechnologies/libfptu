@@ -227,7 +227,7 @@ if(NOT SUBPROJECT)
   #
   # Enable 'make reformat' target.
   find_program(CLANG_FORMAT
-    NAMES clang-format-9 clang-format-8 clang-format-7 clang-format-6 clang-format)
+    NAMES clang-format-12 clang-format-11 clang-format-10 clang-format-9 clang-format-8 clang-format)
   if(CLANG_FORMAT AND UNIX)
     add_custom_target(reformat
       VERBATIM

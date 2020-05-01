@@ -28,7 +28,7 @@
 #pragma GCC visibility push(default)
 #endif
 
-namespace fptu __dll_visibility_default {
+namespace fptu /* __dll_visibility_default */ {
 
 __cold void raise_bug(const bug_location &what_and_where) {
   throw bug(what_and_where);
@@ -206,7 +206,7 @@ __cold __noreturn void throw_tuple_bad(const details::tuple_rw *tuple,
   throw bad_tuple_rw(tuple, details);
 }
 
-} // namespace fptu__dll_visibility_default
+} // namespace fptu
 
 #ifdef __GNUC__
 #pragma GCC visibility pop
