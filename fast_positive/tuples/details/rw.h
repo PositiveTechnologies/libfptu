@@ -40,6 +40,91 @@ class tuple_rw_managed;
 
 namespace details {
 
+/* Границы безопасной конвертации double->integer->double без переполнения */
+template <typename F, typename I> struct roundtrip_bounds;
+
+template <> struct roundtrip_bounds<double, uint64_t> {
+  static constexpr double upper() noexcept {
+    return static_cast<double>(std::numeric_limits<uint64_t>::max() -
+                               INT64_C(2047));
+  }
+  static constexpr double lower() noexcept { return 0.0; }
+};
+
+template <> struct roundtrip_bounds<double, int64_t> {
+  static constexpr double upper() noexcept {
+    return static_cast<double>(std::numeric_limits<int64_t>::max() -
+                               INT64_C(1023));
+  }
+  static constexpr double lower() noexcept {
+    return static_cast<double>(std::numeric_limits<int64_t>::min() +
+                               INT64_C(1024));
+  }
+};
+
+template <> struct roundtrip_bounds<double, uint32_t> {
+  static constexpr double upper() noexcept {
+    return static_cast<double>(std::numeric_limits<uint32_t>::max());
+  }
+  static constexpr double lower() noexcept { return 0.0; }
+};
+
+template <> struct roundtrip_bounds<double, int32_t> {
+  static constexpr double upper() noexcept {
+    return static_cast<double>(std::numeric_limits<int32_t>::max());
+  }
+  static constexpr double lower() noexcept {
+    return static_cast<double>(std::numeric_limits<int32_t>::min() +
+                               INT64_C(1));
+  }
+};
+
+template <> struct roundtrip_bounds<float, uint64_t> {
+  static constexpr float upper() noexcept {
+    return static_cast<float>(std::numeric_limits<uint64_t>::max() -
+                              INT64_C(1099511627775));
+  }
+  static constexpr float lower() noexcept { return 0.0; }
+};
+
+template <> struct roundtrip_bounds<float, int64_t> {
+  static constexpr float upper() noexcept {
+    return static_cast<float>(std::numeric_limits<int64_t>::max() -
+                              INT64_C(549755813887));
+  }
+  static constexpr float lower() noexcept {
+    return static_cast<float>(std::numeric_limits<int64_t>::min() +
+                              INT64_C(549755813888));
+  }
+};
+
+template <> struct roundtrip_bounds<float, uint32_t> {
+  static constexpr float upper() noexcept {
+    return static_cast<float>(std::numeric_limits<uint32_t>::max() -
+                              INT64_C(255));
+  }
+  static constexpr float lower() noexcept { return 0.0; }
+};
+
+template <> struct roundtrip_bounds<float, int32_t> {
+  static constexpr float upper() noexcept {
+    return static_cast<float>(std::numeric_limits<int32_t>::max() -
+                              INT64_C(127));
+  }
+  static constexpr float lower() noexcept {
+    return static_cast<float>(std::numeric_limits<int32_t>::min() +
+                              INT64_C(128));
+  }
+};
+
+template <genus GENUS, typename VALUE>
+constexpr bool is_safe_roundtrip(VALUE value) noexcept {
+  return value >= roundtrip_bounds<VALUE, typename meta::genus_traits<
+                                              GENUS>::value_type>::lower() &&
+         value <= roundtrip_bounds<VALUE, typename meta::genus_traits<
+                                              GENUS>::value_type>::upper();
+}
+
 class FPTU_API_TYPE tuple_rw : public crtp_getter<tuple_rw> {
   friend class crtp_getter<tuple_rw>;
   friend class fptu::tuple_ro_managed;
@@ -645,11 +730,11 @@ public:
           throw_value_range();
         return set_i16(static_cast<int16_t>(value));
       case i32:
-        if (unlikely(value < INT32_MIN || value > INT32_MAX))
+        if (unlikely(!(is_safe_roundtrip<i32>(value))))
           throw_value_range();
         return set_i32(static_cast<int32_t>(value));
       case i64:
-        if (unlikely(value < INT64_MIN || value > INT64_MAX))
+        if (unlikely(!(is_safe_roundtrip<i64>(value))))
           throw_value_range();
         return set_i64(static_cast<int64_t>(value));
       case u8:
@@ -661,11 +746,11 @@ public:
           throw_value_range();
         return set_u16(static_cast<uint16_t>(value));
       case u32:
-        if (unlikely(value < 0 || value > UINT32_MAX))
+        if (unlikely(!(is_safe_roundtrip<u32>(value))))
           throw_value_range();
         return set_u32(static_cast<uint32_t>(value));
       case u64:
-        if (unlikely(value < 0 || value > UINT64_MAX))
+        if (unlikely(!(is_safe_roundtrip<u64>(value))))
           throw_value_range();
         return set_u64(static_cast<uint64_t>(value));
       }
@@ -694,11 +779,11 @@ public:
           throw_value_range();
         return set_i16(static_cast<int16_t>(value));
       case i32:
-        if (unlikely(value < INT32_MIN || value > INT32_MAX))
+        if (unlikely(!(is_safe_roundtrip<i32>(value))))
           throw_value_range();
         return set_i32(static_cast<int32_t>(value));
       case i64:
-        if (unlikely(value < INT64_MIN || value > INT64_MAX))
+        if (unlikely(!(is_safe_roundtrip<i64>(value))))
           throw_value_range();
         return set_i64(static_cast<int64_t>(value));
       case u8:
@@ -710,11 +795,11 @@ public:
           throw_value_range();
         return set_u16(static_cast<uint16_t>(value));
       case u32:
-        if (unlikely(value < 0 || value > UINT32_MAX))
+        if (unlikely(!(is_safe_roundtrip<u32>(value))))
           throw_value_range();
         return set_u32(static_cast<uint32_t>(value));
       case u64:
-        if (unlikely(value < 0 || value > UINT64_MAX))
+        if (unlikely(!(is_safe_roundtrip<u64>(value))))
           throw_value_range();
         return set_u64(static_cast<uint64_t>(value));
       }

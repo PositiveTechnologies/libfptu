@@ -529,11 +529,11 @@ tuple_rw::insert_number(const token &ident, const float value) {
       throw_value_range();
     return insert_i16(ident, static_cast<int16_t>(value));
   case i32:
-    if (unlikely(value < INT32_MIN || value > INT32_MAX))
+    if (unlikely(!(is_safe_roundtrip<i32>(value))))
       throw_value_range();
     return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
-    if (unlikely(value < INT64_MIN || value > INT64_MAX))
+    if (unlikely(!(is_safe_roundtrip<i64>(value))))
       throw_value_range();
     return insert_i64(ident, static_cast<int64_t>(value));
   case u8:
@@ -545,11 +545,11 @@ tuple_rw::insert_number(const token &ident, const float value) {
       throw_value_range();
     return insert_u16(ident, static_cast<uint16_t>(value));
   case u32:
-    if (unlikely(value < 0 || value > UINT32_MAX))
+    if (unlikely(!(is_safe_roundtrip<u32>(value))))
       throw_value_range();
     return insert_u32(ident, static_cast<uint32_t>(value));
   case u64:
-    if (unlikely(value < 0 || value > UINT64_MAX))
+    if (unlikely(!(is_safe_roundtrip<u64>(value))))
       throw_value_range();
     return insert_u64(ident, static_cast<uint64_t>(value));
   }
@@ -579,11 +579,11 @@ tuple_rw::insert_number(const token &ident, const double value) {
       throw_value_range();
     return insert_i16(ident, static_cast<int16_t>(value));
   case i32:
-    if (unlikely(value < INT32_MIN || value > INT32_MAX))
+    if (unlikely(!(is_safe_roundtrip<i32>(value))))
       throw_value_range();
     return insert_i32(ident, static_cast<int32_t>(value));
   case i64:
-    if (unlikely(value < INT64_MIN || value > INT64_MAX))
+    if (unlikely(!(is_safe_roundtrip<i64>(value))))
       throw_value_range();
     return insert_i64(ident, static_cast<int64_t>(value));
   case u8:
@@ -595,11 +595,11 @@ tuple_rw::insert_number(const token &ident, const double value) {
       throw_value_range();
     return insert_u16(ident, static_cast<uint16_t>(value));
   case u32:
-    if (unlikely(value < 0 || value > UINT32_MAX))
+    if (unlikely(!(is_safe_roundtrip<u32>(value))))
       throw_value_range();
     return insert_u32(ident, static_cast<uint32_t>(value));
   case u64:
-    if (unlikely(value < 0 || value > UINT64_MAX))
+    if (unlikely(!(is_safe_roundtrip<u64>(value))))
       throw_value_range();
     return insert_u64(ident, static_cast<uint64_t>(value));
   }
