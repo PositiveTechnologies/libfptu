@@ -86,16 +86,48 @@ struct error_guard {
 //------------------------------------------------------------------------------
 
 #define FPTU_DENIL_FP32_BIN UINT32_C(0xFFFFffff)
+#ifndef _MSC_VER /* MSVC provides invalid nanf(), leave it undefined */
+#define FPTU_DENIL_FP32_MAS "0x007FFFFF"
+#endif /* ! _MSC_VER */
+
+#if defined(__cplusplus) && HAVE_std_bit_cast
+static cxx11_constexpr float fptu_fp32_denil(void) {
+  return std::bit_cast<float>(FPTU_DENIL_FP32_BIN);
+#else
 static __inline float fptu_fp32_denil(void) {
-  static const uint32_t u32 = FPTU_DENIL_FP32_BIN;
-  return *erthink::constexpr_pointer_cast<const float *>(&u32);
+#if defined(FPTU_DENIL_FP32_MAS) && (__GNUC_PREREQ(3, 3) || __has_builtin(nanf))
+  return -__builtin_nanf(FPTU_DENIL_FP32_MAS);
+#else
+  const uint32_t u32 = FPTU_DENIL_FP32_BIN;
+  float fp32 = 0.0;
+  constexpr_assert(sizeof(u32) == sizeof(fp32));
+  memcpy(&fp32, &u32, sizeof(fp32));
+  return fp32;
+#endif /* FPTU_DENIL_FP32_MAS */
+#endif /* HAVE_std_bit_cast */
 }
 #define FPTU_DENIL_FP32 fptu_fp32_denil()
 
 #define FPTU_DENIL_FP64_BIN UINT64_C(0xFFFFffffFFFFffff)
+#ifndef _MSC_VER /* MSVC provides invalid nan(), leave it undefined */
+#define FPTU_DENIL_FP64_MAS "0x000FffffFFFFffff"
+#endif /* ! _MSC_VER */
+
+#if defined(__cplusplus) && HAVE_std_bit_cast
+static cxx11_constexpr double fptu_fp64_denil(void) {
+  return std::bit_cast<double>(FPTU_DENIL_FP64_BIN);
+#else
 static __inline double fptu_fp64_denil(void) {
-  static const uint64_t u64 = FPTU_DENIL_FP64_BIN;
-  return *erthink::constexpr_pointer_cast<const double *>(&u64);
+#if defined(FPTU_DENIL_FP64_MAS) && (__GNUC_PREREQ(3, 3) || __has_builtin(nan))
+  return -__builtin_nan(FPTU_DENIL_FP64_MAS);
+#else
+  const uint64_t u64 = FPTU_DENIL_FP64_BIN;
+  double fp64 = 0.0;
+  constexpr_assert(sizeof(u64) == sizeof(fp64));
+  memcpy(&fp64, &u64, sizeof(fp64));
+  return fp64;
+#endif /* FPTU_DENIL_FP64_MAS */
+#endif /* HAVE_std_bit_cast */
 }
 #define FPTU_DENIL_FP64 fptu_fp64_denil()
 
