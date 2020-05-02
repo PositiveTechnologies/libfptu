@@ -43,8 +43,8 @@ fptu_datetime_C fptu_now_fine(void) {
   struct timespec now;
   int rc = clock_gettime(CLOCK_REALTIME, &now);
   if (unlikely(rc != 0))
-    __assert_fail("clock_gettime() failed", "fptu/time.cxx", __LINE__,
-                  __func__);
+    throw std::system_error(rc, std::system_category(),
+                            "clock_gettime(CLOCK_REALTIME) failed");
   return fptu_datetime_t::from_timespec(now);
 #endif /* ! WINDOWS */
 }
@@ -86,9 +86,10 @@ fptu_datetime_C fptu_now_coarse(void) {
   struct timespec now;
   int rc = clock_gettime(coarse_clockid, &now);
   if (unlikely(rc != 0))
-    __assert_fail("clock_gettime() failed", "fptu/time.cxx", __LINE__,
-                  __func__);
-
+    throw std::system_error(
+        rc, std::system_category(),
+        fptu::format("clock_gettime(coarse_clockid=%ld) failed",
+                     long(coarse_clockid)));
   return fptu::datetime_t::from_timespec(now);
 #else  /* CLOCK_REALTIME_COARSE */
   return fptu_now_fine();

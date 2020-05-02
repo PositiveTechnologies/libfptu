@@ -17,7 +17,10 @@
 
 #pragma once
 #include "fast_positive/tuples/api.h"
-#include <stdexcept> // for std::invalid_argument
+#include <exception>    // for str::exception
+#include <new>          // for std::bad_alloc
+#include <stdexcept>    // for std::invalid_argument
+#include <system_error> // for std::system_error
 
 namespace fptu {
 class bug_location;

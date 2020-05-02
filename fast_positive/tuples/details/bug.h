@@ -34,23 +34,6 @@
 #define BUG_PROVIDE_FILENAME 1
 #endif
 
-#if !defined(_MSC_VER) &&                                                      \
-    /* workaround for avoid musl libc wrong prototype */ (                     \
-        defined(__GLIBC__) || defined(__GNU_LIBRARY__))
-/* Prototype should match libc runtime. ISO POSIX (2003) & LSB 1.x-3.x */
-__extern_C void __assert_fail(const char *assertion, const char *filename,
-                              unsigned line, const char *function)
-#ifdef __GNUC__
-#ifdef __THROW
-    __THROW
-#else
-    __nothrow
-#endif
-    __noreturn
-#endif
-    ;
-#endif /* _MSC_VER or musl */
-
 namespace fptu {
 
 class bug_location {

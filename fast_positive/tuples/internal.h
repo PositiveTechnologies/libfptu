@@ -72,8 +72,36 @@
 
 //------------------------------------------------------------------------------
 
-#include <limits.h>
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif /* Apple OSX & iOS */
+
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||     \
+    defined(__BSD__) || defined(__bsdi__) || defined(__DragonFly__) ||         \
+    defined(__APPLE__) || defined(__MACH__)
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#else
 #include <malloc.h>
+#endif /* !xBSD */
+
+#if defined(__FreeBSD__) || __has_include(<malloc_np.h>)
+#include <malloc_np.h>
+#endif
+
+#if defined(__APPLE__) || defined(__MACH__) || __has_include(<malloc/malloc.h>)
+#include <malloc/malloc.h>
+#endif /* MacOS */
+
+#if __GLIBC_PREREQ(2, 12) || defined(__FreeBSD__) || defined(malloc_usable_size)
+/* malloc_usable_size() already provided */
+#elif defined(__APPLE__)
+#define malloc_usable_size(ptr) malloc_size(ptr)
+#elif defined(_MSC_VER)
+#define malloc_usable_size(ptr) _msize(ptr)
+#endif /* malloc_usable_size */
+
+#include <limits.h>
 #include <string.h>
 
 #include <cinttypes> // for PRId64, PRIu64
@@ -91,6 +119,7 @@
 #include "fast_positive/tuples/1Hippeus/hipagut.h"
 #include "fast_positive/tuples/details/bug.h"
 #include "fast_positive/tuples/details/cpu_features.h"
+#include "fast_positive/tuples/details/exceptions.h"
 #include "fast_positive/tuples/details/meta.h"
 #include "fast_positive/tuples/details/nan.h"
 #include "fast_positive/tuples/details/scan.h"
