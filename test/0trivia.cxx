@@ -181,7 +181,8 @@ TEST(Trivia, Apriory) {
 TEST(Trivia, ColType) {
   fptu_tag_t tag;
   tag = fptu::make_tag(0, fptu_bool);
-  ASSERT_EQ(4294778880u, tag);
+  /* fpu_tag_t is uint_fast 16_t, it can be 2, 4, or 8 bytes in size */
+  ASSERT_EQ((sizeof(tag) == 2) ? 0x2000u : 0xFFFD2000u, tag);
   EXPECT_EQ(0u, fptu::get_colnum(tag));
   EXPECT_EQ(fptu_bool, fptu::get_type(tag));
 
