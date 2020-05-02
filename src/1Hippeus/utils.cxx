@@ -35,6 +35,25 @@ namespace hippeus {
 
 namespace {
 
+template <typename T, unsigned SIZE = sizeof(T)> struct native_type;
+template <typename T> struct native_type<T, 1> {
+  using signed_integer = int8_t;
+  using unsigned_integer = uint8_t;
+};
+template <typename T> struct native_type<T, 2> {
+  using signed_integer = int16_t;
+  using unsigned_integer = uint16_t;
+};
+template <typename T> struct native_type<T, 4> {
+  using signed_integer = int32_t;
+  using unsigned_integer = uint32_t;
+};
+template <typename T> struct native_type<T, 8> {
+  using signed_integer = int64_t;
+  using unsigned_integer = uint64_t;
+};
+using machine_word = native_type<uintptr_t>::unsigned_integer;
+
 /* LY: выдает маску с 0xFF для первых n-байт в порядке адресации. */
 template <typename word> cxx11_constexpr word aheadmask(size_t bytes) {
   constexpr_assert(bytes > 0 && bytes < sizeof(word));
@@ -60,17 +79,17 @@ template <typename word> static cxx11_constexpr word tailmask(size_t bytes) {
 }
 
 template <typename F>
-__always_inline uintptr_t *uintptr_applier(uintptr_t *ptr, ptrdiff_t bytes,
-                                           F functor) {
-  const uintptr_t whole = ~uintptr_t(0);
+__always_inline machine_word *uintptr_applier(machine_word *ptr,
+                                              ptrdiff_t bytes, F functor) {
+  const machine_word whole = ~machine_word(0);
   const std::size_t unalign =
-      erthink::bit_cast<uintptr_t>(ptr) % sizeof(uintptr_t);
+      erthink::bit_cast<machine_word>(ptr) % sizeof(machine_word);
 
   if (unalign) {
-    ptr = erthink::bit_cast<uintptr_t *>(erthink::bit_cast<uintptr_t>(ptr) -
-                                         unalign);
-    bytes -= sizeof(uintptr_t) - unalign;
-    uintptr_t gatemask = whole;
+    ptr = erthink::bit_cast<machine_word *>(
+        erthink::bit_cast<machine_word>(ptr) - unalign);
+    bytes -= sizeof(machine_word) - unalign;
+    machine_word gatemask = whole;
     if (bytes < 0)
       gatemask >>= (unalign - bytes) * 8;
 
@@ -81,29 +100,29 @@ __always_inline uintptr_t *uintptr_applier(uintptr_t *ptr, ptrdiff_t bytes,
     ptr++;
   }
 
-  while (bytes >= ptrdiff_t(sizeof(uintptr_t))) {
+  while (bytes >= ptrdiff_t(sizeof(machine_word))) {
     if (functor(ptr))
       return ptr;
 
     ptr++;
-    bytes -= sizeof(uintptr_t);
+    bytes -= sizeof(machine_word);
   }
 
-  if ((bytes > 0) && functor(ptr, aheadmask<uintptr_t>(bytes)))
+  if ((bytes > 0) && functor(ptr, aheadmask<machine_word>(bytes)))
     return ptr;
 
   return nullptr;
 }
 
 template <bool congruential> class pollute_functor {
-  uintptr_t value_;
+  machine_word value_;
 
 public:
-  pollute_functor(uintptr_t seed) : value_(seed) {}
+  pollute_functor(machine_word seed) : value_(seed) {}
 
-  bool operator()(uintptr_t *ptr, uintptr_t gatemask) {
+  bool operator()(machine_word *ptr, machine_word gatemask) {
     assert(gatemask > 0);
-    assert(gatemask != ~(uintptr_t)0);
+    assert(gatemask != machine_word(0));
 
     if (congruential)
       value_ = linear_congruential(value_);
@@ -116,7 +135,7 @@ public:
     return false;
   }
 
-  bool operator()(uintptr_t *ptr) {
+  bool operator()(machine_word *ptr) {
     if (congruential)
       value_ = linear_congruential(value_);
 
@@ -126,14 +145,14 @@ public:
 };
 
 struct probe4zero_functor {
-  bool operator()(uintptr_t *ptr, uintptr_t gatemask) {
+  bool operator()(machine_word *ptr, machine_word gatemask) {
     /* LY: valgrind здесь детектирует выход за границы региона памяти.
      * Однако, это не является ошибкой. Доступ производится выровненными
      * словами, при этом изменение байтов вне заданных границ блокируется
      * битовой маской. Для проверки корректности поведения есть юнит-тест. */
     return (*ptr & gatemask) != 0;
   }
-  bool operator()(uintptr_t *ptr) { return *ptr != 0; }
+  bool operator()(machine_word *ptr) { return *ptr != 0; }
 };
 
 size_t system_pagesize() {
@@ -175,12 +194,12 @@ void probe_pages(const void *addr, ptrdiff_t bytes, bool rw,
 void __flatten pollute(void *ptr, ptrdiff_t bytes, uintptr_t xormask) {
   if (likely(bytes > 0)) {
     if (xormask)
-      uintptr_applier(static_cast<uintptr_t *>(ptr), bytes,
+      uintptr_applier(static_cast<machine_word *>(ptr), bytes,
                       pollute_functor<false>(xormask));
     else {
-      uintptr_t seed =
-          /*cpu_ticks() ^*/ bytes ^ erthink::bit_cast<uintptr_t>(ptr);
-      uintptr_applier(static_cast<uintptr_t *>(ptr), bytes,
+      machine_word seed =
+          /*cpu_ticks() ^*/ bytes ^ erthink::bit_cast<machine_word>(ptr);
+      uintptr_applier(static_cast<machine_word *>(ptr), bytes,
                       pollute_functor<true>(seed));
     }
   }
@@ -188,7 +207,7 @@ void __flatten pollute(void *ptr, ptrdiff_t bytes, uintptr_t xormask) {
 
 bool __flatten is_zeroed(const void *ptr, ptrdiff_t bytes) {
   return bytes > 0 &&
-         !uintptr_applier(static_cast<uintptr_t *>(const_cast<void *>(ptr)),
+         !uintptr_applier(static_cast<machine_word *>(const_cast<void *>(ptr)),
                           bytes, probe4zero_functor());
 }
 
