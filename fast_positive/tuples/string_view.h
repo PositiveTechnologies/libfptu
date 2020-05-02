@@ -26,11 +26,11 @@
 #include <cstring>
 #include <string>
 
-#if __cplusplus >= 201703L && __has_include(<string_view>)
+#if defined(__cpp_lib_string_view) && __cpp_lib_string_view >= 201606L
 #include <string_view>
-#define HAVE_cxx17_std_string_view 1
+#define HAVE_std_string_view 1
 #else
-#define HAVE_cxx17_std_string_view 0
+#define HAVE_std_string_view 0
 #endif
 
 namespace fptu {
@@ -52,9 +52,9 @@ protected:
 
 public:
   cxx11_constexpr string_view() : str(nullptr), len(-1) {}
-  cxx11_constexpr string_view(const string_view &v) = default;
+  cxx11_constexpr string_view(const string_view &) = default;
   cxx14_constexpr string_view &
-  operator=(const string_view &v) cxx11_noexcept = default;
+  operator=(const string_view &) cxx11_noexcept = default;
 
   cxx11_constexpr string_view(const char *str, std::size_t count)
       : str(str), len(str ? static_cast<intptr_t>(count) : -1) {
@@ -73,7 +73,7 @@ public:
   }
   /* Конструктор из std::string ОБЯЗАН быть explicit для предотвращения
    * проблемы reference to temporary object из-за неявного создания string_view
-   * из переданной по значению временного экземпляра std::string. */
+   * из переданного по значению временного экземпляра std::string. */
   explicit /* не может быть cxx11_constexpr из-за std::string::size() */
       string_view(const std::string &s)
       : str(s.data()), len(static_cast<intptr_t>(s.size())) {
@@ -81,12 +81,12 @@ public:
   }
   operator std::string() const { return std::string(data(), length()); }
 
-#if HAVE_cxx17_std_string_view
+#if HAVE_std_string_view
   /* Конструктор из std::string_view:
    *  - Может быть НЕ-explicit, так как у std::string_view нет неявного
    *    конструктора из std::string. Поэтому не возникает проблемы
    *    reference to temporary object из-за неявного создания string_view
-   *    из переданной по значению временного экземпляра std::string.
+   *    из переданного по значению временного экземпляра std::string.
    *  - НЕ ДОЛЖЕН быть explicit для бесшовной интеграции с std::string_view. */
   cxx11_constexpr string_view(const std::string_view &v) cxx11_noexcept
       : str(v.data()),
@@ -107,7 +107,7 @@ public:
     *this = v;
     v = temp;
   }
-#endif /* HAVE_cxx17_std_string_view */
+#endif /* HAVE_std_string_view */
 
   cxx14_constexpr void swap(string_view &v) cxx11_noexcept {
     const auto temp = *this;
@@ -163,9 +163,9 @@ public:
   cxx11_constexpr std::size_t size() const { return length(); }
   cxx11_constexpr size_type max_size() const { return 32767; }
 
-  cxx14_constexpr std::size_t hash_value() const {
-    /* TODO: replace by t1ha */
-    std::size_t h = (size_t)len * 3977471;
+  cxx14_constexpr size_t hash_value() const {
+    /* TODO: replace by t1ha_v3 */
+    size_t h = static_cast<std::size_t>(len) * 3977471;
     for (intptr_t i = 0; i < len; ++i)
       h = (h ^ str[i]) * 1664525 + 1013904223;
     return h ^ 3863194411 * (h >> 11);
