@@ -89,12 +89,12 @@ cxx14_constexpr uint32_t operator"" _hipagut(const char *str, std::size_t len) {
 __extern_C void hipagut_setup(hippeus_hipagut_t *, const uint32_t signature);
 __extern_C __must_check_result bool hipagut_probe(const hippeus_hipagut_t *,
                                                   const uint32_t signature);
-__always_inline void hipagut_setup_link(hippeus_hipagut_t *slave,
-                                        const hippeus_hipagut_t *master) {
+static __maybe_unused __always_inline void
+hipagut_setup_link(hippeus_hipagut_t *slave, const hippeus_hipagut_t *master) {
   hipagut_setup(slave, master->derived_mesh);
 }
 
-__always_inline __must_check_result bool
+static __maybe_unused __always_inline __must_check_result bool
 hipagut_probe_link(const hippeus_hipagut *slave,
                    const hippeus_hipagut *master) {
   constexpr_assert("42"_hipagut != 0);
@@ -104,7 +104,8 @@ hipagut_probe_link(const hippeus_hipagut *slave,
 #define HIPPEUS_HIPAGUT_NASTY_DISABLED 0xfea51b1eu /* feasible */
 extern unsigned hipagut_nasty_disabled;
 
-__always_inline void hipagut_drown(hippeus_hipagut *gizmo) {
+static __maybe_unused __always_inline void
+hipagut_drown(hippeus_hipagut *gizmo) {
   // LY: This notable value would always bite,
   //     because (random_chirp == 0) != (derived_hash == 0).
   gizmo->body = UINT32_C(0xDEADB0D1F);

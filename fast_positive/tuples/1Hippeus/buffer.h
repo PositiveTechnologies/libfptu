@@ -459,10 +459,13 @@ public:
 };
 
 /* glue for boost::intrusive_ptr */
-__always_inline void intrusive_ptr_add_ref(buffer *ptr) cxx11_noexcept {
+static __maybe_unused __always_inline void
+intrusive_ptr_add_ref(buffer *ptr) cxx11_noexcept {
   ptr->add_reference();
 }
-__always_inline void intrusive_ptr_release(buffer *ptr) { ptr->detach(); }
+static __maybe_unused __always_inline void intrusive_ptr_release(buffer *ptr) {
+  ptr->detach();
+}
 
 //------------------------------------------------------------------------------
 
