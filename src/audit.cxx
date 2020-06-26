@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Fast Positive Tuples (libfptu), aka Позитивные Кортежи
  *  Copyright 2016-2019 Leonid Yuriev <leo@yuriev.ru>
  *
