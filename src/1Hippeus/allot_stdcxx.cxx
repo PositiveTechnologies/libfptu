@@ -57,10 +57,17 @@ static hippeus_buffer_t *borrow(hippeus_allot_t *allot, std::size_t wanna_size,
   void *ptr =
       erthink::constexpr_pointer_cast<buffer_allocator *>(allot)->allocate(
           bytes);
-  auto buffer =
-      new (ptr) hippeus::buffer_solid(hippeus::buffer_tag(allot, false), bytes);
-  assert(buffer->space + hippeus::buffer_solid::space_overhead() == bytes);
-  return buffer;
+
+  try {
+    auto buffer = new (ptr)
+        hippeus::buffer_solid(hippeus::buffer_tag(allot, false), bytes);
+    assert(buffer->space + hippeus::buffer_solid::space_overhead() == bytes);
+    return buffer;
+  } catch (...) {
+    static_cast<buffer_allocator *>(allot)->deallocate(static_cast<char *>(ptr),
+                                                       bytes);
+    throw;
+  }
 }
 
 static void repay(hippeus_allot_t *allot, hippeus_buffer_t *buffer,
