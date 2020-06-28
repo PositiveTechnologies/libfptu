@@ -88,7 +88,9 @@ TEST(Trivia, Apriory) {
 
   ASSERT_LE(std::ptrdiff_t(fptu_max_cols), std::ptrdiff_t(fptu::max_fields));
   ASSERT_LE(fptu_max_field_bytes, UINT16_MAX * fptu::unit_size);
-  ASSERT_LE(fptu_max_opaque_bytes, fptu_max_field_bytes - fptu::unit_size);
+  ASSERT_LE(std::ptrdiff_t(fptu_max_opaque_bytes),
+            std::ptrdiff_t(fptu_max_field_bytes) -
+                std::ptrdiff_t(fptu::unit_size));
 
   ASSERT_GE(fptu_max_field_bytes, fptu::max_fields * fptu::unit_size);
   ASSERT_GE(fptu_max_tuple_bytes, fptu_max_field_bytes + fptu::unit_size * 2);

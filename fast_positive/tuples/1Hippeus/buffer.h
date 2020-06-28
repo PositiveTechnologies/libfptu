@@ -150,6 +150,17 @@ struct FPTU_API_TYPE hippeus_buffer_tag_C {
   } opacity_;
 
 #ifdef __cplusplus
+  friend cxx11_constexpr bool
+  operator==(const hippeus_buffer_tag_C &a,
+             const hippeus_buffer_tag_C &b) cxx11_noexcept {
+    return a.opacity_.uint == b.opacity_.uint;
+  }
+  friend cxx11_constexpr bool
+  operator!=(const hippeus_buffer_tag_C &a,
+             const hippeus_buffer_tag_C &b) cxx11_noexcept {
+    return a.opacity_.uint != b.opacity_.uint;
+  }
+
 protected:
   cxx11_constexpr hippeus_buffer_tag_C(uintptr_t uint) cxx11_noexcept
       : opacity_(uint) {}
@@ -279,11 +290,6 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
   }
 
   cxx11_constexpr uintptr_t raw() const cxx11_noexcept { return opacity_.uint; }
-
-  cxx11_constexpr bool
-  operator==(const hippeus_buffer_tag_C &ditto) const cxx11_noexcept {
-    return opacity_.uint == ditto.opacity_.uint;
-  }
 
   cxx11_constexpr operator bool() const cxx11_noexcept {
     return opacity_.uint != 0;
