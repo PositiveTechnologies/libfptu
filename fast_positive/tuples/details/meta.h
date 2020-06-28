@@ -247,26 +247,34 @@ template <unsigned N, typename TYPE = uint32_t[N]> struct unit_n {
                   preplaced_bytes - sizeof(value_type));
   }
 
-#if defined(__GNUC__) && __GNUC__ == 10
+#if __GNUC_PREREQ(10, 0) /* || __has_warning("-Wstringop-overflow") */
   /* This is workaround for GCC 10 false-positive warnings
    * like "writing 16 bytes into a region of size 2 [-Wstringop-overflow=]".
    * Unfortunately this crutch has no effect if LTO enabled. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
+#endif /* GNU C >= 10.x */
   static void write(details::field_loose *loose,
                     return_type value) cxx11_noexcept {
     static_assert(sizeof(value_type) <= preplaced_bytes, "WTF?");
-    details::relative_payload *const ptr = loose->relative.payload();
+    details::relative_payload *ptr = loose->relative.payload();
+
+#if __GNUC_PREREQ(10, 0) && defined(LTO_ENABLED)
+    /* This is workaround for GCC 10 false-positive warnings
+     * like "writing 16 bytes into a region of size 2 [-Wstringop-overflow=]".
+     * This crutch is for the case when LTO is enabled. */
+    __asm("#workaround $1" : "=r"(ptr) : "r"(ptr));
+#endif /* GNU C >= 10.x */
+
     static_assert(sizeof(ptr->fixed) >= preplaced_bytes, "WTF?");
     std::memcpy(&ptr->fixed.words, &value, preplaced_bytes);
     if (preplaced_bytes != sizeof(value_type))
       std::memset(ptr->fixed.bytes + sizeof(value_type), 0,
                   preplaced_bytes - sizeof(value_type));
   }
-#if defined(__GNUC__) && __GNUC__ == 10
+#if __GNUC_PREREQ(10, 0) /* || __has_warning("-Wstringop-overflow") */
 #pragma GCC diagnostic pop
-#endif /* workaround for GCC 10 false-positive warning */
+#endif /* GNU C >= 10.x */
 
   static void erase(details::field_preplaced *preplaced,
                     const bool distinct_null) {
