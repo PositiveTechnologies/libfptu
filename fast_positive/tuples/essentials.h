@@ -168,18 +168,18 @@ units2bytes(const std::size_t units) cxx11_noexcept {
 
 /* FIELD's TOKEN & TAG ---------------------------------------------------------
 
-        1              1 0              0
-   MSB> FEDCBA9876543210 FEDCBA9876543210 <LSB
-        ooooooooooooooSD GGGGGsssssssssss <<== preplaced
-        1111111111111CSD GGGGGIiiiiiiiiii <<== loose/inlay
-                         11111sssssssssss <<== hole
+        1                 1 0                 0
+   MSB> FEDC'BA98'7654'3210 FEDC'BA98'7654'3210 <LSB
+        oooo'oooo'oooo'ooSD GGGG'Gsss'ssss'ssss <<== preplaced
+        1111'1111'1111'1CSD GGGG'GIii'iiii'iiii <<== loose/inlay
+                            1111'1sss'ssss'ssss <<== hole
 
-                         Такое распределение бит позволяет:
-                          - сортировкой прижать дескрипторы "дырок" к одному
-                            краю, а поля переменной длины к другому.
-                          - сортировка тэгов по возрастанию разместит
-                            preplaced в начале и в порядке физического
-                            расположения в кортеже.
+        Такое распределение бит позволяет:
+         - сортировкой прижать дескрипторы "дырок" к одному
+           краю, а поля переменной длины к другому.
+         - сортировка тэгов по возрастанию разместит
+           preplaced в начале и в порядке физического
+           расположения в кортеже.
 
         o - Offset of preplaced fields
         i - id for loose fields
