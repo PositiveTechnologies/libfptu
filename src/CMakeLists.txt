@@ -180,7 +180,7 @@ if(X86_32 OR X86_64)
     set_source_files_properties(scan_AVX2.cxx COMPILE_FLAGS -mavx2)
   endif()
 elseif(E2K)
-  list(APPEND LIBFPTU_SOURCES scan_AVX.cxx)
+  list(APPEND LIBFPTU_SOURCES scan_SSE2.cxx scan_AVX.cxx scan_AVX2.cxx)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)

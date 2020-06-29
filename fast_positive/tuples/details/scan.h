@@ -30,45 +30,48 @@ namespace details {
 
 typedef const field_loose *(*scan_func_t)(const field_loose *begin,
                                           const field_loose *end,
-                                          uint16_t genus_and_id);
+                                          const uint16_t genus_and_id);
 
 /* Artless reference implementation for testing & verification */
 __extern_C FPTU_API const field_loose *
 fptu_scan_referential(const field_loose *begin, const field_loose *end,
-                      uint16_t genus_and_id);
+                      const uint16_t genus_and_id);
 
 __extern_C FPTU_API const field_loose *
 fptu_scan_unroll(const field_loose *begin, const field_loose *end,
-                 uint16_t genus_and_id);
+                 const uint16_t genus_and_id);
 
-#if defined(__ia32__) || defined(__e2k__)
-__extern_C FPTU_API const field_loose *fptu_scan_AVX(const field_loose *begin,
-                                                     const field_loose *end,
-                                                     uint16_t genus_and_id);
-#endif /* __ia32__ || __e2k__ */
+#if defined(__ia32__) || defined(__SSE2__)
+__extern_C FPTU_API const field_loose *
+fptu_scan_SSE2(const field_loose *begin, const field_loose *end,
+               const uint16_t genus_and_id);
+#endif /* __ia32__ || __SSE2__ */
 
-#if defined(__ia32__)
-__extern_C FPTU_API const field_loose *fptu_scan_SSE2(const field_loose *begin,
-                                                      const field_loose *end,
-                                                      uint16_t genus_and_id);
-__extern_C FPTU_API const field_loose *fptu_scan_AVX2(const field_loose *begin,
-                                                      const field_loose *end,
-                                                      uint16_t genus_and_id);
-#endif /* __ia32__ */
+#if defined(__ia32__) || defined(__AVX__)
+__extern_C FPTU_API const field_loose *
+fptu_scan_AVX(const field_loose *begin, const field_loose *end,
+              const uint16_t genus_and_id);
+#endif /* __ia32__ || __AVX__ */
+
+#if defined(__ia32__) || defined(__AVX2__)
+__extern_C FPTU_API const field_loose *
+fptu_scan_AVX2(const field_loose *begin, const field_loose *end,
+               const uint16_t genus_and_id);
+#endif /* __ia32__ || __AVX2__ */
 
 #if defined(__AVX2__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_AVX2(begin, end, genus_and_id)
-#elif defined(__e2k__)
+#elif !defined(__ia32__) && defined(__AVX__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_AVX(begin, end, genus_and_id)
-#elif defined(__ATOM__)
+#elif !defined(__ia32__) && defined(__SSE2__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_SSE2(begin, end, genus_and_id)
 #elif defined(__ia32__)
 ERTHINK_DECLARE_IFUNC(FPTU_API, const field_loose *, fptu_scan,
                       (const field_loose *begin, const field_loose *end,
-                       uint16_t genus_and_id),
+                       const uint16_t genus_and_id),
                       (begin, end, genus_and_id), fptu_scan_resolver)
 #else
 #define fptu_scan(begin, end, genus_and_id)                                    \

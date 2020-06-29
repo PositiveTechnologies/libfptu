@@ -21,8 +21,8 @@
 #endif
 
 #ifndef __SSE2__
-#error "The -msse2 or /arch:SSE2 compiler's option is required"
-#endif
+#warning "The -msse2 or /arch:SSE2 compiler's option is required"
+#else
 
 #include "fast_positive/erthink/erthink_intrin.h"
 #include "fast_positive/tuples/api.h"
@@ -82,7 +82,7 @@ static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
 
 __hot const field_loose *fptu_scan_SSE2(const field_loose *begin,
                                         const field_loose *end,
-                                        uint16_t genus_and_id) {
+                                        const uint16_t genus_and_id) {
   const ptrdiff_t bytes = (char *)end - (char *)begin;
   assert(bytes % 4 == 0);
 
@@ -160,3 +160,4 @@ __hot const field_loose *fptu_scan_SSE2(const field_loose *begin,
 
 } // namespace details
 } // namespace fptu
+#endif /* __SSE2__ */

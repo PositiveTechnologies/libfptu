@@ -30,7 +30,7 @@ namespace details {
 
 ERTHINK_DEFINE_IFUNC(FPTU_API, const field_loose *, fptu_scan,
                      (const field_loose *begin, const field_loose *end,
-                      uint16_t genus_and_id),
+                      const uint16_t genus_and_id),
                      (begin, end, genus_and_id), fptu_scan_resolver)
 
 ERTHINK_IFUNC_RESOLVER_API(FPTU_API)

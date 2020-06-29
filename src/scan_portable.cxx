@@ -30,7 +30,7 @@ namespace details {
 /* Artless reference implementation for testing & verification */
 __cold const field_loose *fptu_scan_referential(const field_loose *begin,
                                                 const field_loose *end,
-                                                uint16_t genus_and_id) {
+                                                const uint16_t genus_and_id) {
   for (const field_loose *scan = begin; scan < end; ++scan)
     if (genus_and_id == scan->genus_and_id)
       return scan;
@@ -50,7 +50,7 @@ __cold const field_loose *fptu_scan_referential(const field_loose *begin,
 
 __hot const field_loose *fptu_scan_unroll(const field_loose *begin,
                                           const field_loose *end,
-                                          uint16_t genus_and_id) {
+                                          const uint16_t genus_and_id) {
   ptrdiff_t items = end - begin;
 
   const field_loose *scan = begin;
