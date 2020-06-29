@@ -75,8 +75,10 @@ static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
 #define STEP_x4                                                                \
   do {                                                                         \
     unsigned mask = cmp2mask(pattern, scan);                                   \
-    if (mask2ptr(0x4444u & mask, scan))                                        \
+    if (mask2ptr(0x4444u & mask, scan)) {                                      \
+      assert(scan->genus_and_id == genus_and_id);                              \
       return scan;                                                             \
+    }                                                                          \
     scan += 4;                                                                 \
   } while (0)
 
@@ -103,8 +105,10 @@ __hot const field_loose *fptu_scan_SSE2(const field_loose *begin,
       mask >>= (16 - bytes);
       mask &= cmp2mask_bypass_asan(pattern, scan);
     }
-    if (mask2ptr(mask, scan))
+    if (mask2ptr(mask, scan)) {
+      assert(scan->genus_and_id == genus_and_id);
       return scan;
+    }
     return nullptr;
   }
 
