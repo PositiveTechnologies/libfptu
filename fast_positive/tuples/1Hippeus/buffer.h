@@ -124,7 +124,7 @@ struct FPTU_API_TYPE
                               bool leastwise, hippeus_actor_t actor);
   void (*repay)(hippeus_allot_t *allot, hippeus_buffer_t *,
                 hippeus_actor_t actor);
-  __must_check_result bool (*_validate)(const hippeus_allot_t *allot,
+  __must_check_result bool (*validate_)(const hippeus_allot_t *allot,
                                         bool probe_only, bool deep_checking);
 };
 
@@ -390,9 +390,23 @@ public:
    *  - operator new() может потребоваться для наследников buffer_weak.
    */
   static buffer *borrow(buffer_tag tag, std::size_t wanna, bool leastwise);
-  static void operator delete(void *ptr) { detach(static_cast<buffer *>(ptr)); }
-  static void *operator new[](std::size_t) = delete;
-  static void operator delete[](void *ptr) = delete;
+  void operator delete(void *ptr) { detach(static_cast<buffer *>(ptr)); }
+  void *operator new[](std::size_t) = delete;
+  void operator delete[](void *ptr) = delete;
+
+  /* non-allocating placement (de)allocation functions
+   * Компиляторы на основе EDG-фроненда могут болеть без их явного определения
+   * при использовании placement new */
+  void *operator new(std::size_t bytes, void *ptr) noexcept {
+    assert(bytes >= sizeof(buffer));
+    (void)bytes;
+    return ptr;
+  }
+  void operator delete(void *ptr, void *place) noexcept {
+    assert(ptr == place);
+    (void)ptr;
+    (void)place;
+  }
 
   const buffer *add_reference(/* accepts nullptr */) const cxx11_noexcept {
     return add_reference(this);

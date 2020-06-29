@@ -63,14 +63,36 @@
 /*----------------------------------------------------------------------------*/
 /* LY: temporary workaround for Elbrus's memcmp() bug. */
 #if defined(__e2k__) && !__GLIBC_PREREQ(2, 24)
-extern "C" int mdbx_e2k_memcmp_bug_workaround(const void *s1, const void *s2,
-                                              std::size_t n);
-extern "C" int mdbx_e2k_strcmp_bug_workaround(const char *s1, const char *s2);
-extern "C" int mdbx_e2k_strncmp_bug_workaround(const char *s1, const char *s2,
-                                               std::size_t n);
-extern "C" std::size_t mdbx_e2k_strlen_bug_workaround(const char *s);
-extern "C" std::size_t mdbx_e2k_strnlen_bug_workaround(const char *s,
-                                                       std::size_t maxlen);
+__extern_C int mdbx_e2k_memcmp_bug_workaround(const void *s1, const void *s2,
+                                              size_t n);
+__extern_C int mdbx_e2k_strcmp_bug_workaround(const char *s1, const char *s2);
+__extern_C int mdbx_e2k_strncmp_bug_workaround(const char *s1, const char *s2,
+                                               size_t n);
+__extern_C size_t mdbx_e2k_strlen_bug_workaround(const char *s);
+__extern_C size_t mdbx_e2k_strnlen_bug_workaround(const char *s, size_t maxlen);
+
+#ifdef __cplusplus
+namespace std {
+inline int mdbx_e2k_memcmp_bug_workaround(const void *s1, const void *s2,
+                                          size_t n) {
+  return ::mdbx_e2k_memcmp_bug_workaround(s1, s2, n);
+}
+inline int mdbx_e2k_strcmp_bug_workaround(const char *s1, const char *s2) {
+  return ::mdbx_e2k_strcmp_bug_workaround(s1, s2);
+}
+inline int mdbx_e2k_strncmp_bug_workaround(const char *s1, const char *s2,
+                                           size_t n) {
+  return ::mdbx_e2k_strncmp_bug_workaround(s1, s2, n);
+}
+inline size_t mdbx_e2k_strlen_bug_workaround(const char *s) {
+  return ::mdbx_e2k_strlen_bug_workaround(s);
+}
+inline size_t mdbx_e2k_strnlen_bug_workaround(const char *s, size_t maxlen) {
+  return ::mdbx_e2k_strnlen_bug_workaround(s, maxlen);
+}
+} // namespace std
+#endif /* __cplusplus */
+
 #include <string.h>
 #include <strings.h>
 #undef memcmp

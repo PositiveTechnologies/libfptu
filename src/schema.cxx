@@ -32,14 +32,14 @@ schema::~schema() {}
 
 namespace {
 struct schema_impl : public schema {
-  struct hash_name {
+  /* struct hash_name {
     bool operator()(const string_view &name) const cxx11_noexcept {
       return name.hash_value();
     }
     bool operator()(const std::string &name) const cxx11_noexcept {
       return operator()(string_view(name));
     }
-  };
+  }; */
 
   //----------------------------------------------------------------------------
 

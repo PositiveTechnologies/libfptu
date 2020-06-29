@@ -37,7 +37,6 @@ namespace details {
 
 namespace {
 struct malloc_deleter {
-  void operator()(tuple_rw *tuple) { ::free(tuple); }
   void operator()(void *ptr) { ::free(ptr); }
 };
 } // namespace

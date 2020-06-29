@@ -44,18 +44,18 @@ class auditor {
   std::size_t holes_count_, holes_volume_;
 
   struct map_less {
-    bool operator()(const interval &a, const interval &b) const cxx11_noexcept {
-      return a.first < b.first;
-    }
+    /* bool operator()(const interval &a, const interval &b) const
+    cxx11_noexcept { return a.first < b.first;
+    } */
     bool operator()(const offset &a, const interval &b) const cxx11_noexcept {
       return a < b.first;
     }
-    bool operator()(const interval &a, const offset &b) const cxx11_noexcept {
-      return a.first < b;
+    /* bool operator()(const interval &a, const offset &b) const cxx11_noexcept
+    { return a.first < b;
     }
     bool operator()(const offset &a, const offset &b) const cxx11_noexcept {
       return a < b;
-    }
+    } */
   };
 
   bool check_map() const;

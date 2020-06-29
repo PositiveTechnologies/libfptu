@@ -121,30 +121,29 @@ __pure_function field_loose *gear::lookup_hole(unsigned units) cxx11_noexcept {
   if_constexpr(MODE == hole_search_mode::exactly_size) return const_cast<
       field_loose *>(
       lookup(is_sorted(), begin_index(), end_index(), make_hole(units)));
-  else if (0 == /* нет смысла искать, так как дырка ненулевого размера потребует
+
+  if (0 == /* нет смысла искать, так как дырка ненулевого размера потребует
               усечения и поиска еще одной дырки... */
-           units) return const_cast<field_loose *>(lookup(is_sorted(),
-                                                          begin_index(),
-                                                          end_index(),
-                                                          make_hole(units)));
-  else {
-    field_loose *found = nullptr;
-    std::size_t left_holes = junk_.count;
-    /* TODO: SIMD */
-    for (field_loose *scan = begin_index(); left_holes > 0; ++scan) {
-      assert(scan != end_index());
-      if (!scan->is_hole())
-        continue;
-      if (scan->hole_get_units() >= units) {
-        if_constexpr(MODE == hole_search_mode::any_suitable) return scan;
-        /* MODE == hole_search_mode::best_fit */
-        found = best_fit(units, found, scan);
-      }
-      if (--left_holes == 0)
-        break;
+      units)
+    return const_cast<field_loose *>(
+        lookup(is_sorted(), begin_index(), end_index(), make_hole(units)));
+
+  field_loose *found = nullptr;
+  std::size_t left_holes = junk_.count;
+  /* TODO: SIMD */
+  for (field_loose *scan = begin_index(); left_holes > 0; ++scan) {
+    assert(scan != end_index());
+    if (!scan->is_hole())
+      continue;
+    if (scan->hole_get_units() >= units) {
+      if_constexpr(MODE == hole_search_mode::any_suitable) return scan;
+      /* MODE == hole_search_mode::best_fit */
+      found = best_fit(units, found, scan);
     }
-    return found;
+    if (--left_holes == 0)
+      break;
   }
+  return found;
 }
 
 std::pair<field_loose *, field_loose *>
