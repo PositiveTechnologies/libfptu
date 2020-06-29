@@ -34,11 +34,12 @@ namespace details {
 
 static __always_inline unsigned cmp2mask(const __m256 pattern,
                                          const field_loose *scan) {
-  const __m256 odd = _mm256_castsi256_ps(_mm256_set1_epi32(0xffff0000u));
+  const char *ptr = (const char *)scan + 2;
+  const __m256 even = _mm256_castsi256_ps(_mm256_set1_epi32(0x0000ffffu));
   return _mm256_movemask_ps(_mm256_cmp_ps(
       pattern,
       _mm256_and_ps(
-          odd, _mm256_castsi256_ps(_mm256_loadu_si256((const __m256i *)scan))),
+          even, _mm256_castsi256_ps(_mm256_loadu_si256((const __m256i *)ptr))),
       _CMP_EQ_OQ));
 }
 
@@ -84,9 +85,13 @@ __hot const field_loose *fptu_scan_AVX(const field_loose *begin,
   assert(bytes % 4 == 0);
 
   const __m256 pattern =
+#if 1 /* LY: avoid store to temporary on the stack */
       _mm256_permute2f128_ps(_mm256_castps128_ps256(_mm_castsi128_ps(
-                                 _mm_set1_epi32((uint32_t)genus_and_id << 16))),
+                                 _mm_set1_epi32(genus_and_id))),
                              _mm256_undefined_ps(), 0);
+#else
+      _mm256_castsi256_ps(_mm256_set1_epi32(genus_and_id));
+#endif
   const field_loose *scan = begin;
 
   if (unlikely(bytes < 8 * 4)) {
