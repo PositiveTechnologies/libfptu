@@ -30,21 +30,21 @@ static void test_ScanIndex(fptu::details::scan_func_t scan) {
                     sizeof(fptu::details::field_loose),
                 "Oops");
   std::array<fptu::details::unit_t, 64> array;
-  memset(&array, 0, sizeof(array));
+  memset(&array, 0xFF, sizeof(array));
   fptu::details::field_loose *const fake =
       erthink::constexpr_pointer_cast<fptu::details::field_loose *>(&array);
 
   for (ptrdiff_t tail = array.size(); tail > 0; --tail) {
     if (tail != ptrdiff_t(array.size()))
-      fake[tail].genus_and_id = 1;
+      fake[tail].genus_and_id = 0xFFFE;
 
     for (ptrdiff_t head = -1; head < tail; ++head) {
       if (head >= 0)
-        fake[head].genus_and_id = 1;
+        fake[head].genus_and_id = 0xFFFE;
 
       for (ptrdiff_t begin = array.size(); begin >= 0; --begin) {
         for (ptrdiff_t end = array.size(); end >= 0; --end) {
-          auto ptr = scan(&fake[begin], &fake[end], 1);
+          auto ptr = scan(&fake[begin], &fake[end], 0xFFFE);
           if (begin >= end) {
             ASSERT_EQ(nullptr, ptr);
           } else if (begin <= head && head < end) {
@@ -58,10 +58,10 @@ static void test_ScanIndex(fptu::details::scan_func_t scan) {
       }
 
       if (head >= 0)
-        fake[head].genus_and_id = 0;
+        fake[head].genus_and_id = 0xFFFF;
     }
     if (tail != ptrdiff_t(array.size()))
-      fake[tail].genus_and_id = 0;
+      fake[tail].genus_and_id = 0xFFFF;
   }
 }
 
