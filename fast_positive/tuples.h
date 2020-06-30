@@ -83,7 +83,7 @@ enum validation_mode {
   enforce_skip_validation,
   enforce_validation
 };
-cxx11_constexpr bool apply_validation_mode(validation_mode mode,
+cxx14_constexpr bool apply_validation_mode(validation_mode mode,
                                            bool by_defaults) cxx11_noexcept {
   switch (mode) {
   default:

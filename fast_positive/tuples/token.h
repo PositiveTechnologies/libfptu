@@ -243,7 +243,7 @@ public:
   }
 
   struct hash {
-    cxx11_constexpr std::size_t
+    cxx14_constexpr std::size_t
     operator()(const token_nonstatic_tag &ident) const cxx11_noexcept {
       const auto m = ident.normalized_tag() * size_t(2709533891);
       return m ^ (m >> 19);
@@ -325,7 +325,7 @@ public:
   cxx11_constexpr token_native() cxx11_noexcept {
     static_assert(std::is_standard_layout<STRUCT_TYPE>::value,
                   "Constraint is violated");
-    static_assert(std::is_pod<FIELD_TYPE>::value, "Constraint is violated");
+    static_assert(std::is_trivial<FIELD_TYPE>::value, "Constraint is violated");
   }
 };
 
@@ -347,30 +347,31 @@ class FPTU_API_TYPE token
       : base(tag) {}
 
   static cxx14_constexpr genus validate_loose_type(const genus type) {
-    if (unlikely(type >= genus::hole))
+    if (constexpr_unlikely(type >= genus::hole))
       throw_invalid_argument("type >= fptu::genus::hole");
     return type;
   }
   static cxx14_constexpr unsigned validate_loose_id(const unsigned id) {
-    if (unlikely(id > details::tag_bits::max_ident))
+    if (constexpr_unlikely(id > details::tag_bits::max_ident))
       throw_invalid_argument("id > fptu::details::max_ident");
     return id;
   }
   static cxx14_constexpr genus validate_preplaced_type(const genus type) {
-    if (unlikely(type > genus::hole))
+    if (constexpr_unlikely(type > genus::hole))
       throw_invalid_argument("type > fptu::genus::hole");
     return type;
   }
   static cxx14_constexpr std::size_t
   validate_preplaced_offset(const ptrdiff_t offset) {
-    if (unlikely(std::size_t(offset) > details::max_preplaced_offset))
+    if (constexpr_unlikely(std::size_t(offset) > details::max_preplaced_offset))
       throw_invalid_argument(
           "offset < 0 || offset > details::max_preplaced_offset");
     return std::size_t(offset);
   }
   static cxx14_constexpr uint16_t
   validate_loose_descriptor(const uint16_t loose_descriptor) {
-    if (unlikely(details::descriptor2genus(loose_descriptor) > genus::hole))
+    if (constexpr_unlikely(details::descriptor2genus(loose_descriptor) >
+                           genus::hole))
       throw_invalid_argument("loose_descriptor.type > fptu::genus::hole");
     return loose_descriptor;
   }
@@ -415,7 +416,7 @@ template <genus TYPE, class TOKEN> class cast_typecheck : public TOKEN {
 
 public:
   cxx14_constexpr cast_typecheck(const TOKEN &token) : TOKEN(token) {
-    if (unlikely(token.type() != TYPE))
+    if (constexpr_unlikely(token.type() != TYPE))
       throw_type_mismatch();
   }
   cxx11_constexpr genus type() const cxx11_noexcept { return TYPE; }
@@ -426,7 +427,7 @@ template <class TOKEN> class cast_preplaced : public TOKEN {
 
 public:
   cxx14_constexpr cast_preplaced(const TOKEN &token) : TOKEN(token) {
-    if (unlikely(!token.is_preplaced()))
+    if (constexpr_unlikely(!token.is_preplaced()))
       throw_type_mismatch();
   }
   cxx11_constexpr bool is_preplaced() const cxx11_noexcept { return true; }
@@ -440,7 +441,7 @@ template <class TOKEN> class cast_loose : public TOKEN {
 
 public:
   cxx14_constexpr cast_loose(const TOKEN &token) : TOKEN(token) {
-    if (unlikely(!token.is_loose()))
+    if (constexpr_unlikely(!token.is_loose()))
       throw_type_mismatch();
   }
   cxx11_constexpr bool is_preplaced() const cxx11_noexcept { return false; }

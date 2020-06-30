@@ -81,13 +81,13 @@ enum fundamentals : std::ptrdiff_t {
 
 /* The min/max "safe" values which could be converted
  * to IEEE-754 double (64 bit) without loss precision */
-cxx11_constexpr_var int64_t safe64_number_max = INT64_C(0x001FFFFFFFFFFFFF);
-cxx11_constexpr_var int64_t safe64_number_min = -safe64_number_max;
+static constexpr int64_t safe64_number_max = INT64_C(0x001FFFFFFFFFFFFF);
+static constexpr int64_t safe64_number_min = -safe64_number_max;
 
 /* The min/max "safe" values which could be converted
  * to IEEE-754 single (32 bit) without loss precision */
-cxx11_constexpr_var int32_t safe32_number_max = INT32_C(0x001FFFFF);
-cxx11_constexpr_var int32_t safe32_number_min = -safe32_number_max;
+static constexpr int32_t safe32_number_max = INT32_C(0x001FFFFF);
+static constexpr int32_t safe32_number_min = -safe32_number_max;
 
 enum configure {
   onstask_allocation_threshold = 2048,
@@ -157,12 +157,10 @@ using tag_t = uint32_t;
 using genus_mask_t = uint32_t;
 using unit_t = uint32_t;
 
-cxx11_constexpr std::size_t
-bytes2units(const std::size_t bytes) cxx11_noexcept {
+constexpr std::size_t bytes2units(const std::size_t bytes) cxx11_noexcept {
   return (bytes + unit_size - 1) >> unit_shift;
 }
-cxx11_constexpr std::size_t
-units2bytes(const std::size_t units) cxx11_noexcept {
+constexpr std::size_t units2bytes(const std::size_t units) cxx11_noexcept {
   return units << unit_shift;
 }
 
@@ -225,94 +223,91 @@ enum tag_bits : uint32_t {
 
 //------------------------------------------------------------------------------
 
-static cxx11_constexpr bool is_fixed_size(const genus type) cxx11_noexcept {
+static constexpr bool is_fixed_size(const genus type) cxx11_noexcept {
   constexpr_assert(type != hole);
   return type > property;
 }
 
-static cxx11_constexpr bool is_fixed_size(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_fixed_size(const tag_t tag) cxx11_noexcept {
   return (tag & 0xE000) != 0;
 }
 
-static cxx11_constexpr bool is_inplaced(const genus type) cxx11_noexcept {
+static constexpr bool is_inplaced(const genus type) cxx11_noexcept {
   return utils::test_bit(
       utils::bitset_mask<i16, u16, i8, u8, boolean, enumeration>::value, type);
 }
 
-static cxx11_constexpr loose_genus_and_id_t tag2genus_and_id(const tag_t tag)
-    cxx11_noexcept {
+static constexpr loose_genus_and_id_t
+tag2genus_and_id(const tag_t tag) cxx11_noexcept {
   return loose_genus_and_id_t(tag >> tag_bits::id_shift);
 }
 
-static cxx11_constexpr genus tag2genus(const tag_t tag) cxx11_noexcept {
+static constexpr genus tag2genus(const tag_t tag) cxx11_noexcept {
   return genus(loose_genus_and_id_t(tag) >> tag_bits::genus_shift);
 }
 
-static cxx11_constexpr bool is_inplaced(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_inplaced(const tag_t tag) cxx11_noexcept {
   return is_inplaced(tag2genus(tag));
 }
 
-static cxx11_constexpr bool is_loose(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_loose(const tag_t tag) cxx11_noexcept {
   return tag >= tag_bits::loose_threshold;
 }
 
-static cxx11_constexpr bool is_preplaced(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_preplaced(const tag_t tag) cxx11_noexcept {
   return tag < tag_bits::loose_threshold;
 }
 
-static cxx11_constexpr bool is_saturated(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_saturated(const tag_t tag) cxx11_noexcept {
   return (tag & tag_bits::saturation_flag) != 0;
 }
 
-static cxx11_constexpr bool is_inlay(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_inlay(const tag_t tag) cxx11_noexcept {
   constexpr_assert(is_loose(tag));
   return (tag & tag_bits::inlay_flag) != 0;
 }
 
-static cxx11_constexpr bool is_loose_inlay(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_loose_inlay(const tag_t tag) cxx11_noexcept {
   return (tag & tag_bits::inlay_pattern) == tag_bits::inlay_pattern;
 }
 
-static cxx11_constexpr bool
-is_loose_collection(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_loose_collection(const tag_t tag) cxx11_noexcept {
   return tag >= tag_bits::collection_threshold;
 }
 
-static cxx11_constexpr bool
-is_discernible_null(const tag_t tag) cxx11_noexcept {
+static constexpr bool is_discernible_null(const tag_t tag) cxx11_noexcept {
   return (tag & tag_bits::discernible_null_flag) != 0;
 }
 
-static cxx11_constexpr std::size_t tag2offset(const tag_t tag) cxx11_noexcept {
+static constexpr std::size_t tag2offset(const tag_t tag) cxx11_noexcept {
   constexpr_assert(is_preplaced(tag));
   return tag >> tag_bits::offset_shift;
 }
 
-static cxx11_constexpr std::size_t
-tag2indysize(const tag_t tag) cxx11_noexcept {
+static constexpr std::size_t tag2indysize(const tag_t tag) cxx11_noexcept {
   constexpr_assert(is_preplaced(tag));
   return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
-static cxx11_constexpr unsigned tag2id(const tag_t tag) cxx11_noexcept {
+static constexpr unsigned tag2id(const tag_t tag) cxx11_noexcept {
   constexpr_assert(is_loose(tag));
   return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
-static cxx11_constexpr unsigned
+static constexpr unsigned
 descriptor2id(const loose_genus_and_id_t loose_descriptor) cxx11_noexcept {
   return (loose_descriptor >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
-static cxx11_constexpr genus
+static constexpr genus
 descriptor2genus(const loose_genus_and_id_t loose_descriptor) cxx11_noexcept {
   return genus(loose_descriptor >> tag_bits::genus_shift);
 }
 
-static cxx11_constexpr tag_t make_tag(const genus type, const unsigned id,
-                                      const bool collection,
-                                      const bool discernible_null,
-                                      const bool saturated) cxx11_noexcept {
+static constexpr tag_t make_tag(const genus type, const unsigned id,
+                                const bool collection,
+                                const bool discernible_null,
+                                const bool saturated) cxx11_noexcept {
   constexpr_assert(type <= hole && id <= tag_bits::max_ident);
   return tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
                (id << tag_bits::id_shift) +
@@ -321,9 +316,10 @@ static cxx11_constexpr tag_t make_tag(const genus type, const unsigned id,
                (saturated ? tag_bits::saturation_flag : 0u));
 }
 
-static cxx11_constexpr tag_t
-make_tag(const loose_genus_and_id_t loose_descriptor, const bool collection,
-         const bool discernible_null, const bool saturated) cxx11_noexcept {
+static constexpr tag_t make_tag(const loose_genus_and_id_t loose_descriptor,
+                                const bool collection,
+                                const bool discernible_null,
+                                const bool saturated) cxx11_noexcept {
   constexpr_assert(descriptor2genus(loose_descriptor) != hole);
   return tag_t(tag_bits::loose_threshold + loose_descriptor +
                (collection ? tag_bits::loose_collection_flag : 0u) +
@@ -331,16 +327,18 @@ make_tag(const loose_genus_and_id_t loose_descriptor, const bool collection,
                (saturated ? tag_bits::saturation_flag : 0u));
 }
 
-static cxx11_constexpr tag_t make_hole(const std::size_t units) cxx11_noexcept {
+static constexpr tag_t make_hole(const std::size_t units) cxx11_noexcept {
   constexpr_assert(units <= tag_bits::max_ident);
   return tag_t(tag_bits::collection_threshold +
                (genus::hole << tag_bits::genus_shift) +
                (units << tag_bits::id_shift));
 }
 
-static cxx11_constexpr tag_t tag_from_offset(
-    const std::size_t offset, const genus type, const std::size_t indysize,
-    const bool discernible_null, const bool saturated) cxx11_noexcept {
+static constexpr tag_t tag_from_offset(const std::size_t offset,
+                                       const genus type,
+                                       const std::size_t indysize,
+                                       const bool discernible_null,
+                                       const bool saturated) cxx11_noexcept {
   constexpr_assert(type <= hole && offset <= tag_bits::max_preplaced_offset);
   constexpr_assert(indysize > 0 && indysize <= tag_bits::max_ident);
   return tag_t((type << tag_bits::genus_shift) +
@@ -350,9 +348,9 @@ static cxx11_constexpr tag_t tag_from_offset(
                (saturated ? tag_bits::saturation_flag : 0u));
 }
 
-static cxx11_constexpr tag_t
-normalize_tag(const tag_t tag, const bool as_preplaced) cxx11_noexcept {
-  assert(is_preplaced(tag) == as_preplaced);
+static constexpr tag_t normalize_tag(const tag_t tag,
+                                     const bool as_preplaced) cxx11_noexcept {
+  constexpr_assert(is_preplaced(tag) == as_preplaced);
   return tag |
          (as_preplaced
               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
@@ -360,38 +358,35 @@ normalize_tag(const tag_t tag, const bool as_preplaced) cxx11_noexcept {
                     tag_bits::loose_collection_flag);
 }
 
-static cxx11_constexpr tag_t normalize_tag(const tag_t tag) cxx11_noexcept {
+static constexpr tag_t normalize_tag(const tag_t tag) cxx11_noexcept {
   return normalize_tag(tag, is_preplaced(tag));
 }
 
-static cxx11_constexpr bool tag_less(const tag_t a,
-                                     const tag_t b) cxx11_noexcept {
+static constexpr bool tag_less(const tag_t a, const tag_t b) cxx11_noexcept {
   return normalize_tag(a) < normalize_tag(b);
 }
 
-static cxx11_constexpr bool tag_same(const tag_t a,
-                                     const tag_t b) cxx11_noexcept {
+static constexpr bool tag_same(const tag_t a, const tag_t b) cxx11_noexcept {
   return normalize_tag(a) == normalize_tag(b);
 }
 
 //------------------------------------------------------------------------------
 
-static cxx11_constexpr_var genus_mask_t mask_all_types =
+static constexpr genus_mask_t mask_all_types =
     UINT32_MAX - utils::bitset_mask<hole>::value;
 
-static cxx11_constexpr_var genus_mask_t mask_integer =
+static constexpr genus_mask_t mask_integer =
     utils::bitset_mask<i8, u8, i16, u16, i32, u32, i64, u64>::value;
 
-static cxx11_constexpr_var genus_mask_t mask_float =
+static constexpr genus_mask_t mask_float =
     utils::bitset_mask<f32, f64, d64>::value;
 
-static cxx11_constexpr_var genus_mask_t mask_signed =
+static constexpr genus_mask_t mask_signed =
     utils::bitset_mask<i8, i16, i32, i64>::value | mask_float;
 
-static cxx11_constexpr_var genus_mask_t mask_unsigned =
-    mask_integer & ~mask_signed;
+static constexpr genus_mask_t mask_unsigned = mask_integer & ~mask_signed;
 
-static cxx11_constexpr_var genus_mask_t mask_number = mask_integer | mask_float;
+static constexpr genus_mask_t mask_number = mask_integer | mask_float;
 
 } // namespace details
 } // namespace fptu

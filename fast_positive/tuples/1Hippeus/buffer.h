@@ -197,11 +197,11 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
 
   using base = hippeus_buffer_tag_C;
 
-  static cxx11_constexpr uintptr_t p2u(const void *ptr) cxx11_noexcept {
+  static cxx14_constexpr uintptr_t p2u(const void *ptr) cxx11_noexcept {
     return erthink::bit_cast<uintptr_t>(ptr);
   }
 
-  static cxx11_constexpr void *u2p(uintptr_t uint) cxx11_noexcept {
+  static cxx14_constexpr void *u2p(uintptr_t uint) cxx11_noexcept {
     return erthink::bit_cast<void *>(uint);
   }
 
@@ -214,7 +214,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
   cxx14_constexpr buffer_tag &
   operator=(const buffer_tag &) cxx11_noexcept = default;
 
-  cxx11_constexpr buffer_tag(const hippeus_allot_C *local_allot, bool readonly)
+  cxx14_constexpr buffer_tag(const hippeus_allot_C *local_allot, bool readonly)
       : base(p2u(local_allot) | (readonly ? HIPPEUS_LOCALWEAK | HIPPEUS_READONLY
                                           : HIPPEUS_LOCALWEAK)) {
     constexpr_assert((erthink::bit_cast<uintptr_t>(local_allot) &
@@ -283,7 +283,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
   }
 
   /* Прямой указатель на локальный аллокатор. */
-  cxx11_constexpr hippeus_allot_C *local_allot() const cxx11_noexcept {
+  cxx14_constexpr hippeus_allot_C *local_allot() const cxx11_noexcept {
     constexpr_assert(flags_test(HIPPEUS_LOCALWEAK));
     return static_cast<hippeus_allot_C *>(
         u2p(opacity_.uint & ~uintptr_t(HIPPEUS_TAG_FLAGS_MASK)));
@@ -371,7 +371,7 @@ class FPTU_API_TYPE buffer : public hippeus_buffer_C {
     init(this, host, payload, payload_bytes);
   }
 
-  ~buffer() = default;
+  ~buffer() cxx11_noexcept = default;
 
   friend class buffer_solid;
   friend class buffer_indirect;

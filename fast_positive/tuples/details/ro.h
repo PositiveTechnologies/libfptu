@@ -333,7 +333,7 @@ protected:
   }
 
   using compare_result_t = ptrdiff_t /* c++20 std::strong_ordering */;
-  friend cxx11_constexpr compare_result_t compare(
+  friend cxx14_constexpr compare_result_t compare(
       const field_iterator_ro &a, const field_iterator_ro &b) cxx11_noexcept {
     constexpr_assert(a.pivot_ == b.pivot_);
     const char *const pivot = static_cast<const char *>(a.pivot_);
@@ -444,22 +444,22 @@ public:
     return !operator==(other);
   }
 
-  friend cxx11_constexpr bool
+  friend cxx14_constexpr bool
   operator<(const field_iterator_ro &a,
             const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) < 0;
   }
-  friend cxx11_constexpr bool
+  friend cxx14_constexpr bool
   operator<=(const field_iterator_ro &a,
              const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) <= 0;
   }
-  friend cxx11_constexpr bool
+  friend cxx14_constexpr bool
   operator>=(const field_iterator_ro &a,
              const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) >= 0;
   }
-  friend cxx11_constexpr bool
+  friend cxx14_constexpr bool
   operator>(const field_iterator_ro &a,
             const field_iterator_ro &b) cxx11_noexcept {
     return compare(a, b) > 0;

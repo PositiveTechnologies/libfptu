@@ -36,12 +36,12 @@ private:
 
 #if !defined(__COVERITY__)
     cxx11_constexpr casting(const casting &) cxx11_noexcept = default;
-    cxx11_constexpr casting &
+    cxx14_constexpr casting &
     operator=(const casting &) cxx11_noexcept = default;
 #else
     cxx11_constexpr casting(const casting &ones) cxx11_noexcept
         : uint(ones.uint) {}
-    cxx11_constexpr casting &operator=(const casting &ones) cxx11_noexcept {
+    cxx14_constexpr casting &operator=(const casting &ones) cxx11_noexcept {
       uint = ones.uint;
       return *this;
     }
@@ -139,12 +139,12 @@ private:
 
 #if !defined(__COVERITY__)
     cxx11_constexpr casting(const casting &) cxx11_noexcept = default;
-    cxx11_constexpr casting &
+    cxx14_constexpr casting &
     operator=(const casting &) cxx11_noexcept = default;
 #else
     cxx11_constexpr casting(const casting &ones) cxx11_noexcept
         : u64(ones.u64) {}
-    cxx11_constexpr casting &operator=(const casting &ones) cxx11_noexcept {
+    cxx14_constexpr casting &operator=(const casting &ones) cxx11_noexcept {
       u64 = ones.u64;
       return *this;
     }
