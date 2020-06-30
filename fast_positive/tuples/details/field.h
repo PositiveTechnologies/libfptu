@@ -342,8 +342,8 @@ union relative_payload {
     uint64_t unaligned_u64;
     int64_t unaligned_i64;
     double unaligned_f64;
-    char bytes[8];
-    uint32_t words[16];
+    char bytes[512 / 8];
+    uint32_t words[512 / 32];
   } fixed;
 
   unit_t flat[1];
@@ -354,6 +354,7 @@ union relative_payload {
 
 struct relative_offset {
   uint16_t offset_uint16;
+  using ephemeral_addressable_by_offset_data = unit_t[UINT16_MAX];
 
   cxx14_constexpr void add_delta(const ptrdiff_t delta) cxx11_noexcept {
     constexpr_assert(delta >= -UINT16_MAX && delta <= UINT16_MAX);
@@ -368,7 +369,9 @@ struct relative_offset {
     return offset_uint16 > 0;
   }
   cxx14_constexpr unit_t *base() cxx11_noexcept {
-    return erthink::constexpr_pointer_cast<unit_t *>(this);
+    return *(
+        erthink::constexpr_pointer_cast<ephemeral_addressable_by_offset_data *>(
+            this));
   }
 
   cxx14_constexpr relative_payload *payload() cxx11_noexcept {
@@ -395,7 +398,7 @@ struct relative_offset {
 };
 
 union field_preplaced {
-  char bytes[1];
+  char bytes[max_preplaced_size];
   relative_offset relative;
 
   FPTU_API bool is_null(tag_t tag) const cxx11_noexcept;
