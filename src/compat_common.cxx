@@ -254,3 +254,8 @@ fptu_lge __hot fptu_cmp_binary(const void *left_data, std::size_t left_len,
     diff = fptu::cmp2int(left_len, right_len);
   return fptu::diff2lge(diff);
 }
+
+const float fptu_fp32_denil_value =
+    erthink::bit_cast<float>(uint32_t(FPTU_DENIL_FP32_BIN));
+const double fptu_fp64_denil_value =
+    erthink::bit_cast<double>(uint64_t(FPTU_DENIL_FP64_BIN));

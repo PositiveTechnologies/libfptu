@@ -55,11 +55,6 @@ TEST(Trivia, Denil) {
   EXPECT_EQ(FPTU_DENIL_FP64_BIN, denil64.u);
   denil64 = {fptu_fp64_denil()};
   EXPECT_EQ(FPTU_DENIL_FP64_BIN, denil64.u);
-#if defined(HAVE_nan) &&                                                       \
-    !defined(_MSC_VER) /* MSVC provides invalid nan(), skip test */
-  denil64 = {-nan("0x000FffffFFFFffff")};
-  EXPECT_EQ(FPTU_DENIL_FP64_BIN, denil64.u);
-#endif /* HAVE_nan && !_MSC_VER */
   denil64 = {fptu_fp32_denil()};
   EXPECT_NE(FPTU_DENIL_FP64_BIN, denil64.u);
 
@@ -71,11 +66,6 @@ TEST(Trivia, Denil) {
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
   denil32 = {fptu_fp32_denil()};
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
-#if defined(HAVE_nanf) &&                                                      \
-    !defined(_MSC_VER) /* MSVC provides invalid nan(), skip test */
-  denil32 = {-nanf("0x007FFFFF")};
-  EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
-#endif /* HAVE_nanf && !_MSC_VER */
   denil32 = {static_cast<float>(fptu_fp64_denil())};
   EXPECT_EQ(FPTU_DENIL_FP32_BIN, denil32.u);
 }
