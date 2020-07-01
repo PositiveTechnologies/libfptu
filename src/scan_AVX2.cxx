@@ -58,7 +58,7 @@ static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
   if (!_BitScanForward(&index, mask))
     return false;
 #else
-  if (!mask)
+  if (likely(!mask))
     return false;
   index = __builtin_ctz(mask);
 #endif
