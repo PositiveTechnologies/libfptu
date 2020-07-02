@@ -130,7 +130,8 @@ class FPTU_API_TYPE datetime_t {
   }
 
 #ifdef _FILETIME_
-  static uint64_t filetime_to_utc_100ns(const FILETIME &FileTime) {
+  static cxx11_constexpr uint64_t
+  filetime_to_utc_100ns(const FILETIME &FileTime) {
     return (uint64_t(FileTime.dwHighDateTime) << 32 | FileTime.dwLowDateTime) -
            Gregorian_UTC_offset_100ns;
   }

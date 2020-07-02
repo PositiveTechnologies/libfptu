@@ -72,7 +72,7 @@ void tuple_rw_managed::manage_space_deficit(const insufficient_space &wanna) {
       shift = -(reserve - ptrdiff_t(pimpl_->end_ - pimpl_->tail_));
     }
 
-    assert(pimpl_->tail_ + ptrdiff_t(wanna.data_space) + shift <=
+    assert(ptrdiff_t(pimpl_->tail_) + ptrdiff_t(wanna.data_space) + shift <=
            ptrdiff_t(pimpl_->end_));
     assert(pimpl_->head_ - ptrdiff_t(wanna.index_space) + shift >= 0);
     if (shift) {
@@ -155,7 +155,7 @@ void tuple_rw_managed::manage_space_deficit(const insufficient_space &wanna) {
       /* Недостаточно места для индекса, перемещаем всё назад */
       const ptrdiff_t shift = growth_index - pimpl_->pivot_;
 
-      assert(pimpl_->tail_ + shift <= ptrdiff_t(pimpl_->end_));
+      assert(ptrdiff_t(pimpl_->tail_) + shift <= ptrdiff_t(pimpl_->end_));
       auto src = &pimpl_->area_[pimpl_->head_];
       auto dst = &pimpl_->area_[pimpl_->head_ + shift];
       std::memmove(dst, src,

@@ -73,7 +73,7 @@ bool ia32_cpu_features::fetch() {
   clear();
   bool rc = false;
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 
   uint32_t unused_eax, unused_ebx, cpuid_max;
 
@@ -95,7 +95,7 @@ bool ia32_cpu_features::fetch() {
     rc = true;
   }
 
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && !defined(__clang__)
 
   int info[4];
   __cpuid(info, 0);

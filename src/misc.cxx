@@ -15,6 +15,10 @@
  *  limitations under the License.
  */
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "fast_positive/tuples/internal.h"
 
 #ifdef _MSC_VER

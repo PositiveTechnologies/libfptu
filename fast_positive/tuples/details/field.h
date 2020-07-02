@@ -158,7 +158,7 @@ union stretchy_value_varbin {
   ~stretchy_value_varbin() = delete;
 };
 
-struct stretchy_value_tuple {
+struct FPTU_API_TYPE stretchy_value_tuple {
   union {
     /* См описание ограничений и компромиссов в комментариях к типу enum
      * fptu::fundamentals в essentials.h */
@@ -406,7 +406,7 @@ union field_preplaced {
   ~field_preplaced() = delete;
 };
 
-struct field_loose {
+struct FPTU_API_TYPE field_loose {
   using inplace_storage_t = int16_t;
   union {
     struct {
