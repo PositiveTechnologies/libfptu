@@ -32,6 +32,14 @@
 namespace fptu {
 namespace details {
 
+#if __SANITIZE_ADDRESS__
+static __m256i __attribute__((no_sanitize_address, noinline))
+bypass_asan_read_m256(const void *src) {
+  return _mm256_loadu_si256((const __m256i *)src);
+}
+#define _mm256_loadu_si256(ptr) bypass_asan_read_m256(ptr)
+#endif
+
 static __always_inline unsigned cmp2mask(const __m256 pattern,
                                          const field_loose *scan) {
   const char *ptr = (const char *)scan + 2;
@@ -42,20 +50,6 @@ static __always_inline unsigned cmp2mask(const __m256 pattern,
           even, _mm256_castsi256_ps(_mm256_loadu_si256((const __m256i *)ptr))),
       _CMP_EQ_OQ));
 }
-
-#if __SANITIZE_ADDRESS__
-static __m256i __attribute__((no_sanitize_address, noinline))
-bypass_asan_read_m256(const void *src) {
-  return _mm256_loadu_si256((const __m256i *)src);
-}
-#define cmp2mask_bypass_asan(pattern, scan)                                    \
-  ({                                                                           \
-    __m256i copy = bypass_asan_read_m256(scan);                                \
-    cmp2mask(pattern, (field_loose *)&copy);                                   \
-  })
-#else
-#define cmp2mask_bypass_asan(pattern, scan) cmp2mask(pattern, scan)
-#endif
 
 static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
   unsigned long index;
@@ -104,11 +98,11 @@ __hot const field_loose *fptu_scan_AVX(const field_loose *begin,
     unsigned mask;
     if (likely(/* check for enough on-page offset for '-32' */ 0xfe0 &
                (uintptr_t)scan)) {
-      mask = cmp2mask_bypass_asan(pattern, end - 8);
+      mask = cmp2mask(pattern, end - 8);
       mask >>= (8 - bytes / 4);
     } else {
       mask = 255 >> (8 - bytes / 4);
-      mask &= cmp2mask_bypass_asan(pattern, scan);
+      mask &= cmp2mask(pattern, scan);
     }
     if (mask2ptr(mask, scan)) {
       assert(scan->genus_and_id == genus_and_id);

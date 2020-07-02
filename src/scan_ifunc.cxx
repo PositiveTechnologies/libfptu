@@ -35,7 +35,8 @@ ERTHINK_DEFINE_IFUNC(FPTU_API, const field_loose *, fptu_scan,
 
 ERTHINK_IFUNC_RESOLVER_API(FPTU_API)
 __cold scan_func_t fptu_scan_resolver() {
-#ifdef __ia32__
+#ifndef __SANITIZE_ADDRESS__
+#if defined(__ia32__)
   if (cpu_features.has_AVX2())
     return fptu_scan_AVX2;
   else if (cpu_features.has_AVX())
@@ -45,6 +46,8 @@ __cold scan_func_t fptu_scan_resolver() {
 #else
 #warning "FIXME: Support for other architectures"
 #endif
+#endif /* ! __SANITIZE_ADDRESS__ */
+
   return fptu_scan_unroll;
 }
 
