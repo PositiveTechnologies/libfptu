@@ -66,18 +66,12 @@ TEST(Token, StaticPreplaced) {
   EXPECT_TRUE(MyToken_FooBar_int::is_static_preplaced());
   EXPECT_TRUE(MyToken_FooBar_int::is_static_token::value);
 
-#ifndef __clang__
   const fptu::tuple_ro_weak tuple_ro;
   /* FIXME: CLANG ?-6-7-8 WTF? */
   EXPECT_THROW(tuple_ro.collection(token).empty(), ::fptu::collection_required);
-#endif
 }
 
-#ifdef __clang__
-TEST(clang_WTF, DISABLED_ExceptionHandling) {
-#else
 TEST(clang_WTF, ExceptionHandling) {
-#endif
   try {
     bool got_collection_required_exception = false;
     try {
