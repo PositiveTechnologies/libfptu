@@ -78,6 +78,7 @@ script: |
     ) && \
     ([ ! -x test/fptu_c_mode ] || MALLOC_CHECK_=7 MALLOC_PERTURB_=42 test/fptu_c_mode)
   else
+    COVERITY_UNSUPPORTED_COMPILER_INVOCATION=1 \
     COVERITY_SCAN_PROJECT_NAME="leo-yuriev/libfptu" \
     COVERITY_SCAN_NOTIFICATION_EMAIL="leo@yuriev.ru" \
     COVERITY_SCAN_BUILD_COMMAND_PREPEND="cmake -DCMAKE_BUILD_TYPE=Debug ." \
