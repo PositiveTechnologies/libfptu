@@ -445,6 +445,10 @@ public:
   inline bool operator!=(const tuple_ro_managed &ditto) const cxx11_noexcept;
   inline bool operator==(const tuple_rw_fixed &ditto) const cxx11_noexcept;
   inline bool operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept;
+
+  friend std::ostream &operator<<(std::ostream &out, const tuple_ro_weak &ro) {
+    return out << ro.pimpl_;
+  }
 };
 
 class FPTU_API_TYPE tuple_ro_managed
@@ -586,6 +590,11 @@ public:
   __pure_function inline tuple_ro_managed
   get_nested_managed(const TOKEN &ident) const {
     return tuple_ro_managed(get_impl()->get_nested(ident), get_buffer());
+  }
+
+  friend std::ostream &operator<<(std::ostream &out,
+                                  const tuple_ro_managed &ro) {
+    return out << ro.pimpl_;
   }
 };
 
@@ -1147,6 +1156,10 @@ public:
   bool operator!=(const tuple_rw_fixed &ditto) const cxx11_noexcept {
     return get_impl() != ditto.get_impl();
   }
+
+  friend std::ostream &operator<<(std::ostream &out, const tuple_rw_fixed &rw) {
+    return out << rw.pimpl_;
+  }
 };
 
 /* Управляемый R/W-кортеж с данными в управляемом буфере со счётчиком ссылок,
@@ -1405,6 +1418,11 @@ public:
         continue;
       }
     }
+  }
+
+  friend std::ostream &operator<<(std::ostream &out,
+                                  const tuple_rw_managed &rw) {
+    return out << rw.pimpl_;
   }
 };
 

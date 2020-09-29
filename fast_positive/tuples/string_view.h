@@ -24,6 +24,7 @@
 #include <climits>
 #include <cstddef>
 #include <cstring>
+#include <ostream>
 #include <string>
 
 #if defined(__cpp_lib_string_view) && __cpp_lib_string_view >= 201606L
@@ -210,7 +211,13 @@ public:
   bool operator<=(const std::string &s) const { return compare(*this, s) <= 0; }
   bool operator>=(const std::string &s) const { return compare(*this, s) >= 0; }
   bool operator!=(const std::string &s) const { return compare(*this, s) != 0; }
+
+  friend std::ostream &operator<<(std::ostream &out,
+                                  const fptu::string_view &sv) {
+    return out.write(sv.data(), sv.size());
+  }
 };
+
 } // namespace fptu
 
 namespace std {

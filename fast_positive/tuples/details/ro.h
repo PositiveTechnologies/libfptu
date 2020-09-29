@@ -615,6 +615,8 @@ public:
   cxx11_constexpr loose_iterator_ro end_loose() const cxx11_noexcept {
     return cend_loose();
   }
+
+  friend std::ostream &operator<<(std::ostream &, const tuple_ro *);
 };
 
 inline iovec_thunk::iovec_thunk(const tuple_ro *ro)

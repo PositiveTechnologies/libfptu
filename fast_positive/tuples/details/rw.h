@@ -1312,6 +1312,8 @@ public: //----------------------------------------------------------------------
   __pure_function loose_iterator_ro end_loose() const cxx11_noexcept {
     return cend_loose();
   }
+
+  friend std::ostream &operator<<(std::ostream &, const tuple_rw *);
 };
 
 //------------------------------------------------------------------------------
