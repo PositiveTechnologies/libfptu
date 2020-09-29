@@ -25,6 +25,7 @@
 
 #include "fast_positive/erthink/erthink_casting.h"
 #include "fast_positive/erthink/erthink_defs.h"
+#include "fast_positive/erthink/erthink_intrin.h"
 #include "fast_positive/tuples/1Hippeus/utils.h"
 #include <array>
 
