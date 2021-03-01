@@ -243,7 +243,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
   cxx11_constexpr bool
   flags_test(hippeus_buffer_flags mask) const cxx11_noexcept {
     constexpr_assert(unsigned(mask) <= unsigned(HIPPEUS_TAG_FLAGS_MASK));
-    return (mask & opacity_.uint) != 0;
+    return (uintptr_t(mask) & opacity_.uint) != 0;
   }
 
   /* LY: Идентификатор аллокатора и региона разделяемой памяти.
@@ -422,13 +422,14 @@ public:
   }
 
   bool is_readonly() const cxx11_noexcept {
-    return (host.opacity_.uint & HIPPEUS_READONLY) != 0;
+    return (host.opacity_.uint & uintptr_t(HIPPEUS_READONLY)) != 0;
   }
   bool is_localweak() const cxx11_noexcept {
-    return (host.opacity_.uint & HIPPEUS_LOCALWEAK) != 0;
+    return (host.opacity_.uint & uintptr_t(HIPPEUS_LOCALWEAK)) != 0;
   }
   bool is_warpable() const cxx11_noexcept {
-    return (host.opacity_.uint & (HIPPEUS_LOCALWEAK | HIPPEUS_READONLY)) == 0;
+    return (host.opacity_.uint &
+            uintptr_t(HIPPEUS_LOCALWEAK | HIPPEUS_READONLY)) == 0;
   }
   bool is_alterable() const cxx11_noexcept {
     return ref_counter == 1 && !is_readonly();
