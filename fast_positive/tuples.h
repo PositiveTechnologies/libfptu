@@ -35,8 +35,6 @@
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/types.h"
 
-#ifdef __cplusplus
-
 #include "fast_positive/tuples/details/warnings_push_system.h"
 
 #include <cmath>     // for std::ldexp
@@ -59,8 +57,6 @@
 #include "fast_positive/tuples/essentials.h"
 #include "fast_positive/tuples/schema.h"
 #include "fast_positive/tuples/token.h"
-
-#endif /* __cplusplus */
 
 //------------------------------------------------------------------------------
 

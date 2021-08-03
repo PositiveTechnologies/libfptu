@@ -16,6 +16,41 @@
  */
 
 #pragma once
+
+/* Useful macros definition, includes __GNUC_PREREQ/__GLIBC_PREREQ */
+#include "fast_positive/erthink/erthink_defs.h"
+
+#if defined(_MSC_VER) && _MSC_FULL_VER < 191526730
+#pragma message(                                                               \
+    "At least \"Microsoft C/C++ Compiler\" version 19.15.26730 (Visual Studio 2017 15.8) is required.")
+#endif /* _MSC_VER */
+
+#if !defined(__cplusplus) || __cplusplus < 201103L
+#if defined(_MSC_VER)
+#pragma message("Does the \"/Zc:__cplusplus\" option is used?")
+#endif
+#error "Please use C++11/14/17 compiler to build libfptu"
+#endif /* C++11 */
+
+#if (defined(__clang__) && !__CLANG_PREREQ(3, 9)) ||                           \
+    (!defined(__clang__) && defined(__GNUC__) && !__GNUC_PREREQ(5, 4))
+/* Actualy libfptu was not tested with old compilers.
+ * But you could remove this #error and try to continue at your own risk.
+ * In such case please don't rise up an issues related ONLY to old compilers. */
+#error                                                                         \
+    "libfptu required at least GCC 5.4 or CLANG 3.9 compatible C/C++ compiler."
+#endif /* __GNUC__ */
+
+#if defined(__GLIBC__) && !__GLIBC_PREREQ(2, 12)
+/* Actualy libfptu requires just C99 (e.g glibc >= 2.1), but was
+ * not tested with glibc older than 2.12 (from RHEL6). So you could
+ * remove this #error and try to continue at your own risk.
+ * In such case please don't rise up an issues related ONLY to old glibc. */
+#error "libfptu required at least glibc version 2.12 or later."
+#endif /* __GLIBC__ */
+
+//------------------------------------------------------------------------------
+
 #include "fast_positive/tuples/api.h"
 
 #include "fast_positive/tuples/details/utils.h"
