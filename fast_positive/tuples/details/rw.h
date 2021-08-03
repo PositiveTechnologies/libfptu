@@ -1313,7 +1313,7 @@ public: //----------------------------------------------------------------------
     return cend_loose();
   }
 
-  friend std::ostream &operator<<(std::ostream &, const tuple_rw *);
+  friend FPTU_API std::ostream &operator<<(std::ostream &, const tuple_rw *);
 };
 
 //------------------------------------------------------------------------------

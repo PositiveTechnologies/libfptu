@@ -616,7 +616,7 @@ public:
     return cend_loose();
   }
 
-  friend std::ostream &operator<<(std::ostream &, const tuple_ro *);
+  friend FPTU_API std::ostream &operator<<(std::ostream &, const tuple_ro *);
 };
 
 inline iovec_thunk::iovec_thunk(const tuple_ro *ro)
