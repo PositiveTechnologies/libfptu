@@ -27,9 +27,15 @@
 ##  for (de)serialization, messaging and placement in shared memory.
 ##
 
-cmake_minimum_required(VERSION 3.8.2)
+if(CMAKE_VERSION VERSION_LESS 3.12)
+  cmake_minimum_required(VERSION 3.8.2)
+else()
+  cmake_minimum_required(VERSION 3.12)
+endif()
+
 cmake_policy(PUSH)
-cmake_policy(VERSION 3.8.2)
+cmake_policy(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
+
 if(NOT CMAKE_VERSION VERSION_LESS 3.12)
   cmake_policy(SET CMP0075 NEW)
 endif()
