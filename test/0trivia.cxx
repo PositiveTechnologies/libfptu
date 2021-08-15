@@ -245,7 +245,7 @@ TEST(Trivia, time_ns2fractional) {
     for (int offset_42 = -42; offset_42 <= 42; ++offset_42) {
       SCOPED_TRACE("base_2log " + std::to_string(base_2log) + ", offset_42 " +
                    std::to_string(offset_42));
-      const uint64_t ns = (1 << base_2log) + offset_42;
+      const uint64_t ns = (uint64_t(1) << base_2log) + offset_42;
       if (ns >= 1000000000)
         continue;
       SCOPED_TRACE("ns " + std::to_string(ns) + ", factional " +
@@ -262,7 +262,8 @@ TEST(Trivia, time_fractional2ns) {
     for (int offset_42 = -42; offset_42 <= 42; ++offset_42) {
       SCOPED_TRACE("base_2log " + std::to_string(base_2log) + ", offset_42 " +
                    std::to_string(offset_42));
-      const uint64_t fractional = uint32_t((1 << base_2log) + offset_42);
+      const uint64_t fractional =
+          uint32_t((uint64_t(1) << base_2log) + offset_42);
       SCOPED_TRACE("fractional " + std::to_string(fractional) + ", ns " +
                    std::to_string(fractional * scale));
       const uint64_t probe = floor(fractional * scale);
@@ -277,7 +278,7 @@ TEST(Trivia, time_us2fractional) {
     for (int offset_42 = -42; offset_42 <= 42; ++offset_42) {
       SCOPED_TRACE("base_2log " + std::to_string(base_2log) + ", offset_42 " +
                    std::to_string(offset_42));
-      const uint64_t us = (1 << base_2log) + offset_42;
+      const uint64_t us = (uint64_t(1) << base_2log) + offset_42;
       if (us >= 1000000)
         continue;
       SCOPED_TRACE("us " + std::to_string(us) + ", factional " +
@@ -294,7 +295,8 @@ TEST(Trivia, time_fractional2us) {
     for (int offset_42 = -42; offset_42 <= 42; ++offset_42) {
       SCOPED_TRACE("base_2log " + std::to_string(base_2log) + ", offset_42 " +
                    std::to_string(offset_42));
-      const uint64_t fractional = uint32_t((1 << base_2log) + offset_42);
+      const uint64_t fractional =
+          uint32_t((uint64_t(1) << base_2log) + offset_42);
       SCOPED_TRACE("fractional " + std::to_string(fractional) + ", us " +
                    std::to_string(fractional * scale));
       const uint64_t probe = floor(fractional * scale);
@@ -309,7 +311,7 @@ TEST(Trivia, time_ms2fractional) {
     for (int offset_42 = -42; offset_42 <= 42; ++offset_42) {
       SCOPED_TRACE("base_2log " + std::to_string(base_2log) + ", offset_42 " +
                    std::to_string(offset_42));
-      const uint64_t ms = (1 << base_2log) + offset_42;
+      const uint64_t ms = (uint64_t(1) << base_2log) + offset_42;
       if (ms >= 1000)
         continue;
       SCOPED_TRACE("ms " + std::to_string(ms) + ", factional " +
@@ -326,7 +328,8 @@ TEST(Trivia, time_fractional2ms) {
     for (int offset_42 = -42; offset_42 <= 42; ++offset_42) {
       SCOPED_TRACE("base_2log " + std::to_string(base_2log) + ", offset_42 " +
                    std::to_string(offset_42));
-      const uint64_t fractional = uint32_t((1 << base_2log) + offset_42);
+      const uint64_t fractional =
+          uint32_t((uint64_t(1) << base_2log) + offset_42);
       SCOPED_TRACE("fractional " + std::to_string(fractional) + ", ms " +
                    std::to_string(fractional * scale));
       const uint64_t probe = floor(fractional * scale);
@@ -388,7 +391,7 @@ TEST(Trivia, time_grain) {
       ASSERT_GE(fine.fixedpoint, grained.fixedpoint);
       for (int bit = 0; - bit > grain; ++bit) {
         SCOPED_TRACE("bit " + std::to_string(bit));
-        EXPECT_EQ(0u, grained.fractional & (1 << bit));
+        EXPECT_EQ(0u, grained.fractional & (uint64_t(1) << bit));
       }
       usleep(37);
     }

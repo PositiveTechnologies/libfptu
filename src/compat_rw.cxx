@@ -38,6 +38,7 @@ fptu_rw *fptu_init(void *buffer_space, std::size_t buffer_bytes,
   }
 }
 
+// coverity[+alloc]
 fptu_rw *fptu_alloc(size_t items_limit, std::size_t data_bytes) cxx11_noexcept {
   if (unlikely(items_limit > fptu::max_fields ||
                data_bytes > fptu::max_tuple_bytes_netto))
@@ -47,6 +48,7 @@ fptu_rw *fptu_alloc(size_t items_limit, std::size_t data_bytes) cxx11_noexcept {
   return fptu_init(::malloc(bytes), bytes, items_limit);
 }
 
+// coverity[+free : arg-0]
 void fptu_destroy(fptu_rw *pt) cxx11_noexcept {
   if (pt)
     pt->~fptu_rw();
