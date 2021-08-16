@@ -20,9 +20,16 @@
 #include "fast_positive/tuples/internal.h"
 #include "fast_positive/tuples/legacy.h"
 
+namespace {
 cxx11_constexpr fptu_type genus2legacy(fptu::genus type, unsigned colnum = 0) {
   return fptu_type(fptu::details::make_tag(type, colnum, true, true, false));
 }
+
+cxx11_constexpr fptu::details::tag_t legacy2tag(const fptu_tag_t tag) {
+  return fptu::details::make_tag(fptu::details::loose_genus_and_id_t(tag), true,
+                                 true, false);
+}
+} // namespace
 
 struct FPTU_API_TYPE fptu_field : public fptu::details::field_loose {
   using base = fptu::details::field_loose;
@@ -104,7 +111,7 @@ static __inline double fptu_fp64_denil(void) { return fptu_fp64_denil_value; }
 namespace fptu {
 
 inline unsigned get_colnum(fptu_tag_t tag) {
-  return fptu::details::tag2id(fptu::details::tag_t(tag));
+  return fptu::details::tag2id(legacy2tag(tag));
 }
 
 inline fptu_type get_type(fptu_tag_t tag) {
