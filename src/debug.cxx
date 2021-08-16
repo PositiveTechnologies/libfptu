@@ -320,7 +320,7 @@ __cold string to_string(const fptu_datetime_t &time) {
       static_cast<time_t>(time.utc_seconds()) + fractional[0] - '0';
 
   struct tm utc_tm;
-#ifdef _MSC_VER
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
   gmtime_s(&utc_tm, &utc_sec);
 #else
   gmtime_r(&utc_sec, &utc_tm);

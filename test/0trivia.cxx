@@ -19,7 +19,7 @@
 
 #include <cmath>
 
-#ifdef _MSC_VER
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 #pragma warning(push, 1)
 #include <windows.h>
 #pragma warning(pop)
@@ -42,7 +42,7 @@ static void usleep(unsigned usec) {
   WaitForSingleObject(timer, INFINITE);
   CloseHandle(timer);
 }
-#endif /* _MSC_VER */
+#endif /* Windows */
 
 const auto ms100 = fptu::datetime_t::ms2fractional(100);
 
