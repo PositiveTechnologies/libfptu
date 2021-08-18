@@ -60,13 +60,40 @@ static __noinline void throw_indirect_crossoverDSO() {
 
 TEST(ExceptionHandling, InsideDSO) { probe(throw_insideDSO); }
 
+#if (defined(__MINGW32__) &&                                                   \
+     (__MINGW32_MAJOR_VERSION < 10 ||                                          \
+      (__MINGW32_MAJOR_VERSION == 10 && __MINGW32_MINOR_VERSION < 3))) ||      \
+    (defined(__MINGW64__) &&                                                   \
+     (__MINGW64_MAJOR_VERSION < 10 ||                                          \
+      (__MINGW64_MAJOR_VERSION == 10 && __MINGW64_MINOR_VERSION < 3)))
+/* Some reasons why these tests may fail:
+ *
+ * 1) Errors in the implementation of exception handling thrown outside
+ *    the current DSO.
+ *
+ * 2) One known case is when the multiple instances of GCC runtime
+ *    are present, i.e. the GCC runtime linked statically with a shared library
+ *    and/or with an executable.
+ *    This is known reason fails this test with MinGW 10.2, which by default
+ *    links GCC's runtime statically.
+ *
+ * 3) https://bugs.llvm.org/show_bug.cgi?id=43275 for __attribute__((__pure__)),
+ *    [[gnu::pure]], __attribute__((__const__)) or [[gnu::const]]
+ */
+TEST(ExceptionHandling, DISABLED_DirectCrossoverDSO) {
+  probe(throw_direct_crossoverDSO);
+}
+TEST(ExceptionHandling, DISABLED_IndirectCrossoverDSO) {
+  probe(throw_indirect_crossoverDSO);
+}
+#else
 TEST(ExceptionHandling, DirectCrossoverDSO) {
   probe(throw_direct_crossoverDSO);
 }
-
 TEST(ExceptionHandling, IndirectCrossoverDSO) {
   probe(throw_indirect_crossoverDSO);
 }
+#endif
 
 //------------------------------------------------------------------------------
 
