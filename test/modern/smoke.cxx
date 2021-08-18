@@ -65,31 +65,6 @@ TEST(Token, StaticPreplaced) {
   EXPECT_TRUE(probe2static(token));
   EXPECT_TRUE(MyToken_FooBar_int::is_static_preplaced());
   EXPECT_TRUE(MyToken_FooBar_int::is_static_token::value);
-
-  const fptu::tuple_ro_weak tuple_ro;
-  /* FIXME: CLANG ?-6-7-8 WTF? */
-  EXPECT_THROW(tuple_ro.collection(token).empty(), ::fptu::collection_required);
-}
-
-TEST(clang_WTF, ExceptionHandling) {
-  try {
-    bool got_collection_required_exception = false;
-    try {
-      // fptu::throw_collection_required();
-      const fptu::tuple_ro_weak tuple_ro;
-      MyToken_FooBar_int token;
-      tuple_ro.collection(token).empty();
-    } catch (const ::fptu::collection_required &) {
-      got_collection_required_exception = true;
-    }
-    EXPECT_TRUE(got_collection_required_exception);
-  } catch (const ::std::exception &e) {
-    std::string msg = fptu::format("Unexpected exception type '%s': %s",
-                                   typeid(e).name(), e.what());
-    GTEST_FATAL_FAILURE_(msg.c_str());
-  } catch (...) {
-    GTEST_FATAL_FAILURE_("Unknown NOT std::exception");
-  }
 }
 
 //------------------------------------------------------------------------------
