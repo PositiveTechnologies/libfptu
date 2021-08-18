@@ -30,13 +30,12 @@ endif()
 
 add_ut(modern_internals TIMEOUT 142 SOURCE modern/internals.cxx LIBRARY fptu)
 add_ut(modern_smoke TIMEOUT 142 SOURCE modern/smoke.cxx LIBRARY fptu)
+add_ut(modern_exceptions TIMEOUT 42 SOURCE modern/exceptions.cxx LIBRARY fptu)
 add_ut(fptu0_trivia TIMEOUT ${fptu0_trivia_timeout} SOURCE 0trivia.cxx LIBRARY fptu)
 add_ut(fptu1_create TIMEOUT 42 SOURCE 1create.cxx LIBRARY fptu)
 add_ut(fptu2_upsert TIMEOUT 5 SOURCE 2upsert.cxx LIBRARY fptu)
 add_ut(fptu3_iterate TIMEOUT 42 SOURCE 3iterate.cxx LIBRARY fptu)
 add_ut(fptu4_fetch TIMEOUT 5 SOURCE 4fetch.cxx LIBRARY fptu)
-
-##FIXME
 add_ut(fptu5_remove TIMEOUT ${fptu5_remove_timeout} SOURCE 5remove.cxx shuffle6.hpp LIBRARY fptu)
 add_ut(fptu6_shrink TIMEOUT ${fptu6_shrink_timeout} SOURCE 6shrink.cxx shuffle6.hpp LIBRARY fptu)
 

@@ -19,18 +19,33 @@
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#define NOCOMM
-#define NOMINMAX
+#endif /* WIN32_LEAN_AND_MEAN */
 
-#if !defined(WINVER) || !defined(_WIN32_WINNT)
-#define WINVER 0x0502
+#ifndef NOCOMM
+#define NOCOMM
+#endif /* NOCOMM */
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif /* NOMINMAX */
+
+#ifndef _WIN32_WINNT
+#ifdef WINVER
+#define _WIN32_WINNT WINVER
+#else
 #define _WIN32_WINNT 0x0502
-#endif // !(WINVER) || !defined(_WIN32_WINNT)
+#endif
+#endif /* _WIN32_WINNT */
+
+#ifndef WINVER
+#define WINVER _WIN32_WINNT
+#endif /* WINVER */
 
 #ifdef DEFINE_ENUM_FLAG_OPERATORS
 #undef DEFINE_ENUM_FLAG_OPERATORS
-#endif
+#endif /* DEFINE_ENUM_FLAG_OPERATORS */
 
 #include "warnings_push_system.h"
 
