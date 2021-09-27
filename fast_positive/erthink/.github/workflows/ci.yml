@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, ubuntu-16.04]
+        os: [ubuntu-latest, macos-latest, ubuntu-18.04]
     steps:
     - uses: actions/checkout@v2
     - name: Fetch tags
@@ -24,4 +24,4 @@ jobs:
         GTEST_RUNTIME_LIMIT: 99
         MALLOC_CHECK_: 7
         MALLOC_PERTURB_: 42
-      run: make --keep-going test
+      run: make --keep-going test || ctest --rerun-failed --output-on-failure
