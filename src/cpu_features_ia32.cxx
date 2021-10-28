@@ -81,8 +81,8 @@ bool ia32_cpu_features::fetch() {
   if (cpuid_max >= 1) {
     __cpuid_count(1, 0, unused_eax, basic.ebx, basic.ecx, basic.edx);
     if (cpuid_max >= 7)
-      __cpuid_count(7, 0, unused_eax, extended_7.ebx, extended_7.ecx,
-                    extended_7.edx);
+      __cpuid_count(7, 0, unused_eax, extended_7_0.ebx, extended_7_0.ecx,
+                    extended_7_0.edx);
     rc = true;
   }
   cpuid_max = __get_cpuid_max(0x80000000, NULL);
@@ -107,9 +107,11 @@ bool ia32_cpu_features::fetch() {
     basic.edx = info[3];
     if (cpuid_max >= 7) {
       __cpuidex(info, 7, 0);
-      extended_7.ebx = info[1];
-      extended_7.ecx = info[2];
-      extended_7.edx = info[3];
+      extended_7_0.ebx = info[1];
+      extended_7_0.ecx = info[2];
+      extended_7_0.edx = info[3];
+      __cpuidex(info, 7, 1);
+      extended_7_1.eax = info[0];
     }
     rc = true;
   }
