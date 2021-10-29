@@ -37,7 +37,9 @@ ERTHINK_IFUNC_RESOLVER_API(FPTU_API)
 __cold scan_func_t fptu_scan_resolver() {
 #ifndef __SANITIZE_ADDRESS__
 #if defined(__ia32__)
-  if (cpu_features.has_AVX2())
+  if (cpu_features.has_AVX512_BW())
+    return fptu_scan_AVX512;
+  else if (cpu_features.has_AVX2())
     return fptu_scan_AVX2;
   else if (cpu_features.has_AVX())
     return fptu_scan_AVX;

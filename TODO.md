@@ -11,7 +11,7 @@
 - [ ] uprobes/SystemTap и perfomance-penalty.
 - [x] Зачистить combo_ptr.
 - [ ] more SIMD (sort, holes search, binary-search);
-- [ ] AVX512;
+- [x] AVX512;
 - [ ] inlay iteration;
 
 - [ ] de-serialization from JSON (with schema);

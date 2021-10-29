@@ -59,7 +59,16 @@ fptu_scan_AVX2(const field_loose *begin, const field_loose *end,
                const uint16_t genus_and_id);
 #endif /* __ia32__ || __AVX2__ */
 
-#if defined(__AVX2__)
+#if defined(__ia32__) || defined(__AVX512BW__)
+__extern_C FPTU_API const field_loose *
+fptu_scan_AVX512(const field_loose *begin, const field_loose *end,
+                 const uint16_t genus_and_id);
+#endif /* __ia32__ || __AVX512BW__ */
+
+#if defined(__AVX512BW__)
+#define fptu_scan(begin, end, genus_and_id)                                    \
+  fptu_scan_AVX512(begin, end, genus_and_id)
+#elif defined(__AVX2__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_AVX2(begin, end, genus_and_id)
 #elif !defined(__ia32__) && defined(__AVX__)
