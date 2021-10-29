@@ -107,6 +107,7 @@ typedef enum fptu_type fptu_type;
 typedef enum fptu_filter fptu_filter;
 typedef enum fptu_json_options fptu_json_options;
 #endif /* __cplusplus */
+typedef fptu_datetime_t fptu_time;
 
 /* Коды ошибок.
  * Список будет пополнен, а описания уточнены. */
@@ -805,6 +806,9 @@ FPTU_API const char *fptu_type_name(const fptu_type) cxx11_noexcept;
 /* Сервисные функции и классы для C++ */
 
 namespace fptu {
+
+using tuple_ptr = tuple_rw_managed;
+
 inline int erase(fptu_rw *pt, unsigned column, fptu_type type) {
   return fptu_erase(pt, column, fptu_type_or_filter(type));
 }
