@@ -175,8 +175,9 @@ public:
   static cxx14_constexpr intptr_t compare(const string_view &a,
                                           const string_view &b) {
     const intptr_t diff = a.len - b.len;
-    return diff ? diff
-                : (a.str == b.str) ? 0 : memcmp(a.data(), b.data(), a.length());
+    return diff               ? diff
+           : (a.str == b.str) ? 0
+                              : memcmp(a.data(), b.data(), a.length());
   }
   cxx14_constexpr bool operator==(const string_view &v) const {
     return compare(*this, v) == 0;

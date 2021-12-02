@@ -93,9 +93,9 @@ cxx14_constexpr bool apply_validation_mode(validation_mode mode,
 
 cxx11_constexpr validation_mode
 combine_validation_mode(validation_mode mode, bool by_default) cxx11_noexcept {
-  return (mode != default_validation)
-             ? mode
-             : by_default ? enforce_validation : enforce_skip_validation;
+  return (mode != default_validation) ? mode
+         : by_default                 ? enforce_validation
+                                      : enforce_skip_validation;
 }
 
 class token /* Токен доступа к полю кортежей.
