@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1994-2020 Leonid Yuriev <leo@yuriev.ru>.
+ *  Copyright (c) 1994-2021 Leonid Yuriev <leo@yuriev.ru>.
  *  https://github.com/erthink/erthink
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -137,7 +137,7 @@
   RESULT_TYPE(*RESOLVER(void)) DECLARGS_PARENTHESIZED;                         \
                                                                                \
   static __cold void __attribute__((__constructor__))                          \
-      NAME##_iFunc_init(void) {                                                \
+  NAME##_iFunc_init(void) {                                                    \
     NAME##_iFuncPtr = RESOLVER();                                              \
   }
 

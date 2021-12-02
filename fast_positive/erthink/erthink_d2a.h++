@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1994-2020 Leonid Yuriev <leo@yuriev.ru>.
+ *  Copyright (c) 1994-2021 Leonid Yuriev <leo@yuriev.ru>.
  *  https://github.com/erthink/erthink
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,12 +42,12 @@
 #endif
 
 #include "erthink_carryadd.h"
-#include "erthink_casting.h"
-#include "erthink_clz.h"
+#include "erthink_casting.h++"
+#include "erthink_clz.h++"
 #include "erthink_defs.h"
-#include "erthink_misc.h"
+#include "erthink_misc.h++"
 #include "erthink_mul.h"
-#include "erthink_u2a.h"
+#include "erthink_u2a.h++"
 
 #ifdef _MSC_VER
 #pragma warning(push, 1)
@@ -695,7 +695,7 @@ struct fractional_printer : public ieee754_default_printer<true, 32> {
   }
 
   void sign(bool negative) cxx11_noexcept {
-    constexpr_assert(!negative);
+    assert(!negative);
     (void)negative;
   }
 
@@ -792,15 +792,51 @@ inline std::ostream &operator<<(std::ostream &out,
   return out.write(buf, end - buf);
 }
 
-template <typename T> class fpclassify;
+template <typename T> class fpclassify {
+  const int std_fpclassify;
+  const bool negative;
+
+  constexpr fpclassify(const uint64_t) noexcept = delete;
+  constexpr fpclassify(const int64_t) noexcept = delete;
+  constexpr fpclassify(const uint32_t) noexcept = delete;
+  constexpr fpclassify(const int32_t) noexcept = delete;
+
+public:
+  constexpr fpclassify(const fpclassify &) noexcept = default;
+  explicit fpclassify(const T &value) noexcept
+      : std_fpclassify(::std::fpclassify(value)), negative(value < T(0)) {}
+
+  constexpr bool is_negative() const noexcept { return negative; }
+  constexpr bool is_zero() const noexcept { return std_fpclassify == FP_ZERO; }
+  constexpr bool is_finite() const noexcept {
+    return std_fpclassify != FP_INFINITE;
+  }
+  constexpr bool is_nan() const noexcept { return std_fpclassify == FP_NAN; }
+  constexpr bool is_infinity() const noexcept {
+    return std_fpclassify == FP_INFINITE;
+  }
+  constexpr bool is_normal() const noexcept {
+    return std_fpclassify == FP_NORMAL;
+  }
+  constexpr bool is_subnormal() const noexcept {
+    return std_fpclassify == FP_SUBNORMAL;
+  }
+  constexpr operator int() const noexcept { return std_fpclassify; }
+};
 
 template <> class fpclassify<float> {
   using type = uint32_t;
   const type value;
 
-public:
-  fpclassify(const float src) noexcept : value(bit_cast<type>(src)) {}
+  constexpr fpclassify(const uint64_t) noexcept = delete;
+  constexpr fpclassify(const int64_t) noexcept = delete;
   constexpr fpclassify(const type value) noexcept : value(value) {}
+  constexpr fpclassify(const int32_t) noexcept = delete;
+
+public:
+  constexpr fpclassify(const fpclassify &) noexcept = default;
+  explicit fpclassify(const float src) noexcept : value(bit_cast<type>(src)) {}
+  friend constexpr fpclassify fpclassify_from_uint(const type value) noexcept;
   constexpr bool is_negative() const noexcept {
     return value > UINT32_C(0x7fffFFFF);
   }
@@ -822,23 +858,33 @@ public:
   constexpr bool is_subnormal() const noexcept {
     return is_finite() && (value & UINT32_C(0x7fffFFFF)) < UINT32_C(0x00800000);
   }
-  cxx11_constexpr operator int() const noexcept {
-    if (likely(is_finite())) {
-      if (likely(is_normal()))
-        return FP_NORMAL;
-      return is_zero() ? FP_ZERO : FP_SUBNORMAL;
-    }
-    return is_infinity() ? FP_INFINITE : FP_NAN;
+  constexpr operator int() const noexcept {
+    return likely(is_finite())
+               ? (likely(is_normal()) ? FP_NORMAL
+                                      : (is_zero() ? FP_ZERO : FP_SUBNORMAL))
+           : is_infinity() ? FP_INFINITE
+                           : FP_NAN;
   }
 };
+
+constexpr fpclassify<float>
+fpclassify_from_uint(const uint32_t value) noexcept {
+  return fpclassify<float>(value);
+}
 
 template <> class fpclassify<double> {
   using type = uint64_t;
   const type value;
 
-public:
-  fpclassify(const double src) noexcept : value(bit_cast<type>(src)) {}
   constexpr fpclassify(const type value) noexcept : value(value) {}
+  constexpr fpclassify(const int64_t) noexcept = delete;
+  constexpr fpclassify(const uint32_t) noexcept = delete;
+  constexpr fpclassify(const int32_t) noexcept = delete;
+
+public:
+  constexpr fpclassify(const fpclassify &) noexcept = default;
+  explicit fpclassify(const double src) noexcept : value(bit_cast<type>(src)) {}
+  friend constexpr fpclassify fpclassify_from_uint(const type value) noexcept;
   constexpr bool is_negative() const noexcept {
     return value > UINT64_C(0x7fffFFFFffffFFFF);
   }
@@ -865,14 +911,18 @@ public:
     return is_finite() && (value & UINT64_C(0x7fffFFFFffffFFFF)) <
                               UINT64_C(0x0010000000000000);
   }
-  cxx11_constexpr operator int() const noexcept {
-    if (likely(is_finite())) {
-      if (likely(is_normal()))
-        return FP_NORMAL;
-      return is_zero() ? FP_ZERO : FP_SUBNORMAL;
-    }
-    return is_infinity() ? FP_INFINITE : FP_NAN;
+  constexpr operator int() const noexcept {
+    return likely(is_finite())
+               ? (likely(is_normal()) ? FP_NORMAL
+                                      : (is_zero() ? FP_ZERO : FP_SUBNORMAL))
+           : is_infinity() ? FP_INFINITE
+                           : FP_NAN;
   }
 };
+
+constexpr fpclassify<double>
+fpclassify_from_uint(const uint64_t value) noexcept {
+  return fpclassify<double>(value);
+}
 
 } // namespace erthink

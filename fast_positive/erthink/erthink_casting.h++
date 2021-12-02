@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1994-2020 Leonid Yuriev <leo@yuriev.ru>.
+ *  Copyright (c) 1994-2021 Leonid Yuriev <leo@yuriev.ru>.
  *  https://github.com/erthink/erthink
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 
 #pragma once
 
-#if !defined(__cplusplus) || __cplusplus < 201103L
+#if !(defined(__cplusplus) && __cplusplus >= 201103L)
 #error "This source code requires C++11 at least."
 #endif
 
@@ -26,15 +26,18 @@
 #include <type_traits>
 #if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
 #include <bit>
-#define HAVE_std_bit_cast 1
+#define ERTHINK_HAVE_std_bit_cast 1
 #else
-#define HAVE_std_bit_cast 0
+#define ERTHINK_HAVE_std_bit_cast 0
 #include <cstring>
-#endif
+#endif /* ERTHINK_HAVE_std_bit_cast */
 
 #if defined(__cpp_lib_concepts) && __cpp_lib_concepts >= 202002L
 #include <concepts>
-#endif
+#define ERTHINK_HAVE_cxx_concepts 1
+#else
+#define ERTHINK_HAVE_cxx_concepts 0
+#endif /* ERTHINK_HAVE_cxx_concepts */
 
 namespace erthink {
 
@@ -67,7 +70,7 @@ cxx11_constexpr TO constexpr_pointer_cast(FROM from) {
 
 //------------------------------------------------------------------------------
 
-#if HAVE_std_bit_cast
+#if ERTHINK_HAVE_std_bit_cast
 
 template <class TO, class FROM>
 cxx11_constexpr TO bit_cast(const FROM &src) cxx11_noexcept {
@@ -78,7 +81,7 @@ cxx11_constexpr TO bit_cast(const FROM &src) cxx11_noexcept {
 
 #if defined(__cpp_concepts) && __cpp_concepts >= 201507L
 template <typename TO, typename FROM>
-    requires(sizeof(TO) == sizeof(FROM)) &&
+requires(sizeof(TO) == sizeof(FROM)) &&
     std::is_trivially_copyable<FROM>::value
         &&std::is_trivially_copyable<TO>::value
 #else
@@ -108,6 +111,6 @@ template <typename TO, typename FROM,
 #endif
 }
 
-#endif /* HAVE_std_bit_cast */
+#endif /* ERTHINK_HAVE_std_bit_cast */
 
 } // namespace erthink
