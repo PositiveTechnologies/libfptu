@@ -979,9 +979,9 @@ template <>
 inline bool is_within<uint64_t, int64_t, int64_t>(uint64_t value, int64_t begin,
                                                   int64_t end) {
   assert(begin < end);
-  if (end < 0 || value > (uint64_t)end)
+  if (end < 0 || value > uint64_t(end))
     return false;
-  if (begin > 0 && value < (uint64_t)begin)
+  if (begin > 0 && value < uint64_t(begin))
     return false;
   return true;
 }
@@ -991,9 +991,9 @@ inline bool is_within<uint64_t, double_t, double_t>(uint64_t value,
                                                     double_t begin,
                                                     double_t end) {
   assert(begin < end);
-  if (end < 0 || (end < (double_t)UINT64_MAX && value > (uint64_t)end))
+  if (end < 0 || (end < double_t(UINT64_MAX) && value > uint64_t(end)))
     return false;
-  if (begin > 0 && (begin > (double_t)UINT64_MAX || value < (uint64_t)begin))
+  if (begin > 0 && (begin > double_t(UINT64_MAX) || value < uint64_t(begin)))
     return false;
   return true;
 }
@@ -1003,9 +1003,9 @@ inline bool is_within<int64_t, double_t, double_t>(int64_t value,
                                                    double_t begin,
                                                    double_t end) {
   assert(begin < end);
-  if (end < (double_t)INT64_MAX && value > (int64_t)end)
+  if (end < double_t(INT64_MAX) && value > int64_t(end))
     return false;
-  if (begin > (double_t)INT64_MAX || value < (int64_t)begin)
+  if (begin > double_t(INT64_MAX) || value < int64_t(begin))
     return false;
   return true;
 }
@@ -1017,7 +1017,7 @@ inline bool is_within<int64_t, uint64_t, uint64_t>(int64_t value,
   assert(begin < end);
   if (value < 0)
     return false;
-  return is_within((uint64_t)value, begin, end);
+  return is_within(uint64_t(value), begin, end);
 }
 
 template <>
@@ -1049,37 +1049,37 @@ static RESULT_TYPE get_number(const fptu_field *field) {
     assert(is_within(field->get_payload_uint16(),
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->get_payload_uint16();
+    return RESULT_TYPE(field->get_payload_uint16());
   case fptu_uint32:
     assert(is_within(field->payload()->u32,
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->u32;
+    return RESULT_TYPE(field->payload()->u32);
   case fptu_uint64:
     assert(is_within(field->payload()->u64,
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->u64;
+    return RESULT_TYPE(field->payload()->u64);
   case fptu_int32:
     assert(is_within(field->payload()->i32,
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->i32;
+    return RESULT_TYPE(field->payload()->i32);
   case fptu_int64:
     assert(is_within(field->payload()->i64,
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->i64;
+    return RESULT_TYPE(field->payload()->i64);
   case fptu_fp32:
     assert(is_within(field->payload()->fp32,
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->fp32;
+    return RESULT_TYPE(field->payload()->fp32);
   case fptu_fp64:
     assert(is_within(field->payload()->fp32,
                      std::numeric_limits<RESULT_TYPE>::lowest(),
                      std::numeric_limits<RESULT_TYPE>::max()));
-    return (RESULT_TYPE)field->payload()->fp64;
+    return RESULT_TYPE(field->payload()->fp64);
   }
 }
 
@@ -1094,31 +1094,31 @@ static void set_number(fptu_field *field, const VALUE_TYPE &value) {
     break;
   case fptu_uint16:
     assert(is_within(value, 0, INT16_MAX));
-    field->offset = (uint16_t)value;
+    field->offset = uint16_t(value);
     break;
   case fptu_uint32:
     assert(is_within(value, 0u, UINT32_MAX));
-    field->payload()->u32 = (uint32_t)value;
+    field->payload()->u32 = uint32_t(value);
     break;
   case fptu_uint64:
     assert(is_within(value, 0u, UINT64_MAX));
-    field->payload()->u64 = (uint64_t)value;
+    field->payload()->u64 = uint64_t(value);
     break;
   case fptu_int32:
     assert(is_within(value, INT32_MIN, INT32_MAX));
-    field->payload()->i32 = (int32_t)value;
+    field->payload()->i32 = int32_t(value);
     break;
   case fptu_int64:
     assert(is_within(value, INT64_MIN, INT64_MAX));
-    field->payload()->i64 = (int64_t)value;
+    field->payload()->i64 = int64_t(value);
     break;
   case fptu_fp32:
     assert(value >= FLT_MIN && value <= FLT_MAX);
-    field->payload()->fp32 = (float)value;
+    field->payload()->fp32 = float(value);
     break;
   case fptu_fp64:
     assert(value >= DBL_MIN && value <= DBL_MAX);
-    field->payload()->fp64 = (double)value;
+    field->payload()->fp64 = double(value);
     break;
   }
 }
@@ -1134,25 +1134,25 @@ static int upsert_number(fptu_rw *pt, unsigned colnum,
     return 0;
   case fptu_uint16:
     assert(is_within(value, 0, INT16_MAX));
-    return fptu_upsert_uint16(pt, colnum, (uint_fast16_t)value);
+    return fptu_upsert_uint16(pt, colnum, uint_fast16_t(value));
   case fptu_uint32:
     assert(is_within(value, 0u, UINT32_MAX));
-    return fptu_upsert_uint32(pt, colnum, (uint_fast32_t)value);
+    return fptu_upsert_uint32(pt, colnum, uint_fast32_t(value));
   case fptu_uint64:
     assert(is_within(value, 0u, UINT64_MAX));
-    return fptu_upsert_uint64(pt, colnum, (uint_fast64_t)value);
+    return fptu_upsert_uint64(pt, colnum, uint_fast64_t(value));
   case fptu_int32:
     assert(is_within(value, INT32_MIN, INT32_MAX));
-    return fptu_upsert_int32(pt, colnum, (int_fast32_t)value);
+    return fptu_upsert_int32(pt, colnum, int_fast32_t(value));
   case fptu_int64:
     assert(is_within(value, INT64_MIN, INT64_MAX));
-    return fptu_upsert_int64(pt, colnum, (int_fast64_t)value);
+    return fptu_upsert_int64(pt, colnum, int_fast64_t(value));
   case fptu_fp32:
     assert(value >= FLT_MIN && value <= FLT_MAX);
-    return fptu_upsert_fp32(pt, colnum, (float_t)value);
+    return fptu_upsert_fp32(pt, colnum, float(value));
   case fptu_fp64:
     assert(value >= DBL_MIN && value <= DBL_MAX);
-    return fptu_upsert_fp64(pt, colnum, (double_t)value);
+    return fptu_upsert_fp64(pt, colnum, double_t(value));
   }
 }
 #endif
