@@ -284,7 +284,7 @@ struct token_static : public details::token_static_tag {
 
 protected:
   cxx14_constexpr token_static(const details::tag_t tag) cxx11_noexcept {
-    constexpr_assert(tag == TAG);
+    CONSTEXPR_ASSERT(tag == TAG);
     (void)tag;
   }
   cxx11_constexpr token_static() cxx11_noexcept = default;

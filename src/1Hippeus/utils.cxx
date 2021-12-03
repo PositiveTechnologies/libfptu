@@ -23,7 +23,7 @@
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/details/bug.h"
 
-#include "fast_positive/erthink/erthink_casting.h"
+#include "fast_positive/erthink/erthink_casting.h++"
 #include "fast_positive/erthink/erthink_defs.h"
 #include "fast_positive/erthink/erthink_intrin.h"
 #include "fast_positive/tuples/1Hippeus/utils.h"
@@ -57,7 +57,7 @@ using machine_word = native_type<uintptr_t>::unsigned_integer;
 
 /* LY: выдает маску с 0xFF для первых n-байт в порядке адресации. */
 template <typename word> cxx11_constexpr word aheadmask(size_t bytes) {
-  constexpr_assert(bytes > 0 && bytes < sizeof(word));
+  CONSTEXPR_ASSERT(bytes > 0 && bytes < sizeof(word));
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   return (~word(0)) >> 8 * (sizeof(word) - bytes);
 #elif __BYTE_ORDER == __BIG_ENDIAN
@@ -69,7 +69,7 @@ template <typename word> cxx11_constexpr word aheadmask(size_t bytes) {
 
 /* LY: выдает маску с 0xFF для последних n-байт в порядке адресации. */
 template <typename word> static cxx11_constexpr word tailmask(size_t bytes) {
-  constexpr_assert(bytes > 0 && bytes < sizeof(word));
+  CONSTEXPR_ASSERT(bytes > 0 && bytes < sizeof(word));
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   return (~word(0)) << 8 * (sizeof(word) - bytes);
 #elif __BYTE_ORDER == __BIG_ENDIAN

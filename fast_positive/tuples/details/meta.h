@@ -16,7 +16,7 @@
  */
 
 #pragma once
-#include "fast_positive/erthink/erthink_dynamic_constexpr.h"
+#include "fast_positive/erthink/erthink_dynamic_constexpr.h++"
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/details/field.h"
 #include "fast_positive/tuples/details/utils.h"
@@ -637,7 +637,7 @@ static cxx14_constexpr size_t loose_units_constexpr(const genus type)
     cxx11_noexcept {
   switch (type) {
   default:
-    constexpr_assert(false);
+    CONSTEXPR_ASSERT(false);
     __unreachable();
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \
@@ -683,7 +683,7 @@ static cxx14_constexpr size_t preplaced_bytes_constexpr(const genus type)
     cxx11_noexcept {
   switch (type) {
   default:
-    constexpr_assert(false);
+    CONSTEXPR_ASSERT(false);
     __unreachable();
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \
@@ -730,7 +730,7 @@ is_trivially_convertible_constexpr(const genus from,
                                    const genus to) cxx11_noexcept {
   switch (to) {
   default:
-    constexpr_assert(false);
+    CONSTEXPR_ASSERT(false);
     __unreachable();
 #define HERE_CASE_ITEM(N)                                                      \
   case genus(N):                                                               \

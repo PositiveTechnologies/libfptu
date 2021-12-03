@@ -16,7 +16,7 @@
  */
 
 #pragma once
-#include "fast_positive/erthink/erthink_casting.h"
+#include "fast_positive/erthink/erthink_casting.h++"
 #include "fast_positive/tuples/api.h"
 
 #include <stddef.h>
@@ -82,15 +82,15 @@ public:
   }
 
   cxx11_constexpr narrow_tagged_pointer_base() cxx11_noexcept : body_(ptr_xor) {
-    constexpr_assert(ptr() == nullptr && tag() == 0);
+    CONSTEXPR_ASSERT(ptr() == nullptr && tag() == 0);
   }
 
   cxx11_constexpr narrow_tagged_pointer_base(void *ptr,
                                              unsigned tag = 0) cxx11_noexcept
       : body_((p2u(ptr) ^ ptr_xor) | (uintptr_t(tag) << bits)) {
-    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
-    constexpr_assert(tag < (1u << bits));
-    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+    CONSTEXPR_ASSERT(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    CONSTEXPR_ASSERT(tag < (1u << bits));
+    CONSTEXPR_ASSERT(this->ptr() == ptr && this->tag() == tag);
   }
 
   cxx11_constexpr narrow_tagged_pointer_base(
@@ -106,21 +106,21 @@ public:
 
   cxx14_constexpr void set_ptr(void *ptr) cxx11_noexcept {
     body_.uint = (body_.uint & tag_mask) | (p2u(ptr) ^ ptr_xor);
-    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
-    constexpr_assert(this->ptr() == ptr);
+    CONSTEXPR_ASSERT(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    CONSTEXPR_ASSERT(this->ptr() == ptr);
   }
 
   cxx14_constexpr void set_tag(unsigned tag) cxx11_noexcept {
     body_.uint = (body_.uint & ptr_mask) | (uintptr_t(tag) << bits);
-    constexpr_assert(tag < (1u << bits));
-    constexpr_assert(this->tag() == tag);
+    CONSTEXPR_ASSERT(tag < (1u << bits));
+    CONSTEXPR_ASSERT(this->tag() == tag);
   }
 
   cxx14_constexpr void set(void *ptr, unsigned tag) cxx11_noexcept {
     body_.uint = (p2u(ptr) ^ ptr_xor) | (uintptr_t(tag) << bits);
-    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
-    constexpr_assert(tag < (1u << bits));
-    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+    CONSTEXPR_ASSERT(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    CONSTEXPR_ASSERT(tag < (1u << bits));
+    CONSTEXPR_ASSERT(this->ptr() == ptr && this->tag() == tag);
   }
 };
 
@@ -192,15 +192,15 @@ public:
 
   cxx11_constexpr wide_tagged_pointer_base() cxx11_noexcept
       : body_(uint64_t(ptr_xor)) {
-    constexpr_assert(ptr() == nullptr && tag() == 0);
+    CONSTEXPR_ASSERT(ptr() == nullptr && tag() == 0);
   }
 
   cxx11_constexpr wide_tagged_pointer_base(void *ptr,
                                            unsigned tag = 0) cxx11_noexcept
       : body_((p2u(ptr) ^ ptr_xor) | (uint64_t(tag) << bits)) {
-    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
-    constexpr_assert(tag < (1u << bits));
-    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+    CONSTEXPR_ASSERT(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    CONSTEXPR_ASSERT(tag < (1u << bits));
+    CONSTEXPR_ASSERT(this->ptr() == ptr && this->tag() == tag);
   }
 
   cxx11_constexpr wide_tagged_pointer_base(const wide_tagged_pointer_base &v)
@@ -216,21 +216,21 @@ public:
 
   cxx14_constexpr void set_ptr(void *ptr) cxx11_noexcept {
     body_.u64 = (body_.u64 & tag_mask) | (p2u(ptr) ^ ptr_xor);
-    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
-    constexpr_assert(this->ptr() == ptr);
+    CONSTEXPR_ASSERT(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    CONSTEXPR_ASSERT(this->ptr() == ptr);
   }
 
   cxx14_constexpr void set_tag(unsigned tag) cxx11_noexcept {
     body_.u64 = (body_.u64 & ptr_mask) | (uint64_t(tag) << bits);
-    constexpr_assert(tag < (1u << bits));
-    constexpr_assert(this->tag() == tag);
+    CONSTEXPR_ASSERT(tag < (1u << bits));
+    CONSTEXPR_ASSERT(this->tag() == tag);
   }
 
   cxx14_constexpr void set(void *ptr, unsigned tag) cxx11_noexcept {
     body_.u64 = (p2u(ptr) ^ ptr_xor) | (uint64_t(tag) << bits);
-    constexpr_assert(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
-    constexpr_assert(tag < (1u << bits));
-    constexpr_assert(this->ptr() == ptr && this->tag() == tag);
+    CONSTEXPR_ASSERT(((p2u(ptr) ^ ptr_xor) & tag_mask) == 0);
+    CONSTEXPR_ASSERT(tag < (1u << bits));
+    CONSTEXPR_ASSERT(this->ptr() == ptr && this->tag() == tag);
   }
 };
 

@@ -59,18 +59,18 @@ public:
 
   cxx11_constexpr string_view(const char *str, std::size_t count)
       : str(str), len(str ? static_cast<intptr_t>(count) : -1) {
-    constexpr_assert(len >= 0 || (len == -1 && !str));
+    CONSTEXPR_ASSERT(len >= 0 || (len == -1 && !str));
   }
 
   cxx11_constexpr string_view(const char *begin, const char *end)
       : str(begin), len(begin ? static_cast<intptr_t>(end - begin) : -1) {
-    constexpr_assert(end >= begin);
-    constexpr_assert(len >= 0 || (len == -1 && !begin));
+    CONSTEXPR_ASSERT(end >= begin);
+    CONSTEXPR_ASSERT(len >= 0 || (len == -1 && !begin));
   }
 
   cxx11_constexpr string_view(const char *ptr)
       : str(ptr), len(ptr ? static_cast<intptr_t>(strlen(ptr)) : -1) {
-    constexpr_assert(len >= 0 || (len == -1 && !str));
+    CONSTEXPR_ASSERT(len >= 0 || (len == -1 && !str));
   }
   /* Конструктор из std::string ОБЯЗАН быть explicit для предотвращения
    * проблемы reference to temporary object из-за неявного создания string_view
@@ -127,11 +127,11 @@ public:
     return str[pos];
   }
   cxx11_constexpr const_reference front() const {
-    constexpr_assert(len > 0);
+    CONSTEXPR_ASSERT(len > 0);
     return str[0];
   }
   cxx11_constexpr const_reference back() const {
-    constexpr_assert(len > 0);
+    CONSTEXPR_ASSERT(len > 0);
     return str[len - 1];
   }
   const_reference at(size_type pos) const;

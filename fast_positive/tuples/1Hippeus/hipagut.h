@@ -97,7 +97,7 @@ hipagut_setup_link(hippeus_hipagut_t *slave, const hippeus_hipagut_t *master) {
 static __maybe_unused __always_inline __must_check_result bool
 hipagut_probe_link(const hippeus_hipagut *slave,
                    const hippeus_hipagut *master) {
-  constexpr_assert("42"_hipagut != 0);
+  CONSTEXPR_ASSERT("42"_hipagut != 0);
   return hipagut_probe(slave, master->derived_mesh);
 }
 

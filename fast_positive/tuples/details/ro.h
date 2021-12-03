@@ -311,7 +311,7 @@ protected:
       : field_(field),
         pivot_(pivot),
         schema_(schema) {
-    constexpr_assert(!on_preplaced_field());
+    CONSTEXPR_ASSERT(!on_preplaced_field());
   }
 
   explicit cxx11_constexpr
@@ -320,8 +320,8 @@ protected:
       : field_(field),
         pivot_(pivot),
         schema_(schema) {
-    constexpr_assert(schema != nullptr);
-    constexpr_assert(on_preplaced_field());
+    CONSTEXPR_ASSERT(schema != nullptr);
+    CONSTEXPR_ASSERT(on_preplaced_field());
   }
 
   __pure_function static field_iterator_ro
@@ -335,7 +335,7 @@ protected:
   using compare_result_t = ptrdiff_t /* c++20 std::strong_ordering */;
   friend cxx14_constexpr compare_result_t compare(
       const field_iterator_ro &a, const field_iterator_ro &b) cxx11_noexcept {
-    constexpr_assert(a.pivot_ == b.pivot_);
+    CONSTEXPR_ASSERT(a.pivot_ == b.pivot_);
     const char *const pivot = static_cast<const char *>(a.pivot_);
     const ptrdiff_t diff_a = static_cast<const char *>(a.field_) - pivot;
     const ptrdiff_t diff_b = static_cast<const char *>(b.field_) - pivot;
@@ -352,13 +352,13 @@ protected:
   }
 
   cxx11_constexpr const details::field_loose *loose() const cxx11_noexcept {
-    constexpr_assert(!on_preplaced_field());
+    CONSTEXPR_ASSERT(!on_preplaced_field());
     return static_cast<const details::field_loose *>(field_);
   }
 
   cxx11_constexpr const details::field_preplaced *
   preplaced() const cxx11_noexcept {
-    constexpr_assert(on_preplaced_field());
+    CONSTEXPR_ASSERT(on_preplaced_field());
     return static_cast<const details::field_preplaced *>(field_);
   }
 

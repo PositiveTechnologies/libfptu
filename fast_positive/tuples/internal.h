@@ -79,7 +79,7 @@
 //------------------------------------------------------------------------------
 #include "fast_positive/tuples/details/crutches.h"
 
-#include "fast_positive/erthink/erthink_short_alloc.h"
+#include "fast_positive/erthink/erthink_short_alloc.h++"
 #include "fast_positive/tuples/1Hippeus/buffer.h"
 #include "fast_positive/tuples/1Hippeus/hipagut.h"
 #include "fast_positive/tuples/details/bug.h"

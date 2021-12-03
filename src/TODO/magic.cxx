@@ -69,16 +69,16 @@ protected:
   static cxx11_constexpr unsigned make_pointer_tag(kind_pointer kind,
                                              value_genus type) {
     static_assert(TAG_BITS <= tagged_pointer_base::bits, "WTF?");
-    constexpr_assert(kind <= unsigned(KIND_MASK));
-    constexpr_assert(type <= unsigned(TYPE_MASK));
+    CONSTEXPR_ASSERT(kind <= unsigned(KIND_MASK));
+    CONSTEXPR_ASSERT(type <= unsigned(TYPE_MASK));
     return unsigned(kind) << KIND_SHIFT | unsigned(type) << TYPE_SHIFT;
   }
 
   static cxx11_constexpr unsigned make_pointer_tag(kind_pointer kind,
                                              unsigned field_id) {
     static_assert(TAG_BITS <= tagged_pointer_base::bits, "WTF?");
-    constexpr_assert(kind <= unsigned(KIND_MASK));
-    constexpr_assert(field_id <= unsigned(IDENT_MASK));
+    CONSTEXPR_ASSERT(kind <= unsigned(KIND_MASK));
+    CONSTEXPR_ASSERT(field_id <= unsigned(IDENT_MASK));
     return unsigned(kind) << KIND_SHIFT | field_id << IDENT_SHIFT;
   }
 

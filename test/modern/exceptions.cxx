@@ -16,7 +16,7 @@
  */
 
 #include "../fptu_test.h"
-#include "fast_positive/erthink/erthink_misc.h"
+#include "fast_positive/erthink/erthink_misc.h++"
 #include "fast_positive/tuples/details/cpu_features.h"
 
 #include <array>

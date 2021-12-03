@@ -67,7 +67,7 @@ colid2tag(fptu_type_or_filter legacy_type, unsigned column) {
 
 static cxx11_constexpr bool match(const fptu_field *pf, unsigned column,
                                   fptu_type_or_filter type_or_filter) {
-  constexpr_assert(is_filter(type_or_filter));
+  CONSTEXPR_ASSERT(is_filter(type_or_filter));
   return !pf->is_hole() && pf->colnum() == column &&
          (fptu_filter(type_or_filter) & fptu_filter_mask(pf->legacy_type())) !=
              0;

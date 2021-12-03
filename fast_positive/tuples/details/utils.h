@@ -18,7 +18,7 @@
 #pragma once
 #ifdef __cplusplus
 
-#include "fast_positive/erthink/erthink_casting.h"
+#include "fast_positive/erthink/erthink_casting.h++"
 #include "fast_positive/erthink/erthink_defs.h"
 #include <cstddef>
 #include <cstdint>
@@ -35,12 +35,12 @@ public:
   cxx11_constexpr range() cxx11_noexcept : begin_(nullptr), end_(nullptr) {}
   cxx11_constexpr range(T *begin, T *end) cxx11_noexcept : begin_(begin),
                                                            end_(end) {
-    constexpr_assert(end >= begin);
+    CONSTEXPR_ASSERT(end >= begin);
   }
   cxx11_constexpr range(T *begin, std::size_t count) cxx11_noexcept
       : begin_(begin),
         end_(begin + count) {
-    constexpr_assert(end_ >= begin_);
+    CONSTEXPR_ASSERT(end_ >= begin_);
   }
   cxx11_constexpr range(const range &) cxx11_noexcept = default;
   range &operator=(const range &) cxx11_noexcept = default;
@@ -197,13 +197,13 @@ cxx11_constexpr bool is_aligned(const TYPE *ptr) cxx11_noexcept {
 
 template <typename INTEGER, intptr_t align>
 cxx11_constexpr INTEGER floor(INTEGER value) cxx11_noexcept {
-  constexpr_assert(is_power2(align));
+  CONSTEXPR_ASSERT(is_power2(align));
   return value & ~(align - 1);
 }
 
 template <typename INTEGER>
 cxx11_constexpr INTEGER ceil(INTEGER value, intptr_t align) cxx11_noexcept {
-  constexpr_assert(is_power2(align));
+  CONSTEXPR_ASSERT(is_power2(align));
   return (value + align - 1) & ~(align - 1);
 }
 

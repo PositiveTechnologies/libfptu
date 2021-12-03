@@ -16,7 +16,7 @@
  */
 
 #pragma once
-#include "fast_positive/erthink/erthink_casting.h"
+#include "fast_positive/erthink/erthink_casting.h++"
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/details/exceptions.h"
 #include "fast_positive/tuples/details/utils.h"
@@ -120,7 +120,7 @@ union stretchy_value_varbin {
   cxx14_constexpr std::size_t length() const cxx11_noexcept {
     static_assert(8 - genus_bitness == 3, "Oops");
     const std::size_t tailbytes = reserved14_tailbytes & 3;
-    constexpr_assert(brutto_units > 1 || tailbytes == 0);
+    CONSTEXPR_ASSERT(brutto_units > 1 || tailbytes == 0);
     return units2bytes(brutto_units) - 4 + tailbytes;
   }
 
@@ -231,7 +231,7 @@ struct FPTU_API_TYPE stretchy_value_tuple {
   }
   cxx14_constexpr std::size_t payload_units() const cxx11_noexcept {
     const ptrdiff_t result = brutto_units - 1 - index_size();
-    constexpr_assert(result >= 0 &&
+    CONSTEXPR_ASSERT(result >= 0 &&
                      result == end_data_units() - begin_data_units());
     return result;
   }
@@ -243,7 +243,7 @@ struct FPTU_API_TYPE stretchy_value_tuple {
   }
   cxx14_constexpr std::size_t payload_bytes() const cxx11_noexcept {
     const ptrdiff_t result = end_data_bytes() - begin_data_bytes();
-    constexpr_assert(result >= 0 &&
+    CONSTEXPR_ASSERT(result >= 0 &&
                      size_t(result) == units2bytes(payload_units()));
     return result;
   }
@@ -299,10 +299,10 @@ union relative_payload {
     stretchy_value_property property;
 
     cxx14_constexpr std::size_t brutto_units(genus type) const {
-      constexpr_assert(!is_fixed_size(type));
+      CONSTEXPR_ASSERT(!is_fixed_size(type));
       switch (type) {
       default:
-        constexpr_assert(false);
+        CONSTEXPR_ASSERT(false);
         __unreachable();
         return 0;
       case genus::text:
@@ -317,10 +317,10 @@ union relative_payload {
     }
 
     cxx14_constexpr std::size_t length(genus type) const {
-      constexpr_assert(!is_fixed_size(type));
+      CONSTEXPR_ASSERT(!is_fixed_size(type));
       switch (type) {
       default:
-        constexpr_assert(false);
+        CONSTEXPR_ASSERT(false);
         __unreachable();
         return 0;
       case genus::text:
@@ -357,9 +357,9 @@ struct relative_offset {
   using ephemeral_addressable_by_offset_data = unit_t[UINT16_MAX];
 
   cxx14_constexpr void add_delta(const ptrdiff_t delta) cxx11_noexcept {
-    constexpr_assert(delta >= -UINT16_MAX && delta <= UINT16_MAX);
+    CONSTEXPR_ASSERT(delta >= -UINT16_MAX && delta <= UINT16_MAX);
     const ptrdiff_t full_offset = offset_uint16 + delta;
-    constexpr_assert(full_offset > 0 && full_offset <= UINT16_MAX);
+    CONSTEXPR_ASSERT(full_offset > 0 && full_offset <= UINT16_MAX);
     offset_uint16 = static_cast<uint16_t>(full_offset);
   }
   cxx14_constexpr void sub_delta(const ptrdiff_t delta) cxx11_noexcept {
@@ -375,7 +375,7 @@ struct relative_offset {
   }
 
   cxx14_constexpr relative_payload *payload() cxx11_noexcept {
-    constexpr_assert(have_payload());
+    CONSTEXPR_ASSERT(have_payload());
     return erthink::constexpr_pointer_cast<relative_payload *>(base() +
                                                                offset_uint16);
   }
@@ -384,10 +384,10 @@ struct relative_offset {
   }
 
   cxx14_constexpr void set_payload(const void *payload) cxx11_noexcept {
-    constexpr_assert(payload != nullptr);
+    CONSTEXPR_ASSERT(payload != nullptr);
     const ptrdiff_t ptrdiff =
         erthink::constexpr_pointer_cast<const unit_t *>(payload) - base();
-    constexpr_assert(ptrdiff > 0 && ptrdiff <= UINT16_MAX);
+    CONSTEXPR_ASSERT(ptrdiff > 0 && ptrdiff <= UINT16_MAX);
     offset_uint16 = static_cast<uint16_t>(ptrdiff);
   }
   cxx14_constexpr void reset_payload() cxx11_noexcept { offset_uint16 = 0; }
@@ -422,18 +422,18 @@ struct FPTU_API_TYPE field_loose {
   cxx11_constexpr genus type() const { return descriptor2genus(genus_and_id); }
   cxx11_constexpr bool is_hole() const { return type() == hole; }
   cxx11_constexpr unsigned id() const {
-    constexpr_assert(!is_hole());
+    CONSTEXPR_ASSERT(!is_hole());
     return descriptor2id(genus_and_id);
   }
   cxx11_constexpr unsigned hole_get_units() const {
-    constexpr_assert(is_hole());
+    CONSTEXPR_ASSERT(is_hole());
     return descriptor2id(genus_and_id);
   }
   void hole_set_units(size_t units) {
     genus_and_id = loose_genus_and_id_t(details::make_hole(units));
   }
   cxx14_constexpr const unit_t *hole_begin() const {
-    constexpr_assert(is_hole() && hole_get_units() > 0);
+    CONSTEXPR_ASSERT(is_hole() && hole_get_units() > 0);
     return relative.payload()->flat;
   }
   const unit_t *hole_end() const { return hole_begin() + hole_get_units(); }

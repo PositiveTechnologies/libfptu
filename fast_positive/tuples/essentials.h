@@ -259,7 +259,7 @@ enum tag_bits : uint32_t {
 //------------------------------------------------------------------------------
 
 static constexpr bool is_fixed_size(const genus type) cxx11_noexcept {
-  constexpr_assert(type != hole);
+  CONSTEXPR_ASSERT(type != hole);
   return type > property;
 }
 
@@ -298,7 +298,7 @@ static constexpr bool is_saturated(const tag_t tag) cxx11_noexcept {
 }
 
 static constexpr bool is_inlay(const tag_t tag) cxx11_noexcept {
-  constexpr_assert(is_loose(tag));
+  CONSTEXPR_ASSERT(is_loose(tag));
   return (tag & tag_bits::inlay_flag) != 0;
 }
 
@@ -315,17 +315,17 @@ static constexpr bool is_discernible_null(const tag_t tag) cxx11_noexcept {
 }
 
 static constexpr std::size_t tag2offset(const tag_t tag) cxx11_noexcept {
-  constexpr_assert(is_preplaced(tag));
+  CONSTEXPR_ASSERT(is_preplaced(tag));
   return tag >> tag_bits::offset_shift;
 }
 
 static constexpr std::size_t tag2indysize(const tag_t tag) cxx11_noexcept {
-  constexpr_assert(is_preplaced(tag));
+  CONSTEXPR_ASSERT(is_preplaced(tag));
   return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
 static constexpr unsigned tag2id(const tag_t tag) cxx11_noexcept {
-  constexpr_assert(is_loose(tag));
+  CONSTEXPR_ASSERT(is_loose(tag));
   return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
@@ -343,7 +343,7 @@ static constexpr tag_t make_tag(const genus type, const unsigned id,
                                 const bool collection,
                                 const bool discernible_null,
                                 const bool saturated) cxx11_noexcept {
-  constexpr_assert(type <= hole && id <= tag_bits::max_ident);
+  CONSTEXPR_ASSERT(type <= hole && id <= tag_bits::max_ident);
   return tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
                (id << tag_bits::id_shift) +
                (collection ? tag_bits::loose_collection_flag : 0u) +
@@ -355,7 +355,7 @@ static constexpr tag_t make_tag(const loose_genus_and_id_t loose_descriptor,
                                 const bool collection,
                                 const bool discernible_null,
                                 const bool saturated) cxx11_noexcept {
-  constexpr_assert(descriptor2genus(loose_descriptor) != hole);
+  CONSTEXPR_ASSERT(descriptor2genus(loose_descriptor) != hole);
   return tag_t(tag_bits::loose_threshold + loose_descriptor +
                (collection ? tag_bits::loose_collection_flag : 0u) +
                (discernible_null ? tag_bits::discernible_null_flag : 0u) +
@@ -363,7 +363,7 @@ static constexpr tag_t make_tag(const loose_genus_and_id_t loose_descriptor,
 }
 
 static constexpr tag_t make_hole(const std::size_t units) cxx11_noexcept {
-  constexpr_assert(units <= tag_bits::max_ident);
+  CONSTEXPR_ASSERT(units <= tag_bits::max_ident);
   return tag_t(tag_bits::collection_threshold +
                (genus::hole << tag_bits::genus_shift) +
                (units << tag_bits::id_shift));
@@ -374,8 +374,8 @@ static constexpr tag_t tag_from_offset(const std::size_t offset,
                                        const std::size_t indysize,
                                        const bool discernible_null,
                                        const bool saturated) cxx11_noexcept {
-  constexpr_assert(type <= hole && offset <= tag_bits::max_preplaced_offset);
-  constexpr_assert(indysize > 0 && indysize <= tag_bits::max_ident);
+  CONSTEXPR_ASSERT(type <= hole && offset <= tag_bits::max_preplaced_offset);
+  CONSTEXPR_ASSERT(indysize > 0 && indysize <= tag_bits::max_ident);
   return tag_t((type << tag_bits::genus_shift) +
                (offset << tag_bits::offset_shift) +
                (indysize << tag_bits::id_shift) +
@@ -385,7 +385,7 @@ static constexpr tag_t tag_from_offset(const std::size_t offset,
 
 static constexpr tag_t normalize_tag(const tag_t tag,
                                      const bool as_preplaced) cxx11_noexcept {
-  constexpr_assert(is_preplaced(tag) == as_preplaced);
+  CONSTEXPR_ASSERT(is_preplaced(tag) == as_preplaced);
   return tag |
          (as_preplaced
               ? tag_bits::discernible_null_flag | tag_bits::saturation_flag

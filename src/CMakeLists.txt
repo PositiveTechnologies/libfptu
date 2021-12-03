@@ -83,15 +83,15 @@ set(LIBFPTU_HEADERS
   erthink/erthink_arch.h
   erthink/erthink_bswap.h
   erthink/erthink_byteorder.h
-  erthink/erthink_d2a.h
+  erthink/erthink_d2a.h++
   erthink/erthink_defs.h
-  erthink/erthink_dynamic_constexpr.h
-  erthink/erthink_u2a.h
-  erthink/erthink_short_alloc.h
+  erthink/erthink_dynamic_constexpr.h++
+  erthink/erthink_u2a.h++
+  erthink/erthink_short_alloc.h++
   erthink/erthink_optimize4size.h
   erthink/erthink_optimize4speed.h
   erthink/erthink_ifunc.h
-  erthink/erthink_misc.h
+  erthink/erthink_misc.h++
   erthink/erthink_endian.h
 
   tuples/1Hippeus/actor.h

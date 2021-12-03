@@ -18,7 +18,7 @@
 #include "fast_positive/tuples/internal.h"
 
 #include "fast_positive/erthink/erthink_arch.h"
-#include "fast_positive/erthink/erthink_short_alloc.h"
+#include "fast_positive/erthink/erthink_short_alloc.h++"
 #include "fast_positive/tuples/details/cpu_features.h"
 #include "fast_positive/tuples/details/meta.h"
 #include "fast_positive/tuples/details/rw.h"
@@ -96,7 +96,7 @@ class gear : public tuple_rw {
 
 static cxx14_constexpr field_loose *best_fit(unsigned units, field_loose *left,
                                              field_loose *right) {
-  constexpr_assert(units > 0 && right != nullptr);
+  CONSTEXPR_ASSERT(units > 0 && right != nullptr);
   if (left == nullptr)
     return right;
   if (right == nullptr)
@@ -691,7 +691,7 @@ struct compact_item {
   payload2offset(const unit_t *const basis,
                  const relative_offset &relative) cxx11_noexcept {
     const ptrdiff_t offset = relative.payload()->flat - basis;
-    constexpr_assert(offset > 0 && offset <= UINT16_MAX);
+    CONSTEXPR_ASSERT(offset > 0 && offset <= UINT16_MAX);
     return static_cast<uint16_t>(offset);
   }
 
@@ -706,7 +706,7 @@ struct compact_item {
     const ptrdiff_t offset =
         erthink::constexpr_pointer_cast<const char *>(relative) -
         erthink::constexpr_pointer_cast<const char *>(basis);
-    constexpr_assert(offset >= 0 && offset < fptu::max_tuple_bytes_netto);
+    CONSTEXPR_ASSERT(offset >= 0 && offset < fptu::max_tuple_bytes_netto);
     return static_cast<uint32_t>(offset);
   }
 
@@ -727,12 +727,12 @@ struct compact_item {
                             ? loose_units_dynamic(field->type())
                             : field->stretchy_units())),
         referrer_offset(referrer2offset(basis, &field->relative)) {
-    constexpr_assert(!field->is_hole() && !is_inplaced(field->type()) &&
+    CONSTEXPR_ASSERT(!field->is_hole() && !is_inplaced(field->type()) &&
                      field->relative.have_payload());
     const std::size_t length_units = is_fixed_size(field->type())
                                          ? loose_units_dynamic(field->type())
                                          : field->stretchy_units();
-    constexpr_assert(length_units > 0 && length_units <= UINT16_MAX);
+    CONSTEXPR_ASSERT(length_units > 0 && length_units <= UINT16_MAX);
     (void)length_units;
   }
 
@@ -743,10 +743,10 @@ struct compact_item {
         length(
             uint16_t(field->relative.payload()->stretchy.brutto_units(type))),
         referrer_offset(referrer2offset(basis, &field->relative)) {
-    constexpr_assert(!is_fixed_size(type) && field->relative.have_payload());
+    CONSTEXPR_ASSERT(!is_fixed_size(type) && field->relative.have_payload());
     const std::size_t length_units =
         field->relative.payload()->stretchy.brutto_units(type);
-    constexpr_assert(length_units > 0 && length_units <= UINT16_MAX);
+    CONSTEXPR_ASSERT(length_units > 0 && length_units <= UINT16_MAX);
     (void)length_units;
   }
 };
@@ -884,7 +884,7 @@ struct sort_item {
   payload2offset(const unit_t *const basis,
                  const relative_offset &relative) cxx11_noexcept {
     const ptrdiff_t offset = relative.payload()->flat - basis;
-    constexpr_assert(offset > 0 && offset <= UINT16_MAX);
+    CONSTEXPR_ASSERT(offset > 0 && offset <= UINT16_MAX);
     return static_cast<uint16_t>(offset);
   }
 

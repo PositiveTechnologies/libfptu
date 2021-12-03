@@ -27,7 +27,7 @@ typedef union FPTU_API_TYPE fptu_mac_address {
 #ifdef __cplusplus
   fptu_mac_address() = default;
   explicit cxx11_constexpr fptu_mac_address(uint64_t u) : raw64(u) {
-    constexpr_assert(raw64 <= UINT64_C(0xffffFFFFffff));
+    CONSTEXPR_ASSERT(raw64 <= UINT64_C(0xffffFFFFffff));
   }
 #endif /* __cplusplus */
 } fptu_mac_address_t;

@@ -890,7 +890,7 @@ public:
     collection_iterator_rw(tuple_rw *tuple, field_loose *target,
                            const TOKEN token) cxx11_noexcept
         : accessor(tuple, target, token) {
-      constexpr_assert(token.is_collection());
+      CONSTEXPR_ASSERT(token.is_collection());
     }
 
   public:
@@ -974,7 +974,7 @@ public:
     cxx11_constexpr collection_rw(tuple_rw *tuple, field_loose *first,
                                   const TOKEN token) cxx11_noexcept
         : collection_iterator_rw<TOKEN>(tuple, first, token) {
-      constexpr_assert(token.is_collection());
+      CONSTEXPR_ASSERT(token.is_collection());
     }
 
   public:

@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "fast_positive/erthink/erthink_casting.h"
+#include "fast_positive/erthink/erthink_casting.h++"
 #include "fast_positive/tuples/1Hippeus/actor.h"
 #include "fast_positive/tuples/1Hippeus/hipagut.h"
 #include "fast_positive/tuples/1Hippeus/utils.h"
@@ -217,7 +217,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
   cxx14_constexpr buffer_tag(const hippeus_allot_C *local_allot, bool readonly)
       : base(p2u(local_allot) | (readonly ? HIPPEUS_LOCALWEAK | HIPPEUS_READONLY
                                           : HIPPEUS_LOCALWEAK)) {
-    constexpr_assert((erthink::bit_cast<uintptr_t>(local_allot) &
+    CONSTEXPR_ASSERT((erthink::bit_cast<uintptr_t>(local_allot) &
                       HIPPEUS_TAG_FLAGS_MASK) == 0);
   }
 
@@ -226,12 +226,12 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
       : base(uintptr_t(flags) | uintptr_t(allot_id) << HIPPEUS_TAG_ALLOT_SHIFT |
              uintptr_t(depot) << HIPPEUS_TAG_DEPOT_SHIFT |
              uintptr_t(crate) << HIPPEUS_TAG_CRATE_SHIFT) {
-    constexpr_assert((flags & HIPPEUS_LOCALWEAK) == 0);
-    constexpr_assert(unsigned(flags) <= unsigned(HIPPEUS_TAG_FLAGS_MASK) &&
+    CONSTEXPR_ASSERT((flags & HIPPEUS_LOCALWEAK) == 0);
+    CONSTEXPR_ASSERT(unsigned(flags) <= unsigned(HIPPEUS_TAG_FLAGS_MASK) &&
                      allot_id <= HIPPEUS_TAG_ALLOT_MASK &&
                      depot <= HIPPEUS_TAG_DEPOT_MASK &&
                      crate <= HIPPEUS_TAG_CRATE_MASK);
-    constexpr_assert(this->flags() == flags && this->allot_id() == allot_id &&
+    CONSTEXPR_ASSERT(this->flags() == flags && this->allot_id() == allot_id &&
                      this->allot_depot() == depot &&
                      this->allot_crate() == crate);
   }
@@ -242,7 +242,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
 
   cxx11_constexpr bool
   flags_test(hippeus_buffer_flags mask) const cxx11_noexcept {
-    constexpr_assert(unsigned(mask) <= unsigned(HIPPEUS_TAG_FLAGS_MASK));
+    CONSTEXPR_ASSERT(unsigned(mask) <= unsigned(HIPPEUS_TAG_FLAGS_MASK));
     return (uintptr_t(mask) & opacity_.uint) != 0;
   }
 
@@ -254,7 +254,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * экономии, который позволяет через баиндер получить доступ к телу и
    * интерфейсу аллокатора. */
   cxx11_constexpr unsigned allot_id() const cxx11_noexcept {
-    constexpr_assert(!flags_test(HIPPEUS_LOCALWEAK));
+    CONSTEXPR_ASSERT(!flags_test(HIPPEUS_LOCALWEAK));
     return (opacity_.uint >> HIPPEUS_TAG_ALLOT_SHIFT) & HIPPEUS_TAG_ALLOT_MASK;
   }
 
@@ -269,7 +269,7 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * Точная семантика может быть другой и определяется реализацией аллокатора.
    */
   cxx11_constexpr unsigned allot_depot() const cxx11_noexcept {
-    constexpr_assert(!flags_test(HIPPEUS_LOCALWEAK));
+    CONSTEXPR_ASSERT(!flags_test(HIPPEUS_LOCALWEAK));
     return (opacity_.uint >> HIPPEUS_TAG_DEPOT_SHIFT) & HIPPEUS_TAG_DEPOT_MASK;
   }
 
@@ -278,13 +278,13 @@ struct FPTU_API_TYPE buffer_tag : public hippeus_buffer_tag_C {
    * Точная семантика может быть другой и определяется реализацией аллокатора.
    */
   cxx11_constexpr unsigned allot_crate() const cxx11_noexcept {
-    constexpr_assert(!flags_test(HIPPEUS_LOCALWEAK));
+    CONSTEXPR_ASSERT(!flags_test(HIPPEUS_LOCALWEAK));
     return (opacity_.uint >> HIPPEUS_TAG_CRATE_SHIFT) & HIPPEUS_TAG_CRATE_MASK;
   }
 
   /* Прямой указатель на локальный аллокатор. */
   cxx14_constexpr hippeus_allot_C *local_allot() const cxx11_noexcept {
-    constexpr_assert(flags_test(HIPPEUS_LOCALWEAK));
+    CONSTEXPR_ASSERT(flags_test(HIPPEUS_LOCALWEAK));
     return static_cast<hippeus_allot_C *>(
         u2p(opacity_.uint & ~uintptr_t(HIPPEUS_TAG_FLAGS_MASK)));
   }
@@ -442,15 +442,15 @@ public:
   void *data() cxx11_noexcept { return static_cast<void *>(begin()); }
 
   uint8_t *begin() cxx11_noexcept {
-    constexpr_assert(ensure());
-    constexpr_assert(_data_offset);
+    CONSTEXPR_ASSERT(ensure());
+    CONSTEXPR_ASSERT(_data_offset);
     return erthink::constexpr_pointer_cast<uint8_t *>(this) + _data_offset;
   }
   uint8_t *end() cxx11_noexcept { return begin() + size(); }
 
   const uint8_t *cbegin() const cxx11_noexcept {
-    constexpr_assert(ensure());
-    constexpr_assert(_data_offset);
+    CONSTEXPR_ASSERT(ensure());
+    CONSTEXPR_ASSERT(_data_offset);
     return erthink::constexpr_pointer_cast<const uint8_t *>(this) +
            _data_offset;
   }

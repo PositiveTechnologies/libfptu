@@ -41,7 +41,7 @@ typedef union FPTU_API_TYPE fptu_decimal32 {
 #ifdef __cplusplus
   fptu_decimal32() = default;
   explicit cxx11_constexpr fptu_decimal32(short i) : i32(i) {
-    constexpr_assert(i == 0);
+    CONSTEXPR_ASSERT(i == 0);
   }
   friend bool operator==(const fptu_decimal32 a,
                          const fptu_decimal32 b) cxx11_noexcept {
@@ -60,7 +60,7 @@ typedef union FPTU_API_TYPE fptu_decimal64 {
 #ifdef __cplusplus
   fptu_decimal64() = default;
   explicit cxx11_constexpr fptu_decimal64(short i) : i64(i) {
-    constexpr_assert(i == 0);
+    CONSTEXPR_ASSERT(i == 0);
   }
   friend bool operator==(const fptu_decimal64 a,
                          const fptu_decimal64 b) cxx11_noexcept {

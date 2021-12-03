@@ -114,7 +114,7 @@ class FPTU_API_TYPE datetime_t {
 
   static cxx11_constexpr uint_fast32_t units2fractional(uint_fast32_t value,
                                                         uint_fast32_t factor) {
-    constexpr_assert(value < factor);
+    CONSTEXPR_ASSERT(value < factor);
     return (uint64_t(value) << 32) / factor;
   }
 
@@ -125,7 +125,7 @@ class FPTU_API_TYPE datetime_t {
 
   static cxx11_constexpr uint_fast32_t fractional2units(uint_fast32_t value,
                                                         uint_fast32_t factor) {
-    constexpr_assert(value <= UINT32_MAX);
+    CONSTEXPR_ASSERT(value <= UINT32_MAX);
     return (uint64_t(value) * factor) >> 32;
   }
 
