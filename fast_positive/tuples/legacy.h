@@ -510,8 +510,8 @@ FPTU_API int_fast32_t fptu_field_int32(const fptu_field *pf) cxx11_noexcept;
 FPTU_API uint_fast32_t fptu_field_uint32(const fptu_field *pf) cxx11_noexcept;
 FPTU_API int_fast64_t fptu_field_int64(const fptu_field *pf) cxx11_noexcept;
 FPTU_API uint_fast64_t fptu_field_uint64(const fptu_field *pf) cxx11_noexcept;
-FPTU_API double_t fptu_field_fp64(const fptu_field *pf) cxx11_noexcept;
-FPTU_API float_t fptu_field_fp32(const fptu_field *pf) cxx11_noexcept;
+FPTU_API double fptu_field_fp64(const fptu_field *pf) cxx11_noexcept;
+FPTU_API float fptu_field_fp32(const fptu_field *pf) cxx11_noexcept;
 FPTU_API union fptu_datetime_C
 fptu_field_datetime(const fptu_field *pf) cxx11_noexcept;
 FPTU_API const uint8_t *fptu_field_96(const fptu_field *pf) cxx11_noexcept;
@@ -534,10 +534,10 @@ FPTU_API int_fast64_t fptu_get_int64(fptu_ro ro, unsigned column,
                                      int *error) cxx11_noexcept;
 FPTU_API uint_fast64_t fptu_get_uint64(fptu_ro ro, unsigned column,
                                        int *error) cxx11_noexcept;
-FPTU_API double_t fptu_get_fp64(fptu_ro ro, unsigned column,
-                                int *error) cxx11_noexcept;
-FPTU_API float_t fptu_get_fp32(fptu_ro ro, unsigned column,
-                               int *error) cxx11_noexcept;
+FPTU_API double fptu_get_fp64(fptu_ro ro, unsigned column,
+                              int *error) cxx11_noexcept;
+FPTU_API float fptu_get_fp32(fptu_ro ro, unsigned column,
+                             int *error) cxx11_noexcept;
 FPTU_API union fptu_datetime_C fptu_get_datetime(fptu_ro ro, unsigned column,
                                                  int *error) cxx11_noexcept;
 
@@ -561,8 +561,8 @@ FPTU_API int_fast64_t fptu_get_sint(fptu_ro ro, unsigned column,
                                     int *error) cxx11_noexcept;
 FPTU_API uint_fast64_t fptu_get_uint(fptu_ro ro, unsigned column,
                                      int *error) cxx11_noexcept;
-FPTU_API double_t fptu_get_fp(fptu_ro ro, unsigned column,
-                              int *error) cxx11_noexcept;
+FPTU_API double fptu_get_fp(fptu_ro ro, unsigned column,
+                            int *error) cxx11_noexcept;
 
 //------------------------------------------------------------------------------
 
@@ -588,9 +588,9 @@ FPTU_API fptu_error fptu_upsert_int64(fptu_rw *pt, unsigned column,
 FPTU_API fptu_error fptu_upsert_uint64(fptu_rw *pt, unsigned column,
                                        uint_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value) cxx11_noexcept;
+                                     double value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value) cxx11_noexcept;
+                                     float value) cxx11_noexcept;
 FPTU_API fptu_error fptu_upsert_datetime(fptu_rw *pt, unsigned column,
                                          const fptu_datetime_t) cxx11_noexcept;
 
@@ -635,9 +635,9 @@ FPTU_API fptu_error fptu_insert_int64(fptu_rw *pt, unsigned column,
 FPTU_API fptu_error fptu_insert_uint64(fptu_rw *pt, unsigned column,
                                        uint_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value) cxx11_noexcept;
+                                     double value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value) cxx11_noexcept;
+                                     float value) cxx11_noexcept;
 FPTU_API fptu_error fptu_insert_datetime(fptu_rw *pt, unsigned column,
                                          const fptu_datetime_t) cxx11_noexcept;
 
@@ -682,9 +682,9 @@ FPTU_API fptu_error fptu_update_int64(fptu_rw *pt, unsigned column,
 FPTU_API fptu_error fptu_update_uint64(fptu_rw *pt, unsigned column,
                                        uint_fast64_t value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_fp64(fptu_rw *pt, unsigned column,
-                                     double_t value) cxx11_noexcept;
+                                     double value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_fp32(fptu_rw *pt, unsigned column,
-                                     float_t value) cxx11_noexcept;
+                                     float value) cxx11_noexcept;
 FPTU_API fptu_error fptu_update_datetime(fptu_rw *pt, unsigned column,
                                          const fptu_datetime_t) cxx11_noexcept;
 
@@ -940,11 +940,10 @@ static inline uint64_t cast_wide(uint32_t value) { return value; }
 static inline uint64_t cast_wide(uint64_t value) { return value; }
 static inline double_t cast_wide(float value) { return value; }
 static inline double_t cast_wide(double value) { return value; }
-#if FLT_EVAL_METHOD > 1
-static inline double_t cast_wide(double_t /*long double*/ value) {
-  return value;
-}
-#endif
+#if defined(LDBL_MANT_DIG) && defined(LDBL_MAX_EXP) &&                         \
+    (LDBL_MANT_DIG != DBL_MANT_DIG || LDBL_MAX_EXP != DBL_MAX_EXP)
+static inline double_t cast_wide(long double value) { return value; }
+#endif /* long double */
 
 template <typename VALUE_TYPE, typename RANGE_BEGIN_TYPE,
           typename RANGE_END_TYPE>

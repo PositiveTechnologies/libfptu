@@ -91,8 +91,8 @@ FPTU_GET_IMPL(int32, i32, i32, int_fast32_t, int_fast32_t, 0)
 FPTU_GET_IMPL(uint32, u32, u32, uint_fast32_t, uint_fast32_t, 0)
 FPTU_GET_IMPL(int64, i64, i64, int_fast64_t, int_fast64_t, 0)
 FPTU_GET_IMPL(uint64, u64, u64, uint_fast64_t, uint_fast64_t, 0)
-FPTU_GET_IMPL(fp64, f64, f64, double_t, double_t, FPTU_DENIL_FP64)
-FPTU_GET_IMPL(fp32, f32, f32, float_t, float_t, FPTU_DENIL_FP32)
+FPTU_GET_IMPL(fp64, f64, f64, double, double, FPTU_DENIL_FP64)
+FPTU_GET_IMPL(fp32, f32, f32, float, float, FPTU_DENIL_FP32)
 FPTU_GET_IMPL(datetime, datetime, t64, fptu_datetime_C, fptu_datetime_C,
               FPTU_DENIL_DATETIME)
 

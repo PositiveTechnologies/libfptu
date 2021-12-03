@@ -404,11 +404,17 @@ TEST(Fetch, DeNils) {
     EXPECT_TRUE(std::isnan(/*FPTU_DENIL_FP64*/ fptu_field_fp64(nullptr)));
   }
   const auto expected_fp32 = FPTU_DENIL_FP32;
+  static_assert(sizeof(expected_fp32) == 4, "WTF?");
   const auto got_fp32 = fptu_field_fp32(nullptr);
+  static_assert(sizeof(expected_fp32) == sizeof(got_fp32), "WTF?");
   EXPECT_EQ(0, std::memcmp(&expected_fp32, &got_fp32, sizeof(expected_fp32)));
+
   const auto expected_fp64 = FPTU_DENIL_FP64;
+  static_assert(sizeof(expected_fp64) == 8, "WTF?");
   const auto got_fp64 = fptu_field_fp64(nullptr);
+  static_assert(sizeof(expected_fp64) == sizeof(got_fp64), "WTF?");
   EXPECT_EQ(0, std::memcmp(&expected_fp64, &got_fp64, sizeof(expected_fp64)));
+
   EXPECT_EQ(FPTU_DENIL_DATETIME, fptu_field_datetime(nullptr));
   EXPECT_EQ(FPTU_DENIL_CSTR, fptu_field_cstr(nullptr));
 

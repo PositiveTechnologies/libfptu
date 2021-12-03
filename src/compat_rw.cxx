@@ -268,8 +268,8 @@ FPTU_UPSERT_IMPL(int32, i32, i32, int_fast32_t)
 FPTU_UPSERT_IMPL(uint32, u32, u32, uint_fast32_t)
 FPTU_UPSERT_IMPL(int64, i64, i64, int_fast64_t)
 FPTU_UPSERT_IMPL(uint64, u64, u64, uint_fast64_t)
-FPTU_UPSERT_IMPL(fp64, f64, f64, double_t)
-FPTU_UPSERT_IMPL(fp32, f32, f32, float_t)
+FPTU_UPSERT_IMPL(fp64, f64, f64, double)
+FPTU_UPSERT_IMPL(fp32, f32, f32, float)
 FPTU_UPSERT_IMPL(datetime, datetime, t64, fptu_datetime_t)
 #undef FPTU_UPSERT_IMPL
 
@@ -366,8 +366,8 @@ FPTU_INSERT_IMPL(int32, i32, i32, int_fast32_t)
 FPTU_INSERT_IMPL(uint32, u32, u32, uint_fast32_t)
 FPTU_INSERT_IMPL(int64, i64, i64, int_fast64_t)
 FPTU_INSERT_IMPL(uint64, u64, u64, uint_fast64_t)
-FPTU_INSERT_IMPL(fp64, f64, f64, double_t)
-FPTU_INSERT_IMPL(fp32, f32, f32, float_t)
+FPTU_INSERT_IMPL(fp64, f64, f64, double)
+FPTU_INSERT_IMPL(fp32, f32, f32, float)
 FPTU_INSERT_IMPL(datetime, datetime, t64, fptu_datetime_t)
 #undef FPTU_INSERT_IMPL
 
@@ -452,8 +452,8 @@ FPTU_UPDATE_IMPL(int32, i32, i32, int_fast32_t)
 FPTU_UPDATE_IMPL(uint32, u32, u32, uint_fast32_t)
 FPTU_UPDATE_IMPL(int64, i64, i64, int_fast64_t)
 FPTU_UPDATE_IMPL(uint64, u64, u64, uint_fast64_t)
-FPTU_UPDATE_IMPL(fp64, f64, f64, double_t)
-FPTU_UPDATE_IMPL(fp32, f32, f32, float_t)
+FPTU_UPDATE_IMPL(fp64, f64, f64, double)
+FPTU_UPDATE_IMPL(fp32, f32, f32, float)
 FPTU_UPDATE_IMPL(datetime, datetime, t64, fptu_datetime_t)
 #undef FPTU_UPDATE_IMPL
 
