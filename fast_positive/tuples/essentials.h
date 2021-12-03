@@ -259,8 +259,7 @@ enum tag_bits : uint32_t {
 //------------------------------------------------------------------------------
 
 static constexpr bool is_fixed_size(const genus type) cxx11_noexcept {
-  CONSTEXPR_ASSERT(type != hole);
-  return type > property;
+  return CONSTEXPR_ASSERT(type != hole), type > property;
 }
 
 static constexpr bool is_fixed_size(const tag_t tag) cxx11_noexcept {
@@ -298,8 +297,7 @@ static constexpr bool is_saturated(const tag_t tag) cxx11_noexcept {
 }
 
 static constexpr bool is_inlay(const tag_t tag) cxx11_noexcept {
-  CONSTEXPR_ASSERT(is_loose(tag));
-  return (tag & tag_bits::inlay_flag) != 0;
+  return CONSTEXPR_ASSERT(is_loose(tag)), (tag & tag_bits::inlay_flag) != 0;
 }
 
 static constexpr bool is_loose_inlay(const tag_t tag) cxx11_noexcept {
@@ -315,18 +313,17 @@ static constexpr bool is_discernible_null(const tag_t tag) cxx11_noexcept {
 }
 
 static constexpr std::size_t tag2offset(const tag_t tag) cxx11_noexcept {
-  CONSTEXPR_ASSERT(is_preplaced(tag));
-  return tag >> tag_bits::offset_shift;
+  return CONSTEXPR_ASSERT(is_preplaced(tag)), tag >> tag_bits::offset_shift;
 }
 
 static constexpr std::size_t tag2indysize(const tag_t tag) cxx11_noexcept {
-  CONSTEXPR_ASSERT(is_preplaced(tag));
-  return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
+  return CONSTEXPR_ASSERT(is_preplaced(tag)),
+         (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
 static constexpr unsigned tag2id(const tag_t tag) cxx11_noexcept {
-  CONSTEXPR_ASSERT(is_loose(tag));
-  return (tag >> tag_bits::id_shift) & tag_bits::id_mask;
+  return CONSTEXPR_ASSERT(is_loose(tag)),
+         (tag >> tag_bits::id_shift) & tag_bits::id_mask;
 }
 
 static constexpr unsigned
@@ -343,8 +340,8 @@ static constexpr tag_t make_tag(const genus type, const unsigned id,
                                 const bool collection,
                                 const bool discernible_null,
                                 const bool saturated) cxx11_noexcept {
-  CONSTEXPR_ASSERT(type <= hole && id <= tag_bits::max_ident);
-  return tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
+  return CONSTEXPR_ASSERT(type <= hole && id <= tag_bits::max_ident),
+         tag_t(tag_bits::loose_threshold + (type << tag_bits::genus_shift) +
                (id << tag_bits::id_shift) +
                (collection ? tag_bits::loose_collection_flag : 0u) +
                (discernible_null ? tag_bits::discernible_null_flag : 0u) +
@@ -355,16 +352,16 @@ static constexpr tag_t make_tag(const loose_genus_and_id_t loose_descriptor,
                                 const bool collection,
                                 const bool discernible_null,
                                 const bool saturated) cxx11_noexcept {
-  CONSTEXPR_ASSERT(descriptor2genus(loose_descriptor) != hole);
-  return tag_t(tag_bits::loose_threshold + loose_descriptor +
+  return CONSTEXPR_ASSERT(descriptor2genus(loose_descriptor) != hole),
+         tag_t(tag_bits::loose_threshold + loose_descriptor +
                (collection ? tag_bits::loose_collection_flag : 0u) +
                (discernible_null ? tag_bits::discernible_null_flag : 0u) +
                (saturated ? tag_bits::saturation_flag : 0u));
 }
 
 static constexpr tag_t make_hole(const std::size_t units) cxx11_noexcept {
-  CONSTEXPR_ASSERT(units <= tag_bits::max_ident);
-  return tag_t(tag_bits::collection_threshold +
+  return CONSTEXPR_ASSERT(units <= tag_bits::max_ident),
+         tag_t(tag_bits::collection_threshold +
                (genus::hole << tag_bits::genus_shift) +
                (units << tag_bits::id_shift));
 }
@@ -374,9 +371,10 @@ static constexpr tag_t tag_from_offset(const std::size_t offset,
                                        const std::size_t indysize,
                                        const bool discernible_null,
                                        const bool saturated) cxx11_noexcept {
-  CONSTEXPR_ASSERT(type <= hole && offset <= tag_bits::max_preplaced_offset);
-  CONSTEXPR_ASSERT(indysize > 0 && indysize <= tag_bits::max_ident);
-  return tag_t((type << tag_bits::genus_shift) +
+  return CONSTEXPR_ASSERT(type <= hole &&
+                          offset <= tag_bits::max_preplaced_offset),
+         CONSTEXPR_ASSERT(indysize > 0 && indysize <= tag_bits::max_ident),
+         tag_t((type << tag_bits::genus_shift) +
                (offset << tag_bits::offset_shift) +
                (indysize << tag_bits::id_shift) +
                (discernible_null ? tag_bits::discernible_null_flag : 0u) +
@@ -385,12 +383,12 @@ static constexpr tag_t tag_from_offset(const std::size_t offset,
 
 static constexpr tag_t normalize_tag(const tag_t tag,
                                      const bool as_preplaced) cxx11_noexcept {
-  CONSTEXPR_ASSERT(is_preplaced(tag) == as_preplaced);
-  return tag |
-         (as_preplaced
-              ? tag_bits::discernible_null_flag | tag_bits::saturation_flag
-              : tag_bits::discernible_null_flag | tag_bits::saturation_flag |
-                    tag_bits::loose_collection_flag);
+  return CONSTEXPR_ASSERT(is_preplaced(tag) == as_preplaced),
+         tag | (as_preplaced ? tag_bits::discernible_null_flag |
+                                   tag_bits::saturation_flag
+                             : tag_bits::discernible_null_flag |
+                                   tag_bits::saturation_flag |
+                                   tag_bits::loose_collection_flag);
 }
 
 static constexpr tag_t normalize_tag(const tag_t tag) cxx11_noexcept {

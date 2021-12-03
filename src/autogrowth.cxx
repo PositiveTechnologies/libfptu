@@ -72,9 +72,9 @@ void tuple_rw_managed::manage_space_deficit(const insufficient_space &wanna) {
       shift = -(reserve - ptrdiff_t(pimpl_->end_ - pimpl_->tail_));
     }
 
-    assert(ptrdiff_t(pimpl_->tail_) + ptrdiff_t(wanna.data_space) + shift <=
+    assert(ptrdiff_t(pimpl_->tail_ + wanna.data_space + shift) <=
            ptrdiff_t(pimpl_->end_));
-    assert(pimpl_->head_ - ptrdiff_t(wanna.index_space) + shift >= 0);
+    assert(ptrdiff_t(pimpl_->head_ - wanna.index_space + shift) >= 0);
     if (shift) {
       auto src = &pimpl_->area_[pimpl_->head_];
       auto dst = &pimpl_->area_[pimpl_->head_ + shift];

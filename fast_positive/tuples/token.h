@@ -39,6 +39,8 @@ namespace details {
 
 template <typename TOKEN> struct token_operations : public TOKEN {
   cxx11_constexpr token_operations() cxx11_noexcept = default;
+  cxx11_constexpr token_operations &
+  operator=(const token_operations &) cxx11_noexcept = default;
   cxx11_constexpr
   token_operations(const token_operations &) cxx11_noexcept = default;
   cxx11_constexpr token_operations(const tag_t tag) cxx11_noexcept
@@ -198,6 +200,8 @@ public:
   cxx11_constexpr token_nonstatic_tag() cxx11_noexcept : tag_(0) {
     static_assert(sizeof(tag_) == 4, "WTF?");
   }
+  cxx11_constexpr token_nonstatic_tag &
+  operator=(const token_nonstatic_tag &) cxx11_noexcept = default;
   cxx11_constexpr
   token_nonstatic_tag(const token_nonstatic_tag &) cxx11_noexcept = default;
 
@@ -401,6 +405,7 @@ public:
       : base(details::tag_from_offset(
             validate_preplaced_offset(offset), validate_preplaced_type(type),
             details::preplaced_bytes(type), discernible_null, saturated)) {}
+  cxx11_constexpr token &operator=(const token &) cxx11_noexcept = default;
   cxx11_constexpr token(const token &) cxx11_noexcept = default;
   cxx11_constexpr
   token(const details::token_nonstatic_tag &other) cxx11_noexcept

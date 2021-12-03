@@ -143,6 +143,8 @@ struct FPTU_API_TYPE hippeus_buffer_tag_C {
     void *ptr;
     const void *const_ptr;
 #ifdef __cplusplus
+    cxx14_constexpr casting &
+    operator=(const casting &) cxx11_noexcept = default;
     cxx11_constexpr casting(const casting &) cxx11_noexcept = default;
     cxx11_constexpr casting(const void *ptr) cxx11_noexcept : const_ptr(ptr) {}
     cxx11_constexpr casting(uintptr_t uint) cxx11_noexcept : uint(uint) {}
@@ -166,6 +168,8 @@ protected:
       : opacity_(uint) {}
   cxx11_constexpr
   hippeus_buffer_tag_C(const hippeus_buffer_tag_C &) cxx11_noexcept = default;
+  cxx14_constexpr hippeus_buffer_tag_C &
+  operator=(const hippeus_buffer_tag_C &) cxx11_noexcept = default;
 #endif /* __cplusplus */
 };
 
