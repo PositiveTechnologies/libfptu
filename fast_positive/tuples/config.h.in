@@ -15,26 +15,17 @@
  *  limitations under the License.
  */
 
-#cmakedefine HAVE_MEMMEM
-#cmakedefine HAVE_MEMRCHR
-#cmakedefine HAVE_UUIDGEN
-#cmakedefine HAVE_UNISTD_H
-#cmakedefine HAVE_SYS_UIO_H
-#cmakedefine HAVE_SYS_STAT_H
 #cmakedefine HAVE_SYSTIME_H_TIMEVAL_TV_USEC
 #cmakedefine HAVE_SYSSELECT_H_TIMEVAL_TV_USEC
 #cmakedefine HAVE_TIMESPEC_TV_NSEC
-#cmakedefine CMAKE_HAVE_PTHREAD_H
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
-#cmakedefine HAVE_nanf
-#cmakedefine HAVE_nan
 #cmakedefine HAVE_IEEE754_H
 
-#cmakedefine LTO_ENABLED
-#cmakedefine ENABLE_VALGRIND
-#cmakedefine ENABLE_GPROF
-#cmakedefine ENABLE_GCOV
-#cmakedefine ENABLE_ASAN
+#cmakedefine01 FPTU_LTO_ENABLED
+#cmakedefine01 FPTU_ENABLE_VALGRIND
+#cmakedefine01 FPTU_ENABLE_GPROF
+#cmakedefine01 FPTU_ENABLE_GCOV
+#cmakedefine01 FPTU_ENABLE_ASAN
 #ifndef FPTU_BUILD_TYPE
 #cmakedefine FPTU_BUILD_TYPE "@FPTU_BUILD_TYPE@"
 #endif

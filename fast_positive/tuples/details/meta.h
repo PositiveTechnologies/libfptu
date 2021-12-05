@@ -259,7 +259,7 @@ template <unsigned N, typename TYPE = uint32_t[N]> struct unit_n {
     static_assert(sizeof(value_type) <= preplaced_bytes, "WTF?");
     details::relative_payload *ptr = loose->relative.payload();
 
-#if __GNUC_PREREQ(10, 0) && defined(LTO_ENABLED)
+#if __GNUC_PREREQ(10, 0) && FPTU_LTO_ENABLED
     /* This is workaround for GCC 10 false-positive warnings
      * like "writing 16 bytes into a region of size 2 [-Wstringop-overflow=]".
      * This crutch is for the case when LTO is enabled. */

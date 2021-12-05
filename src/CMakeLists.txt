@@ -372,7 +372,6 @@ string(REPLACE "  " " " FPTU_CMAKE_OPTIONS "-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTA
   )
 
 string(STRIP "${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}" FPTU_BUILD_COMPILER)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)
 
 set(options VERSION C_COMPILER CXX_COMPILER DEFINITIONS BUILD_TARGET BUILD_TYPE
   ENABLE_GCOV ENABLE_GPROF ENABLE_VALGRIND ENABLE_BACKTRACE
@@ -382,8 +381,10 @@ foreach(option IN LISTS options)
     set(value "${FPTU_${option}}")
   elseif(DEFINED "${option}")
     set(value "${${option}}")
+    set(FPTU_${option} ${value})
   else()
     set(value "${CMAKE_${option}}")
   endif()
   message(STATUS "FPTU_${option}: ${value}")
 endforeach(option)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)
