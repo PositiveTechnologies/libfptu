@@ -22,8 +22,21 @@
 #include "fast_positive/tuples/essentials.h"
 #include "fast_positive/tuples/token.h"
 
+/* Workaround for LCC's bug which hangs an optimizer */
+#if !defined(FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA)
+#if defined(__LCC__) && __LCC__ < 126
+#define FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA 1
+#else
+#define FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA 0
+#endif
+#endif /* FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA */
+
 #include <algorithm>
+#if FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA
+#include <map>
+#else
 #include <unordered_map>
+#endif /* FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA */
 
 namespace fptu {
 
@@ -44,9 +57,14 @@ struct schema_impl : public schema {
 
   //----------------------------------------------------------------------------
 
+#if FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA
+  using map_name2token = std::map<std::string, token>;
+  using map_token2name = std::map<token, string_view>;
+#else
   using map_name2token = std::unordered_map<std::string, token>;
   using map_token2name =
       std::unordered_map<token, string_view, token::hash, token::same>;
+#endif /* FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA */
   map_name2token name2token_;
   map_token2name token2name_;
 
@@ -153,8 +171,10 @@ void schema_impl::add_definition(std::string &&name, const token &ident,
                              preplaced_image_.size());
   }
   sorted_tokens_.reserve(sorted_tokens_.size() + 1);
+#if !FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA
   name2token_.reserve(name2token_.size() + 1);
   token2name_.reserve(token2name_.size() + 1);
+#endif /* FPTU_DONT_USE_UNORDERED_MAP_FOR_SCHEMA */
 
   try {
     if (ident.is_preplaced()) {
