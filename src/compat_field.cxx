@@ -54,11 +54,11 @@ struct iovec fptu_field_as_iovec(const fptu_field *pf) cxx11_noexcept {
   return fptu::iovec(nullptr, 0);
 }
 
-#define FPTU_GET_IMPL(LEGACY, NAME, GENUS, RETURN_TYPE, THUNK_TYPE, DENIL)     \
+#define FPTU_GET_IMPL(LEGACY, NAME, GENUS, RETURN_TYPE, THUNK, DENIL)          \
   RETURN_TYPE fptu_field_##LEGACY(const fptu_field *pf) cxx11_noexcept {       \
     error_guard raii(nullptr);                                                 \
     try {                                                                      \
-      return THUNK_TYPE(fptu::details::get<fptu::genus::GENUS>(pf, true));     \
+      return THUNK(fptu::details::get<fptu::genus::GENUS>(pf, true));          \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return DENIL;                                                            \

@@ -38,6 +38,13 @@
 
 #include "fast_positive/tuples/details/warnings_push_pt.h"
 
+#ifdef __cplusplus
+namespace fptu {
+/* Part of casting workaround for bogus EDG frontend */
+class FPTU_API_TYPE datetime_t;
+} // namespace fptu
+#endif /* __cplusplus*/
+
 /* Представление времени.
  *
  * В формате фиксированной точки 32-dot-32:
@@ -61,6 +68,16 @@ union fptu_datetime_C {
     uint32_t fractional;
 #endif /* byte order */
   };
+
+  /* Casting workaround for bogus EDG frontend */
+#if defined(__cplusplus) && defined(__EDG_VERSION__) && __EDG_VERSION__ < 600
+  fptu_datetime_C() noexcept = default;
+  cxx11_constexpr fptu_datetime_C(const fptu_datetime_C &) = default;
+  cxx14_constexpr fptu_datetime_C &operator=(const fptu_datetime_C &) = default;
+  explicit cxx11_constexpr fptu_datetime_C(const uint64_t fixedpoint) noexcept
+      : fixedpoint(fixedpoint) {}
+  cxx11_constexpr fptu_datetime_C(const ::fptu::datetime_t &) noexcept;
+#endif /* __EDG_VERSION__ < 600 */
 };
 
 /* Возвращает текущее время в правильной, унифицированной с Hiper100re форме.
@@ -95,16 +112,6 @@ namespace fptu {
 class FPTU_API_TYPE datetime_t {
   fptu_datetime_C value_;
 
-  union casting {
-    fptu_datetime_C C_union;
-    uint64_t u64;
-    cxx11_constexpr casting(uint64_t u64) : u64(u64) {}
-  };
-
-  static fptu_datetime_C cxx11_constexpr cast(uint64_t u) {
-    return casting(u).C_union;
-  }
-
   static cxx11_constexpr_var uint32_t ns_per_second = 1000000000u;
   static cxx11_constexpr_var uint32_t us_per_second = 1000000u;
   static cxx11_constexpr_var uint32_t ms_per_second = 1000u;
@@ -135,10 +142,9 @@ class FPTU_API_TYPE datetime_t {
     return (uint64_t(FileTime.dwHighDateTime) << 32 | FileTime.dwLowDateTime) -
            Gregorian_UTC_offset_100ns;
   }
-#endif
+#endif /* _FILETIME_ */
 
-  explicit cxx11_constexpr datetime_t(uint64_t u)
-      : value_(casting(u).C_union) {}
+  explicit cxx11_constexpr datetime_t(uint64_t u) : value_({u}) {}
 
 public:
   static cxx11_constexpr uint_fast32_t ns2fractional(uint_fast32_t ns) {
@@ -172,7 +178,7 @@ public:
 
   datetime_t() = default;
   cxx11_constexpr datetime_t(const datetime_t &) = default;
-  datetime_t &operator=(const datetime_t &) = default;
+  cxx14_constexpr datetime_t &operator=(const datetime_t &) = default;
   cxx11_constexpr datetime_t(const union fptu_datetime_C &src) : value_(src) {}
   datetime_t &operator=(const union fptu_datetime_C &src) {
     value_ = src;
@@ -187,9 +193,6 @@ public:
   static datetime_t now(int grain_ns = /* младшие 16 бит будут нулевые */ -16) {
     return datetime_t(fptu_now(grain_ns));
   }
-
-  cxx11_constexpr datetime_t(const time_t *utc)
-      : datetime_t(uint64_t(*utc) << 32) {}
 
   static cxx11_constexpr datetime_t from_fixedpoint_32dot32(uint64_t u32dot32) {
     return datetime_t(u32dot32);
@@ -248,8 +251,8 @@ public:
   }
 #endif /* _FILETIME_ */
 
-  operator const fptu_datetime_C &() const { return value_; }
-  operator fptu_datetime_C &() { return value_; }
+  operator const fptu_datetime_C &() const noexcept { return value_; }
+  operator fptu_datetime_C &() noexcept { return value_; }
 
   friend inline bool operator==(const datetime_t &lhs, const datetime_t &rhs) {
     return lhs.value_.fixedpoint == rhs.value_.fixedpoint;
@@ -270,7 +273,15 @@ public:
     return !operator<(lhs, rhs);
   }
 };
+
 } // namespace fptu
+
+/* Casting workaround for bogus EDG frontend */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ < 600
+cxx11_constexpr
+fptu_datetime_C::fptu_datetime_C(const ::fptu::datetime_t &dt) noexcept
+    : fixedpoint(dt.fixedpoint_32dot32()) {}
+#endif /* __EDG_VERSION__ < 600*/
 
 using fptu_datetime_t = fptu::datetime_t;
 

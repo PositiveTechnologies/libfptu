@@ -72,13 +72,13 @@ fptu_lookup_ro(fptu_ro ro, unsigned column,
 
 //------------------------------------------------------------------------------
 
-#define FPTU_GET_IMPL(LEGACY, NAME, GENUS, RETURN_TYPE, THUNK_TYPE, DENIL)     \
+#define FPTU_GET_IMPL(LEGACY, NAME, GENUS, RETURN_TYPE, THUNK, DENIL)          \
   RETURN_TYPE fptu_get_##LEGACY(fptu_ro ro, unsigned column, int *error)       \
       cxx11_noexcept {                                                         \
     error_guard raii(error);                                                   \
     try {                                                                      \
       const fptu::token id(fptu::genus::GENUS, column, false);                 \
-      return THUNK_TYPE(impl(ro)->get_##NAME(id));                             \
+      return THUNK(impl(ro)->get_##NAME(id));                                  \
     } catch (const std::exception &e) {                                        \
       raii.feed(e);                                                            \
       return DENIL;                                                            \
