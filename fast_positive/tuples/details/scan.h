@@ -20,6 +20,7 @@
 #include "fast_positive/erthink/erthink_arch.h"
 #include "fast_positive/erthink/erthink_ifunc.h"
 #include "fast_positive/tuples/api.h"
+#include "fast_positive/tuples/config.h"
 #include "fast_positive/tuples/details/field.h"
 #include <cassert>
 #include <cstddef>
@@ -59,11 +60,11 @@ fptu_scan_AVX2(const field_loose *begin, const field_loose *end,
                const uint16_t genus_and_id);
 #endif /* __ia32__ || __AVX2__ */
 
-#if defined(__ia32__) || defined(__AVX512BW__)
+#if FPTU_HAVE_AVX512 || defined(__AVX512BW__)
 __extern_C FPTU_API const field_loose *
 fptu_scan_AVX512(const field_loose *begin, const field_loose *end,
                  const uint16_t genus_and_id);
-#endif /* __ia32__ || __AVX512BW__ */
+#endif /* FPTU_HAVE_AVX512 */
 
 #if defined(__AVX512BW__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
@@ -71,10 +72,10 @@ fptu_scan_AVX512(const field_loose *begin, const field_loose *end,
 #elif defined(__AVX2__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_AVX2(begin, end, genus_and_id)
-#elif !defined(__ia32__) && defined(__AVX__)
+#elif defined(__AVX__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_AVX(begin, end, genus_and_id)
-#elif !defined(__ia32__) && defined(__SSE2__)
+#elif defined(__SSE2__)
 #define fptu_scan(begin, end, genus_and_id)                                    \
   fptu_scan_SSE2(begin, end, genus_and_id)
 #elif defined(__ia32__)

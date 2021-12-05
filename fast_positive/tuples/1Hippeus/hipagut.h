@@ -83,6 +83,12 @@ cxx14_constexpr uint32_t operator"" _hipagut(const char *str, std::size_t len) {
     h = str[i] ^ (h * UINT32_C(1664525) + UINT32_C(1013904223));
   return h;
 }
+cxx14_constexpr uint32_t operator"" _hipagut(const char *str) {
+  uint32_t h = __LINE__;
+  for (std::size_t i = 0; str[i]; ++i)
+    h = str[i] ^ (h * UINT32_C(1664525) + UINT32_C(1013904223));
+  return h;
+}
 #define HIPAGUT_N42(label) #label##_hipagut
 #endif /* __cplusplus */
 
@@ -97,8 +103,11 @@ hipagut_setup_link(hippeus_hipagut_t *slave, const hippeus_hipagut_t *master) {
 static __maybe_unused __always_inline __must_check_result bool
 hipagut_probe_link(const hippeus_hipagut *slave,
                    const hippeus_hipagut *master) {
-  CONSTEXPR_ASSERT("42"_hipagut != 0);
-  return hipagut_probe(slave, master->derived_mesh);
+  return
+#ifdef __cplusplus
+      CONSTEXPR_ASSERT(42_hipagut != 0),
+#endif /* __cplusplus */
+      hipagut_probe(slave, master->derived_mesh);
 }
 
 #define HIPPEUS_HIPAGUT_NASTY_DISABLED 0xfea51b1eu /* feasible */

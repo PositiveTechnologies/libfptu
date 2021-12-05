@@ -392,9 +392,11 @@ struct relative_offset {
   }
   cxx14_constexpr void reset_payload() cxx11_noexcept { offset_uint16 = 0; }
 
+#if !defined(__GNUC__) || __GNUC_PREREQ(5, 4)
   relative_offset() = delete;
   relative_offset(const relative_offset &) = delete;
   relative_offset &operator=(const relative_offset &) = delete;
+#endif /* Workaround for old GCC */
 };
 
 union field_preplaced {

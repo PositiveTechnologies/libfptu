@@ -59,6 +59,8 @@ if(NOT LIBFPTU_TYPE)
   endif()
 endif()
 
+set(LIBFPTU_CONFIG_H "${CMAKE_CURRENT_BINARY_DIR}/../fast_positive/tuples/config.h")
+
 set(LIBFPTU_HEADERS
   tuples.h
   tuples/api.h
@@ -164,22 +166,33 @@ set(LIBFPTU_SOURCES
 
   ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)
 
+set(FPTU_HAVE_AVX512 FALSE)
 if(X86_32 OR X86_64)
-  list(APPEND LIBFPTU_SOURCES cpu_features_ia32.cxx scan_SSE2.cxx scan_AVX.cxx scan_AVX2.cxx scan_AVX512.cxx)
+  list(APPEND LIBFPTU_SOURCES cpu_features_ia32.cxx scan_SSE2.cxx scan_AVX.cxx scan_AVX2.cxx)
   if(MSVC)
     if(X86_32)
       set_source_files_properties(scan_SSE2.cxx COMPILE_FLAGS /arch:SSE2)
     endif()
     set_source_files_properties(scan_AVX.cxx COMPILE_FLAGS /arch:AVX)
     set_source_files_properties(scan_AVX2.cxx COMPILE_FLAGS /arch:AVX2)
-    set_source_files_properties(scan_AVX512.cxx COMPILE_FLAGS /arch:AVX512)
+    check_cxx_compiler_flag("/arch:AVX512" HAVE_CC_AVX512)
+    if(HAVE_CC_AVX512)
+      set(FPTU_HAVE_AVX512 TRUE)
+      list(APPEND LIBFPTU_SOURCES scan_AVX512.cxx)
+      set_source_files_properties(scan_AVX512.cxx COMPILE_FLAGS /arch:AVX512)
+    endif()
   else()
     if(X86_32)
       set_source_files_properties(scan_SSE2.cxx COMPILE_FLAGS -msse2)
     endif()
     set_source_files_properties(scan_AVX.cxx COMPILE_FLAGS -mavx)
     set_source_files_properties(scan_AVX2.cxx COMPILE_FLAGS -mavx2)
-    set_source_files_properties(scan_AVX512.cxx COMPILE_FLAGS -mavx512bw)
+    check_cxx_compiler_flag("-mavx512bw" HAVE_CC_AVX512)
+    if(HAVE_CC_AVX512)
+      set(FPTU_HAVE_AVX512 TRUE)
+      list(APPEND LIBFPTU_SOURCES scan_AVX512.cxx)
+      set_source_files_properties(scan_AVX512.cxx COMPILE_FLAGS -mavx512bw)
+    endif()
   endif()
 elseif(E2K)
   list(APPEND LIBFPTU_SOURCES scan_SSE2.cxx scan_AVX.cxx scan_AVX2.cxx)
@@ -374,8 +387,8 @@ string(REPLACE "  " " " FPTU_CMAKE_OPTIONS "-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTA
 string(STRIP "${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}" FPTU_BUILD_COMPILER)
 
 set(options VERSION C_COMPILER CXX_COMPILER DEFINITIONS BUILD_TARGET BUILD_TYPE
-  ENABLE_GCOV ENABLE_GPROF ENABLE_VALGRIND ENABLE_BACKTRACE
-  HAVE_BFD ENABLE_ASAN)
+  ENABLE_GCOV ENABLE_GPROF ENABLE_VALGRIND ENABLE_BACKTRACE ENABLE_ASAN
+  HAVE_BFD HAVE_AVX512)
 foreach(option IN LISTS options)
   if(DEFINED "FPTU_${option}")
     set(value "${FPTU_${option}}")
@@ -387,4 +400,6 @@ foreach(option IN LISTS options)
   endif()
   message(STATUS "FPTU_${option}: ${value}")
 endforeach(option)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../fast_positive/tuples/config.h.in ${LIBFPTU_CONFIG_H})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/version.cxx)

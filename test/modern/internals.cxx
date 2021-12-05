@@ -73,11 +73,13 @@ TEST(ScanIndex, unroll) { test_ScanIndex(fptu::details::fptu_scan_unroll); }
 
 #ifdef __ia32__
 
+#if FPTU_HAVE_AVX512
 TEST(ScanIndex, AVX512) {
   if (!fptu::cpu_features.has_AVX512_BW())
     GTEST_SKIP();
   test_ScanIndex(fptu::details::fptu_scan_AVX512);
 }
+#endif /* FPTU_HAVE_AVX512 */
 
 TEST(ScanIndex, AVX2) {
   if (!fptu::cpu_features.has_AVX2())

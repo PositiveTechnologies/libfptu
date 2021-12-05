@@ -33,7 +33,7 @@
 #endif /* C++11 */
 
 #if (defined(__clang__) && !__CLANG_PREREQ(3, 9)) ||                           \
-    (!defined(__clang__) && defined(__GNUC__) && !__GNUC_PREREQ(5, 4))
+    (!defined(__clang__) && defined(__GNUC__) && !__GNUC_PREREQ(4, 8))
 /* Actualy libfptu was not tested with old compilers.
  * But you could remove this #error and try to continue at your own risk.
  * In such case please don't rise up an issues related ONLY to old compilers. */

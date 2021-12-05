@@ -74,6 +74,17 @@ static __always_inline bool mask2ptr(unsigned mask, const field_loose *&ptr) {
     scan += 8;                                                                 \
   } while (0)
 
+#if defined(__GNUC__) && !__GNUC_PREREQ(5, 4)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__))
+_mm256_undefined_ps(void) {
+  __m256d __Y = __Y;
+  return __Y;
+}
+#pragma GCC diagnostic pop
+#endif /* GCC < 5.4 */
+
 __hot const field_loose *fptu_scan_AVX(const field_loose *begin,
                                        const field_loose *end,
                                        const uint16_t genus_and_id) {
@@ -81,7 +92,7 @@ __hot const field_loose *fptu_scan_AVX(const field_loose *begin,
   assert(bytes % 4 == 0);
 
   const __m256 pattern =
-#if 1 /* LY: avoid store to temporary on the stack */
+#if 1  /* LY: avoid store to temporary on the stack */
       _mm256_permute2f128_ps(_mm256_castps128_ps256(_mm_castsi128_ps(
                                  _mm_set1_epi32(genus_and_id))),
                              _mm256_undefined_ps(), 0);

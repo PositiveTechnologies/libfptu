@@ -16,6 +16,7 @@
  */
 
 #include "fast_positive/tuples/schema.h"
+#include "fast_positive/erthink/erthink_unaligned.h++"
 #include "fast_positive/tuples/api.h"
 #include "fast_positive/tuples/details/bug.h"
 #include "fast_positive/tuples/essentials.h"
@@ -224,7 +225,7 @@ token schema_impl::define_preplaced_fixed_opacity(std::string &&name,
     throw_invalid_argument("preplaced field is too large");
   if (unlikely(size < 1))
     throw_invalid_argument("illegal preplaced field size");
-  if (unlikely(align >= std::alignment_of<std::max_align_t>::value))
+  if (unlikely(align >= std::alignment_of<erthink::max_align_t>::value))
     throw_invalid_argument("requested alignment cannot be satisfied");
   if (align == 0)
     align = (size > fundamentals::unit_size) ? size_t(fundamentals::unit_size)

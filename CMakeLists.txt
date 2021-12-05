@@ -282,9 +282,6 @@ else()
   set(HAVE_FPTU_VERSIONINFO FALSE)
 endif()
 
-set(LIBFPTU_CONFIG_H "${CMAKE_CURRENT_BINARY_DIR}/fast_positive/tuples/config.h")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fast_positive/tuples/config.h.in ${LIBFPTU_CONFIG_H})
-
 include_directories("${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 set(LIBERTHINK_TYPE STATIC)
 add_subdirectory(fast_positive/erthink)
